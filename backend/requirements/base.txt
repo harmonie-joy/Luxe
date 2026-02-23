@@ -1,0 +1,24 @@
+# Use the April 2025 LTS version (Supported until 2028)
+Django>=5.0,<6.0
+# DRF 3.15+ supports Django 5.2
+djangorestframework>=3.15,<4.0
+
+# Database & Environment
+# --- Database (Psycopg 3 is the modern, non-blocking standard) ---
+# Note: Requires libpq-dev in Dockerfile
+psycopg[binary]>=3.2,<4.0
+
+# --- Environment & Security ---
+django-environ>=0.11,<1.0
+django-cors-headers>=4.4,<5.0
+
+# Task Queue (Stable branch)
+celery>=5.4,<6.0
+redis>=5.2,<6.0
+
+# Data Validation (Pydantic V2 is the long-term play)
+pydantic>=2.10,<3.0
+requests>=2.32,<3.0
+
+# --- Production Server (Crucial for 5-year uptime) ---
+gunicorn>=23.0,<24.0

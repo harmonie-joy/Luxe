@@ -1,0 +1,97 @@
+erDiagram
+  WORKSPACE ||--o{ MEMBERSHIP : has
+  USER ||--o{ MEMBERSHIP : joins
+
+  WORKSPACE ||--o{ BRAND_PROFILE : owns
+  WORKSPACE ||--o{ BRIEF : owns
+  BRAND_PROFILE ||--o{ BRIEF : informs
+
+  WORKSPACE ||--o{ PROJECT : owns
+  PROJECT ||--o{ DRAFT : contains
+  BRIEF ||--o{ DRAFT : used_for
+
+  DRAFT ||--o{ DRAFT_VERSION : versions
+  DRAFT ||--o{ COMPLIANCE_CHECK : checked_by
+
+  WORKSPACE ||--o{ AUDIT_EVENT : logs
+  USER ||--o{ AUDIT_EVENT : acts
+
+  WORKSPACE {
+    uuid id PK
+    string name
+    string plan
+    datetime created_at
+  }
+  MEMBERSHIP {
+    uuid id PK
+    uuid workspace_id FK
+    uuid user_id FK
+    string role
+  }
+  BRAND_PROFILE {
+    uuid id PK
+    uuid workspace_id FK
+    string name
+    jsonb settings_json
+    jsonb facts_json
+    int version
+    datetime created_at
+  }
+  BRIEF {
+    uuid id PK
+    uuid workspace_id FK
+    uuid brand_profile_id FK
+    string title
+    text objective
+    text audience
+    text offer
+    jsonb constraints_json
+    datetime created_at
+  }
+  PROJECT {
+    uuid id PK
+    uuid workspace_id FK
+    string name
+    string status
+    datetime created_at
+  }
+  DRAFT {
+    uuid id PK
+    uuid workspace_id FK
+    uuid project_id FK
+    uuid brief_id FK
+    string channel
+    string status
+    jsonb content_json
+    text rendered_text
+    int current_version
+    datetime created_at
+  }
+  DRAFT_VERSION {
+    uuid id PK
+    uuid draft_id FK
+    int version
+    jsonb content_json
+    text rendered_text
+    datetime created_at
+  }
+  COMPLIANCE_CHECK {
+    uuid id PK
+    uuid workspace_id FK
+    uuid draft_id FK
+    string overall_status
+    string ruleset_version
+    jsonb findings_json
+    jsonb confirmations_json
+    datetime created_at
+  }
+  AUDIT_EVENT {
+    uuid id PK
+    uuid workspace_id FK
+    uuid actor_user_id FK
+    string entity_type
+    uuid entity_id
+    string action
+    jsonb diff_json
+    datetime created_at
+  }
