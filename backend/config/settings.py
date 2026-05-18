@@ -36,14 +36,17 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 INSTALLED_APPS = [
+    #default django apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # DJANGO REST
     "rest_framework",
     "corsheaders",
+    # local apps
     "tenancy",
     "audit",
     "llm",

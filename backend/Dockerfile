@@ -3,6 +3,7 @@ FROM python:3.12-slim
 
 WORKDIR /app
 # 2. Set environment variables
+ENV PYTHONPATH "${PYTHONPATH}:/app"
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
