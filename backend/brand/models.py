@@ -80,3 +80,6 @@ class BrandAsset(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.brand_profile})"
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.brand_profile})"
