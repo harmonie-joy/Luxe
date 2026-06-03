@@ -15,8 +15,8 @@ export function ScheduledContentPreview({
   section,
 }: ScheduledContentPreviewProps) {
   return (
-    <SurfaceCard className="h-full">
-      <div className="luxe-card-header mb-6 flex items-start justify-between gap-4 pb-5">
+    <SurfaceCard className="flex h-full min-h-0 flex-col">
+      <div className="luxe-card-header mb-6 shrink-0 flex items-start justify-between gap-4 pb-5">
         <div>
           <p className="luxe-eyebrow">
             {section.eyebrow}
@@ -30,7 +30,7 @@ export function ScheduledContentPreview({
         </span>
       </div>
 
-      <div className="space-y-5">
+      <div className="luxe-scroll-panel flex-1 space-y-5 pr-1">
         {items.map((item) => (
           <article className="grid grid-cols-[56px_1fr] gap-4" key={item.id}>
             <div className="luxe-date-tile px-2 py-3 text-center">

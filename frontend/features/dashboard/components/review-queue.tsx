@@ -12,8 +12,8 @@ interface ReviewQueueProps {
 
 export function ReviewQueue({ items, section }: ReviewQueueProps) {
   return (
-    <SurfaceCard padding="none">
-      <div className="luxe-card-header px-6 py-5">
+    <SurfaceCard className="flex min-h-0 flex-col" padding="none">
+      <div className="luxe-card-header shrink-0 px-6 py-5">
         <p className="luxe-eyebrow">
           {section.eyebrow}
         </p>
@@ -22,7 +22,7 @@ export function ReviewQueue({ items, section }: ReviewQueueProps) {
         </h2>
       </div>
 
-      <div className="luxe-list-divider">
+      <div className="luxe-list-divider luxe-scroll-panel flex-1">
         {items.map((item) => (
           <article
             className="luxe-list-row flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between"

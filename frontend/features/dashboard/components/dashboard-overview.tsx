@@ -10,8 +10,8 @@ interface DashboardOverviewProps {
 
 export function DashboardOverview({ dashboard }: DashboardOverviewProps) {
   return (
-    <div className="space-y-10">
-      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div className="flex h-full min-h-0 flex-col gap-8">
+      <header className="shrink-0 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
           <p className="luxe-eyebrow">
             {dashboard.pageHeader.eyebrow}
@@ -34,14 +34,14 @@ export function DashboardOverview({ dashboard }: DashboardOverviewProps) {
 
       <section
         aria-label="Dashboard metrics"
-        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+        className="shrink-0 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
       >
         {dashboard.metrics.map((metric) => (
           <MetricCard key={metric.id} metric={metric} />
         ))}
       </section>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <ReviewQueue
           items={dashboard.reviewQueue}
           section={dashboard.reviewQueueSection}

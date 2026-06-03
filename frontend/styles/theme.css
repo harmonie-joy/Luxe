@@ -254,6 +254,82 @@
     outline: none;
   }
 
+  .luxe-form-label {
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .luxe-form-help {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .luxe-field {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    color: var(--color-text-primary);
+    transition-duration: var(--motion-duration-fast);
+    transition-property: border-color, box-shadow;
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .luxe-field::placeholder {
+    color: color-mix(in srgb, var(--color-text-muted) 72%, transparent);
+  }
+
+  .luxe-field:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 1px var(--color-brand-muted);
+    outline: none;
+  }
+
+  .luxe-chip {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    transition-duration: var(--motion-duration-fast);
+    transition-property: background-color, border-color, color;
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .luxe-chip:hover {
+    background: var(--color-surface-muted);
+    color: var(--color-text-primary);
+  }
+
+  .luxe-chip:has(input:checked) {
+    background: var(--color-brand-soft);
+    border-color: var(--color-brand);
+    color: var(--color-text-primary);
+  }
+
+  .luxe-chip:has(input:focus-visible) {
+    outline: 2px solid var(--color-brand-muted);
+    outline-offset: 2px;
+  }
+
+  .luxe-chip-description {
+    color: var(--color-text-muted);
+  }
+
+  .luxe-upload-zone {
+    background: var(--color-surface-muted);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-panel);
+  }
+
+  .luxe-preview-stat {
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-card);
+  }
+
   .luxe-icon-action {
     border: 1px solid transparent;
     color: var(--color-text-secondary);
@@ -314,6 +390,18 @@
 
   .luxe-list-divider > * + * {
     border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .luxe-subtle-divider {
+    border-color: var(--color-border-subtle);
+  }
+
+  .luxe-scroll-panel {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    -webkit-overflow-scrolling: touch;
   }
 
   .luxe-list-row {
