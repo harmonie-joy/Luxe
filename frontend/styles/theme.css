@@ -494,6 +494,46 @@
   .luxe-metric-detail {
     color: var(--metric-detail);
   }
+
+  /* Secondary action button: transparent bg + 1px border (design ref: "Secondary" button style) */
+  .luxe-secondary-action {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    color: var(--color-text-secondary);
+    transition-duration: var(--motion-duration-fast);
+    transition-property: background-color, border-color, color;
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .luxe-secondary-action:hover {
+    background: var(--color-surface-subtle);
+    border-color: var(--color-text-muted);
+    color: var(--color-text-primary);
+  }
+
+  /* Danger action button: error color bg, white text (delete / destructive actions) */
+  .luxe-danger-action {
+    background: var(--status-danger);
+    border-radius: var(--radius-card);
+    color: #ffffff;
+    transition-duration: var(--motion-duration-fast);
+    transition-property: background-color, opacity;
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .luxe-danger-action:hover {
+    opacity: 0.88;
+  }
+
+  /* Label-sm: uppercase metadata labels matching the type scale in the design reference */
+  .luxe-label-sm {
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
 }
 
 @keyframes luxe-page-enter {
