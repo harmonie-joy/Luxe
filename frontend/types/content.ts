@@ -45,7 +45,7 @@ export interface ContentDraft {
   content: string;
   channel: ContentChannel;
   status: DraftStatus;
-  createdBy: string;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

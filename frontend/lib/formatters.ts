@@ -1,4 +1,5 @@
 import type { BrandAssetSourceType, BrandAssetStatus } from "@/types/brand-profile";
+import type { ContentChannel, DraftStatus } from "@/types/content";
 
 export const BRAND_ASSET_SOURCE_LABELS: Record<BrandAssetSourceType, string> = {
   pasted: "Pasted sample",
@@ -8,6 +9,24 @@ export const BRAND_ASSET_SOURCE_LABELS: Record<BrandAssetSourceType, string> = {
 export const BRAND_ASSET_STATUS_LABELS: Record<BrandAssetStatus, string> = {
   ready: "Ready",
   needs_review: "Needs review",
+};
+
+export const CONTENT_CHANNEL_LABELS: Record<ContentChannel, string> = {
+  linkedin: "LinkedIn",
+  instagram: "Instagram",
+  blog: "Blog",
+  newsletter: "Newsletter",
+  x: "X",
+  short_video: "Short Video",
+};
+
+export const DRAFT_STATUS_LABELS: Record<DraftStatus, string> = {
+  draft: "Draft",
+  in_review: "In Review",
+  needs_changes: "Needs Changes",
+  approved: "Approved",
+  scheduled: "Scheduled",
+  published: "Published",
 };
 
 /**
