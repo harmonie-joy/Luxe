@@ -57,11 +57,16 @@ export const mockBrandVoiceSetup = {
   },
   profile: {
     id: "the-luxe-signature",
+    workspaceId: "workspace-the-luxe",
     name: "THE LUXE Signature Voice",
-    region: "North America",
-    tones: ["sophisticated", "authoritative", "approachable"],
     audience:
       "Affluent fashion and lifestyle clients seeking curated, high-touch editorial guidance without inflated language.",
+    tone: ["sophisticated", "authoritative", "approachable"],
+    preferredVocabulary: ["craftsmanship", "clientele", "curated edit"],
+    bannedPhrases: ["affordable luxury", "go viral", "disruptive"],
+    sampleCount: 2,
+    createdAt: "2026-06-01T09:00:00.000Z",
+    updatedAt: "2026-06-02T15:30:00.000Z",
   },
   toneOptions: [
     {
@@ -157,4 +162,4 @@ export const mockBrandVoiceSetup = {
       },
     ],
   },
-} as const satisfies BrandVoiceSetupData;
+} satisfies BrandVoiceSetupData;

@@ -25,7 +25,9 @@ export function BrandProfilePreview({
   toneOptions,
   vocabularyRules,
 }: BrandProfilePreviewProps) {
-  const selectedTones = toneOptions.filter((tone) => tone.selected);
+  const selectedTones = toneOptions.filter((tone) =>
+    profile.tone.includes(tone.value),
+  );
 
   return (
     <SurfaceCard className="flex flex-col">
@@ -47,7 +49,9 @@ export function BrandProfilePreview({
           <h3 className="luxe-serif mt-2 text-3xl leading-none text-[color:var(--color-brand)]">
             {profile.name}
           </h3>
-          <p className="luxe-item-meta mt-3 text-sm">{profile.region}</p>
+          <p className="luxe-item-meta mt-3 text-sm">
+            {profile.workspaceId} · {profile.sampleCount} samples
+          </p>
         </div>
 
         <div>

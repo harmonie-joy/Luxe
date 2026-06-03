@@ -7,6 +7,7 @@ import type {
   BrandVocabularyRule,
 } from "@/types/brand-profile";
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { ToneSelector } from "@/features/brand-voice/components/tone-selector";
 
 interface BrandProfileFormProps {
   profile: BrandProfile;
@@ -76,36 +77,7 @@ export function BrandProfileForm({
           />
         </div>
 
-        <fieldset>
-          <legend className="luxe-form-label">Tone chips</legend>
-          <p className="luxe-form-help mt-1">
-            Choose the voice attributes content should preserve.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            {toneOptions.map((tone) => (
-              <label
-                className="luxe-chip px-4 py-3"
-                key={tone.value}
-              >
-                <input
-                  className="sr-only"
-                  defaultChecked={tone.selected}
-                  name="tones"
-                  type="checkbox"
-                  value={tone.value}
-                />
-                <span>
-                  <span className="block text-sm font-semibold">
-                    {tone.label}
-                  </span>
-                  <span className="luxe-chip-description mt-1 block text-xs">
-                    {tone.description}
-                  </span>
-                </span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
+        <ToneSelector tones={toneOptions} />
 
         <div>
           <label className="luxe-form-label" htmlFor="preferred-vocabulary">

@@ -7,12 +7,16 @@ export type BrandVoiceTone =
 
 export interface BrandProfile {
   id: string;
+  workspaceId: string;
   name: string;
-  region: string;
-  tones: readonly BrandVoiceTone[];
   audience: string;
+  tone: string[];
+  preferredVocabulary: string[];
+  bannedPhrases: string[];
+  sampleCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
-
 export interface BrandVocabularyRule {
   id: string;
   preferredTerm: string;
