@@ -16,8 +16,10 @@ class BrandProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return BrandProfile.objects.filter(
-            workspace__memberships__user=self.request.user
+        return (
+            BrandProfile.objects.select_related("workspace")
+            .prefetch_related("assets")
+            .filter(workspace__memberships__user=self.request.user)
         )
 
     def perform_create(self, serializer):
@@ -25,6 +27,14 @@ class BrandProfileViewSet(viewsets.ModelViewSet):
         if not workspace.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied(
                 "You do not have permission to create profiles in this workspace."
+            )
+        serializer.save()
+
+    def perform_update(self, serializer):
+        workspace = serializer.validated_data.get("workspace", serializer.instance.workspace)
+        if not workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to move profiles into this workspace."
             )
         serializer.save()
 
@@ -40,7 +50,7 @@ class BrandAssetViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        qs = BrandAsset.objects.filter(
+        qs = BrandAsset.objects.select_related("brand_profile", "brand_profile__workspace").filter(
             brand_profile__workspace__memberships__user=self.request.user
         )
         brand_profile_id = self.request.query_params.get("brand_profile")
@@ -54,5 +64,16 @@ class BrandAssetViewSet(viewsets.ModelViewSet):
         if not workspace.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied(
                 "You do not have permission to add assets to this brand profile."
+            )
+        serializer.save()
+
+    def perform_update(self, serializer):
+        brand_profile = serializer.validated_data.get(
+            "brand_profile", serializer.instance.brand_profile
+        )
+        workspace = brand_profile.workspace
+        if not workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to move assets into this brand profile."
             )
         serializer.save()

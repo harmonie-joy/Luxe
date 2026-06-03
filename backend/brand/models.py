@@ -6,6 +6,13 @@ from tenancy.models import Workspace
 
 
 class BrandProfile(models.Model):
+    class ToneValue(models.TextChoices):
+        PROFESSIONAL = "professional", "Professional"
+        AUTHORITATIVE = "authoritative", "Authoritative"
+        SOPHISTICATED = "sophisticated", "Sophisticated"
+        APPROACHABLE = "approachable", "Approachable"
+        VISIONARY = "visionary", "Visionary"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(
         Workspace,
@@ -20,11 +27,11 @@ class BrandProfile(models.Model):
     )
     preferred_vocabulary = models.JSONField(
         default=list,
-        help_text="List of preferred term rule objects.",
+        help_text="List of preferred vocabulary rule objects.",
     )
     banned_phrases = models.JSONField(
         default=list,
-        help_text="List of banned phrase objects.",
+        help_text="List of banned phrase objects with optional rationale.",
     )
     positioning_notes = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,15 +78,14 @@ class BrandAsset(models.Model):
         default=AssetStatus.NEEDS_REVIEW,
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("-created_at",)
+        ordering = ("-updated_at",)
         indexes = [
             models.Index(fields=["brand_profile", "status"]),
+            models.Index(fields=["updated_at"]),
         ]
-
-    def __str__(self) -> str:
-        return f"{self.title} ({self.brand_profile})"
 
     def __str__(self) -> str:
         return f"{self.title} ({self.brand_profile})"

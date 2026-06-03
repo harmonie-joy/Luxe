@@ -6,8 +6,16 @@ from brand.models import BrandAsset, BrandProfile
 class BrandAssetInline(admin.TabularInline):
     model = BrandAsset
     extra = 0
-    fields = ("title", "source_type", "format", "word_count", "status", "created_at")
-    readonly_fields = ("created_at",)
+    fields = (
+        "title",
+        "source_type",
+        "format",
+        "word_count",
+        "status",
+        "created_at",
+        "updated_at",
+    )
+    readonly_fields = ("created_at", "updated_at")
 
 
 @admin.register(BrandProfile)
@@ -21,7 +29,14 @@ class BrandProfileAdmin(admin.ModelAdmin):
 
 @admin.register(BrandAsset)
 class BrandAssetAdmin(admin.ModelAdmin):
-    list_display = ("title", "brand_profile", "source_type", "status", "created_at")
-    list_filter = ("source_type", "status", "created_at")
+    list_display = (
+        "title",
+        "brand_profile",
+        "source_type",
+        "status",
+        "updated_at",
+        "created_at",
+    )
+    list_filter = ("source_type", "status", "updated_at", "created_at")
     search_fields = ("title", "brand_profile__name")
-    ordering = ("-created_at",)
+    ordering = ("-updated_at",)
