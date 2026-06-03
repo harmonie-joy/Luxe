@@ -10,10 +10,8 @@
  */
 
 import type {
-  BannedPhrase,
   BrandAsset,
   BrandProfile,
-  BrandVocabularyRule,
   BrandVoiceTone,
 } from "@/types/brand-profile";
 

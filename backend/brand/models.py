@@ -27,11 +27,11 @@ class BrandProfile(models.Model):
     )
     preferred_vocabulary = models.JSONField(
         default=list,
-        help_text="List of preferred vocabulary rule objects.",
+        help_text="List of preferred term rule objects.",
     )
     banned_phrases = models.JSONField(
         default=list,
-        help_text="List of banned phrase objects with optional rationale.",
+        help_text="List of banned phrase objects.",
     )
     positioning_notes = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)

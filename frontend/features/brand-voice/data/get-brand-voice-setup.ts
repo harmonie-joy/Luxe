@@ -80,7 +80,9 @@ const SAMPLE_CONTENT_CONFIG = {
 // Shape-mapping helpers
 // ---------------------------------------------------------------------------
 
-function buildToneOptions(selectedTones: BrandVoiceTone[]): BrandToneOption[] {
+function buildToneOptions(
+  selectedTones: readonly BrandVoiceTone[],
+): BrandToneOption[] {
   const selected = new Set<string>(selectedTones);
   return ALL_TONE_OPTIONS.map((opt) => ({
     ...opt,

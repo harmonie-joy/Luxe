@@ -24,6 +24,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="brandasset",
-            index=models.Index(fields=["updated_at"], name="brand_brand_updated_2ad314_idx"),
+            index=models.Index(fields=["updated_at"], name="brand_brand_updated_6de9b4_idx"),
         ),
     ]

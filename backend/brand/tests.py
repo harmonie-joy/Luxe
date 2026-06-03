@@ -169,11 +169,11 @@ class BrandProfileAPITest(APITestCase):
         }
         self.assertEqual(set(response.data.keys()), expected_keys)
         self.assertEqual(
-            response.data["preferredVocabulary"][0].keys(),
+            set(response.data["preferredVocabulary"][0].keys()),
             {"id", "preferredTerm", "restrictedTerms", "note"},
         )
         self.assertEqual(
-            response.data["bannedPhrases"][0].keys(),
+            set(response.data["bannedPhrases"][0].keys()),
             {"id", "phrase", "reason"},
         )
 

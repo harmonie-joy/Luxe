@@ -12,9 +12,7 @@ interface BrandProfilePreviewProps {
   samples: readonly BrandAsset[];
 }
 
-function getVocabularyMeta(profile: BrandProfile, index: number): string {
-  const rule = profile.preferredVocabulary[index];
-
+function getVocabularyMeta(rule: BrandProfile["preferredVocabulary"][number]): string {
   if (rule.restrictedTerms.length > 0) {
     return `Avoid ${rule.restrictedTerms.join(", ")}`;
   }
@@ -110,13 +108,13 @@ export function BrandProfilePreview({
         <div>
           <p className="luxe-form-help">Preferred vocabulary</p>
           <div className="luxe-list-divider mt-3">
-            {profile.preferredVocabulary.map((rule, index) => (
+            {profile.preferredVocabulary.map((rule) => (
               <article className="py-3" key={rule.id}>
                 <h4 className="luxe-item-title text-sm">
                   {rule.preferredTerm}
                 </h4>
                 <p className="luxe-item-meta mt-1 text-sm">
-                  {getVocabularyMeta(profile, index)}
+                  {getVocabularyMeta(rule)}
                 </p>
               </article>
             ))}
