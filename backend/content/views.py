@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
@@ -63,6 +64,33 @@ class ContentDraftViewSet(viewsets.ModelViewSet):
 
     serializer_class = ContentDraftSerializer
     permission_classes = [IsAuthenticated]
+
+    def _deny_foreign_brief_payload(self):
+        brief_id = self.request.data.get("brief")
+        if not brief_id:
+            return
+
+        try:
+            brief = ContentBrief.objects.select_related("workspace").get(pk=brief_id)
+        except (ContentBrief.DoesNotExist, TypeError, ValueError, ValidationError):
+            return
+
+        if not brief.workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to use this brief."
+            )
+
+    def create(self, request, *args, **kwargs):
+        self._deny_foreign_brief_payload()
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        self._deny_foreign_brief_payload()
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        self._deny_foreign_brief_payload()
+        return super().partial_update(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = (

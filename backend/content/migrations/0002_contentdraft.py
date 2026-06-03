@@ -83,15 +83,15 @@ class Migration(migrations.Migration):
                 "indexes": [
                     models.Index(
                         fields=["brief", "channel"],
-                        name="content_con_brief_i_8c35e7_idx",
+                        name="content_con_brief_i_4d8532_idx",
                     ),
                     models.Index(
                         fields=["status"],
-                        name="content_con_status_43f878_idx",
+                        name="content_con_status_0be636_idx",
                     ),
                     models.Index(
                         fields=["updated_at"],
-                        name="content_con_updated_c48b9b_idx",
+                        name="content_con_updated_0f828c_idx",
                     ),
                 ],
                 "constraints": [
