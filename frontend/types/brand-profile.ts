@@ -10,9 +10,9 @@ export interface BrandProfile {
   workspaceId: string;
   name: string;
   audience: string;
-  tone: BrandVoiceTone[];
-  preferredVocabulary: string[];
-  bannedPhrases: string[];
+  tone: readonly BrandVoiceTone[];
+  preferredVocabulary: readonly BrandVocabularyRule[];
+  bannedPhrases: readonly BannedPhrase[];
   positioningNotes?: string;
   sampleCount: number;
   createdAt: string;
@@ -52,6 +52,7 @@ export type BrandAssetStatus = "ready" | "needs_review";
 
 export interface BrandAsset {
   id: string;
+  workspaceId: string;
   brandProfileId: string;
   title: string;
   content: string;
@@ -60,6 +61,7 @@ export interface BrandAsset {
   wordCount: number;
   status: BrandAssetStatus;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface AssetComment {

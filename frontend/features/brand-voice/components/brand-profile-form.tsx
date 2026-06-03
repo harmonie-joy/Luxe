@@ -1,8 +1,6 @@
 import type {
-  BannedPhrase,
   BrandToneOption,
   BrandProfile,
-  BrandVocabularyRule,
 } from "@/types/brand-profile";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { ToneSelector } from "@/features/brand-voice/components/tone-selector";
@@ -10,32 +8,32 @@ import { ToneSelector } from "@/features/brand-voice/components/tone-selector";
 interface BrandProfileFormProps {
   profile: BrandProfile;
   toneOptions: readonly BrandToneOption[];
-  vocabularyRules: readonly BrandVocabularyRule[];
-  bannedPhrases: readonly BannedPhrase[];
 }
 
-function formatVocabularyRules(rules: readonly BrandVocabularyRule[]) {
+function formatVocabularyRules(profile: BrandProfile) {
+  const rules = profile.preferredVocabulary;
   return rules
     .map((rule) => {
       const restrictedTerms = rule.restrictedTerms.join(", ");
 
-      return `${rule.preferredTerm} - avoid: ${restrictedTerms}`;
+      if (restrictedTerms) {
+        return `${rule.preferredTerm} - avoid: ${restrictedTerms}`;
+      }
+
+      return rule.note
+        ? `${rule.preferredTerm} - ${rule.note}`
+        : rule.preferredTerm;
     })
     .join("\n");
 }
 
-function formatBannedPhrases(phrases: readonly BannedPhrase[]) {
-  return phrases
+function formatBannedPhrases(profile: BrandProfile) {
+  return profile.bannedPhrases
     .map((phrase) => `${phrase.phrase} - ${phrase.reason}`)
     .join("\n");
 }
 
-export function BrandProfileForm({
-  bannedPhrases,
-  profile,
-  toneOptions,
-  vocabularyRules,
-}: BrandProfileFormProps) {
+export function BrandProfileForm({ profile, toneOptions }: BrandProfileFormProps) {
   return (
     <SurfaceCard className="flex flex-col gap-6">
       <div>
@@ -83,7 +81,7 @@ export function BrandProfileForm({
           </label>
           <textarea
             className="luxe-field mt-2 min-h-32 w-full resize-none px-4 py-3"
-            defaultValue={formatVocabularyRules(vocabularyRules)}
+            defaultValue={formatVocabularyRules(profile)}
             id="preferred-vocabulary"
             name="preferredVocabulary"
             placeholder="Add preferred terms and replacement guidance."
@@ -96,7 +94,7 @@ export function BrandProfileForm({
           </label>
           <textarea
             className="luxe-field mt-2 min-h-28 w-full resize-none px-4 py-3"
-            defaultValue={formatBannedPhrases(bannedPhrases)}
+            defaultValue={formatBannedPhrases(profile)}
             id="banned-phrases"
             name="bannedPhrases"
             placeholder="List phrases that should be avoided."

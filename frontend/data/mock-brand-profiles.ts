@@ -1,11 +1,8 @@
 import type {
-  BannedPhrase,
   BrandAsset,
   BrandProfile,
   BrandToneOption,
-  BrandVoiceTone,
   SampleContentConfig,
-  BrandVocabularyRule,
 } from "@/types/brand-profile";
 
 export interface BrandVoicePageCopy {
@@ -18,8 +15,6 @@ export interface BrandVoiceSetupData {
   pageHeader: BrandVoicePageCopy;
   profile: BrandProfile;
   toneOptions: readonly BrandToneOption[];
-  vocabularyRules: readonly BrandVocabularyRule[];
-  bannedPhrases: readonly BannedPhrase[];
   sampleContent: SampleContentConfig;
 }
 
@@ -37,8 +32,43 @@ export const mockBrandVoiceSetup = {
     audience:
       "Affluent fashion and lifestyle clients seeking curated, high-touch editorial guidance without inflated language.",
     tone: ["sophisticated", "authoritative", "approachable"],
-    preferredVocabulary: ["craftsmanship", "clientele", "curated edit"],
-    bannedPhrases: ["affordable luxury", "go viral", "disruptive"],
+    preferredVocabulary: [
+      {
+        id: "craftsmanship",
+        preferredTerm: "craftsmanship",
+        restrictedTerms: ["artisan vibes", "handmade-ish"],
+        note: "Use when describing production quality or provenance.",
+      },
+      {
+        id: "clientele",
+        preferredTerm: "clientele",
+        restrictedTerms: ["customers", "buyers"],
+        note: "Use for premium audience references.",
+      },
+      {
+        id: "curated-edit",
+        preferredTerm: "curated edit",
+        restrictedTerms: ["drop", "haul"],
+        note: "Use for seasonal selections and editorial collections.",
+      },
+    ],
+    bannedPhrases: [
+      {
+        id: "cheap-luxury",
+        phrase: "affordable luxury",
+        reason: "Dilutes premium positioning.",
+      },
+      {
+        id: "viral",
+        phrase: "go viral",
+        reason: "Too trend-led for the brand voice.",
+      },
+      {
+        id: "disruptive",
+        phrase: "disruptive",
+        reason: "Feels generic and overused.",
+      },
+    ],
     positioningNotes:
       "THE LUXE occupies the quiet luxury tier — editorial authority without aspirational overreach. Content should feel considered, never promotional. Avoid urgency-led language and trend-chasing framing.",
     sampleCount: 2,
@@ -77,43 +107,6 @@ export const mockBrandVoiceSetup = {
       selected: false,
     },
   ],
-  vocabularyRules: [
-    {
-      id: "craftsmanship",
-      preferredTerm: "craftsmanship",
-      restrictedTerms: ["artisan vibes", "handmade-ish"],
-      note: "Use when describing production quality or provenance.",
-    },
-    {
-      id: "clientele",
-      preferredTerm: "clientele",
-      restrictedTerms: ["customers", "buyers"],
-      note: "Use for premium audience references.",
-    },
-    {
-      id: "curated-edit",
-      preferredTerm: "curated edit",
-      restrictedTerms: ["drop", "haul"],
-      note: "Use for seasonal selections and editorial collections.",
-    },
-  ],
-  bannedPhrases: [
-    {
-      id: "cheap-luxury",
-      phrase: "affordable luxury",
-      reason: "Dilutes premium positioning.",
-    },
-    {
-      id: "viral",
-      phrase: "go viral",
-      reason: "Too trend-led for the brand voice.",
-    },
-    {
-      id: "disruptive",
-      phrase: "disruptive",
-      reason: "Feels generic and overused.",
-    },
-  ],
   sampleContent: {
     pasteDefaultValue:
       "A considered edit of sculptural silhouettes, tactile finishes, and quiet statement pieces designed for clients who value presence over spectacle.",
@@ -123,6 +116,7 @@ export const mockBrandVoiceSetup = {
     samples: [
       {
         id: "editorial-launch-note",
+        workspaceId: "workspace-the-luxe",
         brandProfileId: "the-luxe-signature",
         title: "Editorial launch note",
         content: "",
@@ -131,9 +125,11 @@ export const mockBrandVoiceSetup = {
         wordCount: 42,
         status: "ready",
         createdAt: "2026-06-01T09:00:00.000Z",
+        updatedAt: "2026-06-02T10:00:00.000Z",
       },
       {
         id: "atelier-collection-brief",
+        workspaceId: "workspace-the-luxe",
         brandProfileId: "the-luxe-signature",
         title: "Atelier collection brief",
         content: "",
@@ -142,6 +138,7 @@ export const mockBrandVoiceSetup = {
         wordCount: 680,
         status: "needs_review",
         createdAt: "2026-06-01T10:15:00.000Z",
+        updatedAt: "2026-06-01T14:00:00.000Z",
       },
     ] satisfies BrandAsset[],
   },

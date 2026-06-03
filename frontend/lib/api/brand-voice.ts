@@ -9,7 +9,13 @@
  * the camelCase domain types from @/types/brand-profile.
  */
 
-import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
+import type {
+  BannedPhrase,
+  BrandAsset,
+  BrandProfile,
+  BrandVocabularyRule,
+  BrandVoiceTone,
+} from "@/types/brand-profile";
 
 import { httpClient } from "./http-client";
 
@@ -19,13 +25,13 @@ import { httpClient } from "./http-client";
 // ---------------------------------------------------------------------------
 
 export interface CreateBrandProfilePayload {
-  /** Integer PK of the Workspace this profile belongs to. */
-  workspace: number;
+  /** Workspace primary key serialized as a string for frontend consistency. */
+  workspace: string;
   name: string;
   audience: string;
-  tone?: string[];
-  preferred_vocabulary?: string[];
-  banned_phrases?: string[];
+  tone?: readonly BrandVoiceTone[];
+  preferred_vocabulary?: readonly BrandVocabularyRuleWritePayload[];
+  banned_phrases?: readonly BannedPhraseWritePayload[];
   positioning_notes?: string;
 }
 
@@ -47,6 +53,19 @@ export interface CreateBrandAssetPayload {
 export type UpdateBrandAssetPayload = Partial<
   Omit<CreateBrandAssetPayload, "brand_profile">
 >;
+
+export interface BrandVocabularyRuleWritePayload {
+  id: string;
+  preferred_term: string;
+  restricted_terms?: readonly string[];
+  note?: string;
+}
+
+export interface BannedPhraseWritePayload {
+  id: string;
+  phrase: string;
+  reason?: string;
+}
 
 // ---------------------------------------------------------------------------
 // BrandProfile endpoints
@@ -88,6 +107,11 @@ export function updateBrandProfile(
 export function getBrandAssets(brandProfileId?: string): Promise<BrandAsset[]> {
   const query = brandProfileId ? `?brand_profile=${brandProfileId}` : "";
   return httpClient.get<BrandAsset[]>(`/api/brand-assets/${query}`);
+}
+
+/** Returns a single BrandAsset by UUID. */
+export function getBrandAsset(id: string): Promise<BrandAsset> {
+  return httpClient.get<BrandAsset>(`/api/brand-assets/${id}/`);
 }
 
 /** Creates a new BrandAsset under the given BrandProfile. */

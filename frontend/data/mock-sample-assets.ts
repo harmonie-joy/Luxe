@@ -35,6 +35,7 @@ const MOCK_SAMPLE_ASSETS: Record<string, SampleAssetPageData> = {
   "editorial-launch-note": {
     asset: {
       id: "editorial-launch-note",
+      workspaceId: "workspace-the-luxe",
       brandProfileId: "the-luxe-signature",
       title: "Editorial launch note",
       content: `A considered edit of sculptural silhouettes, tactile finishes, and quiet statement pieces designed for clients who value presence over spectacle.
@@ -45,6 +46,7 @@ The collection arrives without announcement—precisely the point. Each piece is
       wordCount: 42,
       status: "ready",
       createdAt: "2026-06-01T09:00:00.000Z",
+      updatedAt: "2026-06-02T10:00:00.000Z",
     },
     comments: [
       {
@@ -78,6 +80,7 @@ The collection arrives without announcement—precisely the point. Each piece is
   "atelier-collection-brief": {
     asset: {
       id: "atelier-collection-brief",
+      workspaceId: "workspace-the-luxe",
       brandProfileId: "the-luxe-signature",
       title: "Atelier collection brief",
       content: `Autumn–Winter 2026 Collection Brief
@@ -98,6 +101,7 @@ Channel notes:
       wordCount: 680,
       status: "needs_review",
       createdAt: "2026-06-01T10:15:00.000Z",
+      updatedAt: "2026-06-01T14:00:00.000Z",
     },
     comments: [
       {

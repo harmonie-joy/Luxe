@@ -1,9 +1,7 @@
 import type {
-  BannedPhrase,
   BrandAsset,
   BrandToneOption,
   BrandProfile,
-  BrandVocabularyRule,
 } from "@/types/brand-profile";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
@@ -11,17 +9,23 @@ import { StatusIndicator } from "@/components/ui/status-indicator";
 interface BrandProfilePreviewProps {
   profile: BrandProfile;
   toneOptions: readonly BrandToneOption[];
-  vocabularyRules: readonly BrandVocabularyRule[];
-  bannedPhrases: readonly BannedPhrase[];
   samples: readonly BrandAsset[];
 }
 
+function getVocabularyMeta(profile: BrandProfile, index: number): string {
+  const rule = profile.preferredVocabulary[index];
+
+  if (rule.restrictedTerms.length > 0) {
+    return `Avoid ${rule.restrictedTerms.join(", ")}`;
+  }
+
+  return rule.note ?? "Preferred term";
+}
+
 export function BrandProfilePreview({
-  bannedPhrases,
   profile,
   samples,
   toneOptions,
-  vocabularyRules,
 }: BrandProfilePreviewProps) {
   const selectedTones = toneOptions.filter((tone) =>
     profile.tone.includes(tone.value),
@@ -86,13 +90,13 @@ export function BrandProfilePreview({
           <div className="luxe-preview-stat p-4">
             <p className="luxe-form-help">Vocabulary rules</p>
             <p className="luxe-serif mt-2 text-3xl text-luxe-brand">
-              {vocabularyRules.length}
+              {profile.preferredVocabulary.length}
             </p>
           </div>
           <div className="luxe-preview-stat p-4">
             <p className="luxe-form-help">Banned phrases</p>
             <p className="luxe-serif mt-2 text-3xl text-luxe-warning">
-              {bannedPhrases.length}
+              {profile.bannedPhrases.length}
             </p>
           </div>
           <div className="luxe-preview-stat p-4">
@@ -106,13 +110,13 @@ export function BrandProfilePreview({
         <div>
           <p className="luxe-form-help">Preferred vocabulary</p>
           <div className="luxe-list-divider mt-3">
-            {vocabularyRules.map((rule) => (
+            {profile.preferredVocabulary.map((rule, index) => (
               <article className="py-3" key={rule.id}>
                 <h4 className="luxe-item-title text-sm">
                   {rule.preferredTerm}
                 </h4>
                 <p className="luxe-item-meta mt-1 text-sm">
-                  Avoid {rule.restrictedTerms.join(", ")}
+                  {getVocabularyMeta(profile, index)}
                 </p>
               </article>
             ))}

@@ -4,14 +4,8 @@ import { BrandProfilePreview } from "@/features/brand-voice/components/brand-pro
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 
 export default async function BrandVoicePage() {
-  const {
-    bannedPhrases,
-    pageHeader,
-    profile,
-    sampleContent,
-    toneOptions,
-    vocabularyRules,
-  } = await getBrandVoiceSetup();
+  const { pageHeader, profile, sampleContent, toneOptions } =
+    await getBrandVoiceSetup();
 
   return (
     <div className="flex min-h-full flex-col gap-8">
@@ -27,21 +21,14 @@ export default async function BrandVoicePage() {
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-6">
-          <BrandProfileForm
-            bannedPhrases={bannedPhrases}
-            profile={profile}
-            toneOptions={toneOptions}
-            vocabularyRules={vocabularyRules}
-          />
+          <BrandProfileForm profile={profile} toneOptions={toneOptions} />
           <SampleContentUploader sampleContent={sampleContent} />
         </div>
 
         <BrandProfilePreview
-          bannedPhrases={bannedPhrases}
           profile={profile}
           samples={sampleContent.samples}
           toneOptions={toneOptions}
-          vocabularyRules={vocabularyRules}
         />
       </div>
     </div>

@@ -16,8 +16,6 @@
  * Shape contract:
  * - pageHeader    : static copy — not from API
  * - toneOptions   : derived from the full canonical tone list + profile.tone
- * - vocabularyRules: mapped from profile.preferredVocabulary (string[])
- * - bannedPhrases : mapped from profile.bannedPhrases (string[])
  * - sampleContent : static config fields + live/mock assets
  */
 
@@ -28,11 +26,9 @@ import {
 import { ApiError } from "@/lib/api/http-client";
 import { getBrandAssets, getBrandProfiles } from "@/lib/api/brand-voice";
 import type {
-  BannedPhrase,
   BrandProfile,
   BrandToneOption,
   BrandVoiceTone,
-  BrandVocabularyRule,
 } from "@/types/brand-profile";
 
 // ---------------------------------------------------------------------------
@@ -92,29 +88,11 @@ function buildToneOptions(selectedTones: BrandVoiceTone[]): BrandToneOption[] {
   }));
 }
 
-function buildVocabularyRules(terms: string[]): BrandVocabularyRule[] {
-  return terms.map((term) => ({
-    id: term.toLowerCase().replace(/\s+/g, "-"),
-    preferredTerm: term,
-    restrictedTerms: [],
-  }));
-}
-
-function buildBannedPhrases(phrases: string[]): BannedPhrase[] {
-  return phrases.map((phrase) => ({
-    id: phrase.toLowerCase().replace(/\s+/g, "-"),
-    phrase,
-    reason: "",
-  }));
-}
-
 function buildFromProfile(profile: BrandProfile): BrandVoiceSetupData {
   return {
     pageHeader: PAGE_HEADER,
     profile,
     toneOptions: buildToneOptions(profile.tone),
-    vocabularyRules: buildVocabularyRules(profile.preferredVocabulary),
-    bannedPhrases: buildBannedPhrases(profile.bannedPhrases),
     sampleContent: {
       ...SAMPLE_CONTENT_CONFIG,
       samples: [],
