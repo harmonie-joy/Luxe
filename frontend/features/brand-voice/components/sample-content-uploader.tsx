@@ -1,4 +1,8 @@
 import type { SampleContentConfig } from "@/types/brand-profile";
+import {
+  BRAND_ASSET_SOURCE_LABELS,
+  BRAND_ASSET_STATUS_LABELS,
+} from "@/lib/formatters";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 
@@ -65,12 +69,12 @@ export function SampleContentUploader({
               <div>
                 <h4 className="luxe-item-title text-sm">{sample.title}</h4>
                 <p className="luxe-item-meta mt-1 text-sm">
-                  {sample.source} · {sample.format} · {sample.wordCount} words
+                  {BRAND_ASSET_SOURCE_LABELS[sample.sourceType]} · {sample.format} · {sample.wordCount} words
                 </p>
               </div>
               <StatusIndicator
-                label={sample.status}
-                tone={sample.status === "Ready" ? "success" : "warning"}
+                label={BRAND_ASSET_STATUS_LABELS[sample.status]}
+                tone={sample.status === "ready" ? "success" : "warning"}
               />
             </article>
           ))}

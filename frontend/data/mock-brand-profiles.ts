@@ -1,5 +1,6 @@
 import type {
   BannedPhrase,
+  BrandAsset,
   BrandProfile,
   BrandToneOption,
   BrandVoiceTone,
@@ -122,20 +123,26 @@ export const mockBrandVoiceSetup = {
     samples: [
       {
         id: "editorial-launch-note",
+        brandProfileId: "the-luxe-signature",
         title: "Editorial launch note",
-        source: "Pasted sample",
+        content: "",
+        sourceType: "pasted",
         format: "Text",
         wordCount: 42,
-        status: "Ready",
+        status: "ready",
+        createdAt: "2026-06-01T09:00:00.000Z",
       },
       {
         id: "atelier-collection-brief",
+        brandProfileId: "the-luxe-signature",
         title: "Atelier collection brief",
-        source: "Uploaded file",
+        content: "",
+        sourceType: "uploaded",
         format: "PDF",
         wordCount: 680,
-        status: "Needs review",
+        status: "needs_review",
+        createdAt: "2026-06-01T10:15:00.000Z",
       },
-    ],
+    ] satisfies BrandAsset[],
   },
 } satisfies BrandVoiceSetupData;

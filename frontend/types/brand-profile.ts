@@ -39,20 +39,11 @@ export interface BannedPhrase {
   reason: string;
 }
 
-export interface SampleContentItem {
-  id: string;
-  title: string;
-  source: "Pasted sample" | "Uploaded file";
-  format: string;
-  wordCount: number;
-  status: "Ready" | "Needs review";
-}
-
 export interface SampleContentConfig {
   pasteDefaultValue: string;
   uploadHelpText: string;
   acceptedFormats: readonly string[];
-  samples: readonly SampleContentItem[];
+  samples: readonly BrandAsset[];
 }
 
 // Canonical API-aligned type matching backend BrandAsset model.

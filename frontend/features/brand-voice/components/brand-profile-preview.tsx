@@ -1,7 +1,7 @@
 import type {
   BannedPhrase,
+  BrandAsset,
   BrandToneOption,
-  SampleContentItem,
   BrandProfile,
   BrandVocabularyRule,
 } from "@/types/brand-profile";
@@ -13,7 +13,7 @@ interface BrandProfilePreviewProps {
   toneOptions: readonly BrandToneOption[];
   vocabularyRules: readonly BrandVocabularyRule[];
   bannedPhrases: readonly BannedPhrase[];
-  samples: readonly SampleContentItem[];
+  samples: readonly BrandAsset[];
 }
 
 export function BrandProfilePreview({
@@ -44,7 +44,7 @@ export function BrandProfilePreview({
       <div className="space-y-6 pt-6">
         <div>
           <p className="luxe-form-help">Profile name</p>
-          <h3 className="luxe-serif mt-2 text-3xl leading-none text-[color:var(--color-brand)]">
+          <h3 className="luxe-serif mt-2 text-3xl leading-none text-luxe-brand">
             {profile.name}
           </h3>
           <p className="luxe-item-meta mt-3 text-sm">
@@ -54,7 +54,7 @@ export function BrandProfilePreview({
 
         <div>
           <p className="luxe-form-help">Target audience</p>
-          <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+          <p className="mt-2 text-sm leading-6 text-luxe-text-secondary">
             {profile.audience}
           </p>
         </div>
@@ -62,7 +62,7 @@ export function BrandProfilePreview({
         {profile.positioningNotes && (
           <div>
             <p className="luxe-form-help">Positioning notes</p>
-            <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+            <p className="mt-2 text-sm leading-6 text-luxe-text-secondary">
               {profile.positioningNotes}
             </p>
           </div>
@@ -85,19 +85,19 @@ export function BrandProfilePreview({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
           <div className="luxe-preview-stat p-4">
             <p className="luxe-form-help">Vocabulary rules</p>
-            <p className="luxe-serif mt-2 text-3xl text-[color:var(--color-brand)]">
+            <p className="luxe-serif mt-2 text-3xl text-luxe-brand">
               {vocabularyRules.length}
             </p>
           </div>
           <div className="luxe-preview-stat p-4">
             <p className="luxe-form-help">Banned phrases</p>
-            <p className="luxe-serif mt-2 text-3xl text-[color:var(--status-warning)]">
+            <p className="luxe-serif mt-2 text-3xl text-luxe-warning">
               {bannedPhrases.length}
             </p>
           </div>
           <div className="luxe-preview-stat p-4">
             <p className="luxe-form-help">Samples</p>
-            <p className="luxe-serif mt-2 text-3xl text-[color:var(--status-success)]">
+            <p className="luxe-serif mt-2 text-3xl text-luxe-success">
               {samples.length}
             </p>
           </div>

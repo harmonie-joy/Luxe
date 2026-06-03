@@ -1,3 +1,15 @@
+import type { BrandAssetSourceType, BrandAssetStatus } from "@/types/brand-profile";
+
+export const BRAND_ASSET_SOURCE_LABELS: Record<BrandAssetSourceType, string> = {
+  pasted: "Pasted sample",
+  uploaded: "Uploaded file",
+};
+
+export const BRAND_ASSET_STATUS_LABELS: Record<BrandAssetStatus, string> = {
+  ready: "Ready",
+  needs_review: "Needs review",
+};
+
 /**
  * Derives a short month and day string from an ISO 8601 timestamp.
  * Used by calendar/schedule display components.
