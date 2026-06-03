@@ -125,7 +125,7 @@ function SidebarLink({ item }: SidebarLinkProps) {
 
 export function AppSidebar() {
   return (
-    <aside className="luxe-sidebar hidden h-screen shrink-0 flex-col border-r md:flex">
+    <aside className="luxe-sidebar hidden h-full shrink-0 flex-col border-r md:flex">
       <div className="flex min-h-0 flex-1 flex-col px-5 py-10">
         <Link
           aria-label="THE LUXE dashboard"
