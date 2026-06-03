@@ -155,7 +155,7 @@ export function SampleContentUploader({
                       </button>
                       <button
                         aria-label={`Delete ${sample.title}`}
-                        className="luxe-focus-ring rounded px-2.5 py-1 text-xs font-medium text-[var(--status-danger)] transition-colors duration-[var(--motion-duration-fast)] hover:bg-[color-mix(in_srgb,var(--status-danger)_10%,transparent)]"
+                        className="luxe-focus-ring rounded px-2.5 py-1 text-xs font-medium text-luxe-danger transition-colors duration-(--motion-duration-fast) hover:bg-[color-mix(in_srgb,var(--status-danger)_10%,transparent)]"
                         type="button"
                         onClick={() => setPendingDelete(sample)}
                       >
@@ -201,7 +201,7 @@ export function SampleContentUploader({
             <div>
               {/* title-md: Inter 18px 600 per type scale */}
               <h2
-                className="text-lg font-semibold leading-6 tracking-[-0.01em] text-[var(--color-text-primary)]"
+                className="text-lg font-semibold leading-6 tracking-[-0.01em] text-luxe-text-primary"
                 id="delete-confirm-title"
               >
                 Delete sample?
@@ -210,7 +210,7 @@ export function SampleContentUploader({
                 className="luxe-form-help mt-3 leading-relaxed"
                 id="delete-confirm-desc"
               >
-                <strong className="font-semibold text-[var(--color-text-primary)]">
+                <strong className="font-semibold text-luxe-text-primary">
                   &ldquo;{pendingDelete.title}&rdquo;
                 </strong>{" "}
                 will be permanently removed from this brand profile. This action
@@ -218,7 +218,7 @@ export function SampleContentUploader({
               </p>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-[var(--color-border)] pt-5">
+            <div className="flex justify-end gap-3 border-t border-luxe-border pt-5">
               <button
                 className="luxe-secondary-action luxe-focus-ring px-4 py-2 text-sm font-medium"
                 type="button"

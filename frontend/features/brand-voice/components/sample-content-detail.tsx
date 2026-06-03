@@ -85,7 +85,7 @@ export function SampleContentDetail({
               />
             ) : (
               /* headline-lg: Libre Caslon Text per the design reference type scale */
-              <h2 className="luxe-serif mt-2 text-2xl font-normal leading-8 tracking-tight text-[var(--color-text-primary)]">
+              <h2 className="luxe-serif mt-2 text-2xl font-normal leading-8 tracking-tight text-luxe-text-primary">
                 {asset.title}
               </h2>
             )}
@@ -93,7 +93,7 @@ export function SampleContentDetail({
 
           <button
             aria-label="Close"
-            className="luxe-interactive luxe-focus-ring -mt-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+            className="luxe-interactive luxe-focus-ring -mt-1 -mr-2 flex h-8 w-8 shrink-0 items-center justify-center rounded text-(--color-text-muted) hover:text-luxe-text-primary"
             type="button"
             onClick={onClose}
           >
@@ -112,28 +112,28 @@ export function SampleContentDetail({
         </div>
 
         {/* Meta row — label-sm type scale: 12px, 500, 0.05em tracking, uppercase per design ref */}
-        <dl className="flex flex-wrap gap-6 border-b border-[var(--color-border)] pb-5">
+        <dl className="flex flex-wrap gap-6 border-b border-luxe-border pb-5">
           <div>
             <dt className="luxe-label-sm">Source</dt>
-            <dd className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">
+            <dd className="mt-1 text-sm font-medium text-luxe-text-primary">
               {BRAND_ASSET_SOURCE_LABELS[asset.sourceType]}
             </dd>
           </div>
           <div>
             <dt className="luxe-label-sm">Format</dt>
-            <dd className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">
+            <dd className="mt-1 text-sm font-medium text-luxe-text-primary">
               {asset.format}
             </dd>
           </div>
           <div>
             <dt className="luxe-label-sm">Word count</dt>
-            <dd className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">
+            <dd className="mt-1 text-sm font-medium text-luxe-text-primary">
               {asset.wordCount.toLocaleString()}
             </dd>
           </div>
           <div>
             <dt className="luxe-label-sm">Added</dt>
-            <dd className="mt-1 text-sm font-medium text-[var(--color-text-primary)]">
+            <dd className="mt-1 text-sm font-medium text-luxe-text-primary">
               {formatDisplayDate(asset.createdAt)}
             </dd>
           </div>
@@ -164,12 +164,12 @@ export function SampleContentDetail({
           ) : (
             <div
               aria-labelledby="detail-content"
-              className="min-h-24 rounded border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-3 text-sm text-[var(--color-text-secondary)]"
+              className="min-h-24 rounded border border-luxe-border bg-luxe-surface-muted px-4 py-3 text-sm text-luxe-text-secondary"
             >
               {content ? (
                 <p className="whitespace-pre-wrap leading-relaxed">{content}</p>
               ) : (
-                <p className="text-[var(--color-text-muted)] italic">
+                <p className="text-(--color-text-muted) italic">
                   No content recorded for this sample.
                 </p>
               )}
@@ -178,7 +178,7 @@ export function SampleContentDetail({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 border-t border-[var(--color-border)] pt-5">
+        <div className="flex items-center justify-end gap-3 border-t border-luxe-border pt-5">
           {mode === "view" ? (
             <>
               <button
