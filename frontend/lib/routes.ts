@@ -1,0 +1,84 @@
+export const APP_ROUTES = {
+  home: "/",
+  dashboard: "/dashboard",
+  brandVoice: "/brand-voice",
+  create: "/create",
+  drafts: "/drafts",
+  compliance: "/compliance",
+  calendar: "/calendar",
+  settings: "/settings",
+} as const;
+
+export type AppRouteKey = keyof typeof APP_ROUTES;
+export type AppRoutePath = (typeof APP_ROUTES)[AppRouteKey];
+
+export type NavigationIcon =
+  | "dashboard"
+  | "brandVoice"
+  | "create"
+  | "drafts"
+  | "compliance"
+  | "calendar"
+  | "settings";
+
+export type NavigationItem = Readonly<{
+  href: AppRoutePath;
+  icon: NavigationIcon;
+  label: string;
+  exact?: boolean;
+}>;
+
+export type TopbarLink = Readonly<{
+  href: AppRoutePath;
+  label: string;
+}>;
+
+export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
+  {
+    href: APP_ROUTES.dashboard,
+    icon: "dashboard",
+    label: "Dashboard",
+    exact: true,
+  },
+  {
+    href: APP_ROUTES.brandVoice,
+    icon: "brandVoice",
+    label: "Brand Voice",
+  },
+  {
+    href: APP_ROUTES.drafts,
+    icon: "drafts",
+    label: "Drafts",
+  },
+  {
+    href: APP_ROUTES.compliance,
+    icon: "compliance",
+    label: "Compliance",
+  },
+  {
+    href: APP_ROUTES.calendar,
+    icon: "calendar",
+    label: "Calendar",
+  },
+] as const;
+
+export const FOOTER_NAV_ITEMS: readonly NavigationItem[] = [
+  {
+    href: APP_ROUTES.settings,
+    icon: "settings",
+    label: "Settings",
+  },
+] as const;
+
+export const TOPBAR_LINKS: readonly TopbarLink[] = [
+  {
+    href: APP_ROUTES.home,
+    label: "Home",
+  },
+  {
+    href: APP_ROUTES.dashboard,
+    label: "Dashboard",
+  },
+] as const;
+
+export const CREATE_BRIEF_ROUTE = APP_ROUTES.create;
