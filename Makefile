@@ -1,4 +1,4 @@
-.PHONY: up down logs ps dev dev-down dev-restart dev-check
+.PHONY: up down logs ps dev dev-down dev-restart dev-check migrate makemigrations manage
 
 COMPOSE = cd infra && docker compose
 
@@ -29,3 +29,17 @@ dev-down:
 	$(COMPOSE) down --remove-orphans
 
 dev-restart: dev-down dev
+
+# Django management — runs inside the backend container.
+# Usage:
+#   make migrate
+#   make makemigrations app=tenancy name=my_migration
+#   make manage cmd="createsuperuser"
+migrate:
+	$(COMPOSE) exec backend python manage.py migrate
+
+makemigrations:
+	$(COMPOSE) exec backend python manage.py makemigrations $(if $(app),$(app),) $(if $(name),--name $(name),)
+
+manage:
+	$(COMPOSE) exec backend python manage.py $(cmd)

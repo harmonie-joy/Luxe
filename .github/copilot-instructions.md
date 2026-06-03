@@ -88,6 +88,14 @@ Use the repository Make targets as the default local workflow for Docker-based d
 - `make dev-down` stops and removes containers.
 - `make dev-restart` restarts the full stack.
 
+Django management commands run inside the backend container via Make. Never run `manage.py` directly against the local filesystem when the stack is running in Docker:
+
+- `make migrate` applies all pending migrations.
+- `make makemigrations` generates migrations for all apps.
+- `make makemigrations app=tenancy` generates migrations for a single app.
+- `make makemigrations app=tenancy name=my_migration` generates a named migration.
+- `make manage cmd="createsuperuser"` runs any arbitrary management command.
+
 When working on Python code outside Docker, use the backend virtual environment at `backend/.venv`.
 
 ## Canonical MVP Domain Model
