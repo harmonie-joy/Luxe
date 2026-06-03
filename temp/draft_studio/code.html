@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Draft Studio - THE LUXE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Libre+Caslon+Text:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#80b275",
+                        "primary-fixed-dim": "#e9c176",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#bcf0ae",
+                        "inverse-on-surface": "#f3f0ef",
+                        "primary": "#775a19",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#174414",
+                        "on-tertiary-fixed": "#002201",
+                        "outline-variant": "#d1c5b4",
+                        "on-surface-variant": "#4e4639",
+                        "surface-container-high": "#ebe7e7",
+                        "primary-fixed": "#ffdea5",
+                        "surface-container": "#f0edec",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-fixed": "#0b1d2d",
+                        "tertiary": "#3b6934",
+                        "tertiary-fixed-dim": "#a1d494",
+                        "error-container": "#ffdad6",
+                        "surface-tint": "#775a19",
+                        "on-primary-fixed-variant": "#5d4201",
+                        "secondary": "#4f6073",
+                        "surface-container-highest": "#e5e2e1",
+                        "on-primary-fixed": "#261900",
+                        "surface": "#fcf9f8",
+                        "on-secondary-container": "#556679",
+                        "inverse-surface": "#313030",
+                        "surface-dim": "#dcd9d9",
+                        "secondary-fixed": "#d2e4fb",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "primary-container": "#c5a059",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#38485a",
+                        "outline": "#7f7667",
+                        "on-primary-container": "#4e3700",
+                        "background": "#fcf9f8",
+                        "on-tertiary-fixed-variant": "#23501e",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#e9c176",
+                        "on-surface": "#1c1b1b",
+                        "secondary-fixed-dim": "#b7c8de",
+                        "on-background": "#1c1b1b",
+                        "secondary-container": "#d2e4fb",
+                        "surface-bright": "#fcf9f8",
+                        "surface-variant": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "unit": "8px",
+                        "gutter": "24px",
+                        "sidebar-width": "260px",
+                        "margin-desktop": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Libre Caslon Text"],
+                        "label-sm": ["Inter"],
+                        "display-lg": ["Libre Caslon Text"],
+                        "headline-lg-mobile": ["Libre Caslon Text"],
+                        "title-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "400" }],
+                        "title-md": ["18px", { "lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #d1c5b4;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex antialiased">
+<!-- Shared Component: SideNavBar -->
+<nav class="hidden md:flex flex-col h-full py-margin-desktop w-[260px] bg-surface border-r border-outline-variant shrink-0 z-20">
+<div class="px-gutter mb-12">
+<h1 class="font-display-lg text-display-lg font-black text-primary tracking-tight">THE LUXE</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mt-2">Enterprise Workspace</p>
+</div>
+<div class="flex-1 overflow-y-auto px-4 space-y-1">
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="font-title-md text-title-md">Dashboard</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings_voice</span>
+<span class="font-title-md text-title-md">Brand Voice</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">assignment</span>
+<span class="font-title-md text-title-md">Briefs</span>
+</a>
+<!-- Active: Studio -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-primary border-l-2 border-primary bg-surface-container-low transform scale-[0.98] transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">movie_filter</span>
+<span class="font-title-md text-title-md">Studio</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+<span class="font-title-md text-title-md">Compliance</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+<span class="font-title-md text-title-md">Calendar</span>
+</a>
+</div>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full bg-primary text-on-primary font-title-md text-title-md py-3 rounded-DEFAULT hover:bg-primary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Create New Brief
+            </button>
+<div class="border-t border-outline-variant pt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+<span class="font-title-md text-title-md">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-DEFAULT text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="font-title-md text-title-md">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<main class="flex-1 flex flex-col h-full min-w-0 bg-background relative">
+<!-- Shared Component: TopAppBar -->
+<header class="sticky top-0 w-full z-10 flex justify-between items-center h-16 px-margin-desktop bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-transparent border-none text-body-md text-on-surface focus:ring-1 focus:ring-primary-container focus:outline-none rounded-DEFAULT w-64 placeholder:text-on-surface-variant/50" placeholder="Search workspace..." type="text"/>
+</div>
+</div>
+<nav class="hidden lg:flex items-center gap-8">
+<!-- Navigation links from JSON (Inactive for Studio context) -->
+<a class="font-title-md text-title-md text-on-surface-variant hover:text-primary transition-colors py-5 border-b-2 border-transparent" href="#">Dashboard</a>
+<a class="font-title-md text-title-md text-on-surface-variant hover:text-primary transition-colors py-5 border-b-2 border-transparent" href="#">Analytics</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-highest">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant overflow-hidden ml-2">
+<!-- Placeholder for profile image -->
+<div class="w-full h-full flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Studio Workspace -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Center Editable Draft Area -->
+<section class="flex-1 flex flex-col overflow-y-auto p-margin-desktop space-y-6">
+<!-- Workspace Header -->
+<div class="flex justify-between items-end pb-4 border-b border-outline-variant">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Brief #A-492 • Q3 Product Launch</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Omnichannel Campaign Draft</h2>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-primary text-primary font-title-md text-title-md rounded-DEFAULT hover:bg-surface-container-low transition-colors">
+                            Preview
+                        </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-title-md text-title-md rounded-DEFAULT hover:bg-primary-container transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+                            Save and send to compliance
+                        </button>
+</div>
+</div>
+<!-- Multi-channel Tabs -->
+<div class="flex gap-1 border-b border-outline-variant">
+<button class="px-6 py-3 border-b-2 border-primary text-primary font-title-md text-title-md bg-surface-container-low">
+                        LinkedIn
+                    </button>
+<button class="px-6 py-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-title-md text-title-md">
+                        Blog Article
+                    </button>
+<button class="px-6 py-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-title-md text-title-md">
+                        Email Newsletter
+                    </button>
+<button class="px-6 py-3 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-title-md text-title-md">
+                        Press Release
+                    </button>
+</div>
+<!-- Main Editor Card (Level 1 Elevation) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-8 flex flex-col min-h-[500px]">
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Draft saved at 10:42 AM</span>
+</div>
+<div class="flex gap-2">
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors">
+<span class="material-symbols-outlined text-[18px]">format_bold</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors">
+<span class="material-symbols-outlined text-[18px]">format_italic</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-DEFAULT transition-colors">
+<span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+</button>
+</div>
+</div>
+<textarea class="w-full flex-1 resize-none bg-transparent border-none focus:ring-0 p-0 font-body-md text-body-md text-on-surface outline-none placeholder:text-on-surface-variant/40" placeholder="Start drafting your LinkedIn post here...">Exciting news from THE LUXE! 🚀
+
+We are thrilled to unveil our Q3 Product Collection, designed specifically for enterprise leaders who demand both performance and elegance. 
+
+Over the past year, our team has rigorously analyzed workflow friction points, leading to a complete architectural overhaul of our core offering. The result? A streamlined, intuitive experience that feels less like a tool and more like an extension of your own thought process.
+
+Key highlights:
+• Precision-engineered interface
+• Enhanced compliance guardrails built-in
+• Seamless omnichannel synchronization
+
+Join us next Tuesday for the official live-streamed walkthrough. Link in the comments below. 👇
+
+#EnterpriseSolutions #ProductLaunch #TheLuxe</textarea>
+</div>
+<!-- Version Comparison Section -->
+<div class="mt-8">
+<h3 class="font-title-md text-title-md text-on-surface mb-4">Version History &amp; Comparison</h3>
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Current Version -->
+<div class="bg-surface-container-low border border-outline-variant p-6 rounded-DEFAULT">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-widest">Current Draft (v1.4)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Just now</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface text-opacity-80 line-clamp-4">
+                                Exciting news from THE LUXE! 🚀 We are thrilled to unveil our Q3 Product Collection, designed specifically for enterprise leaders who demand both performance and elegance...
+                            </p>
+</div>
+<!-- Previous Version -->
+<div class="bg-surface border border-outline-variant p-6 rounded-DEFAULT opacity-80 hover:opacity-100 transition-opacity">
+<div class="flex justify-between items-center mb-4 pb-2 border-b border-outline-variant/50">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Previous Version (v1.3)</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Yesterday, 4:15 PM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface text-opacity-80 line-clamp-4">
+<del class="text-error opacity-70">We are happy</del> <ins class="text-tertiary no-underline">We are thrilled</ins> to announce the new Q3 tools. They are made for <del class="text-error opacity-70">managers</del> <ins class="text-tertiary no-underline">enterprise leaders</ins>...
+                            </p>
+<button class="mt-4 text-primary font-label-sm text-label-sm hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">restore</span> Restore this version
+                            </button>
+</div>
+</div>
+</div>
+<div class="h-12"></div> <!-- Spacer -->
+</section>
+<!-- Right Side AI Assistant Panel -->
+<aside class="w-[320px] shrink-0 border-l border-outline-variant bg-surface flex flex-col h-full z-10">
+<div class="p-6 border-b border-outline-variant bg-surface-container-lowest">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-[20px]">auto_awesome</span>
+<h3 class="font-title-md text-title-md text-on-surface">Luxe AI Assistant</h3>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Contextual refinement &amp; generation</p>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<!-- Quick Actions -->
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-3">Quick Refinements</h4>
+<div class="space-y-2">
+<button class="w-full flex items-center justify-between px-4 py-3 bg-transparent border border-outline-variant rounded-DEFAULT text-on-surface hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md">Make it punchier</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">compress</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 bg-transparent border border-outline-variant rounded-DEFAULT text-on-surface hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md">Increase formality</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">checkroom</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 bg-transparent border border-outline-variant rounded-DEFAULT text-on-surface hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md">Ensure brand voice alignment</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">rule</span>
+</button>
+<button class="w-full flex items-center justify-between px-4 py-3 bg-transparent border border-outline-variant rounded-DEFAULT text-on-surface hover:bg-surface-container-low transition-colors group">
+<span class="font-body-md text-body-md">Regenerate completely</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-colors">refresh</span>
+</button>
+</div>
+</div>
+<!-- Insight/Compliance Warning (Example of traffic light usage) -->
+<div class="bg-surface-container-low border border-outline-variant p-4 rounded-DEFAULT">
+<div class="flex items-center gap-2 mb-2">
+<span class="w-2 h-2 rounded-full bg-[#F57C00]"></span> <!-- Warning Amber -->
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Tone Warning</span>
+</div>
+<p class="font-body-md text-[13px] leading-relaxed text-on-surface-variant">
+                            The phrase "thrilled to unveil" might be slightly too casual for standard Enterprise Tier communications. Consider "pleased to announce" for tighter brand alignment.
+                        </p>
+<button class="mt-3 text-primary font-label-sm text-label-sm hover:underline">Apply suggestion</button>
+</div>
+</div>
+<!-- Custom Prompt Input -->
+<div class="p-6 border-t border-outline-variant bg-surface-container-lowest">
+<div class="relative">
+<textarea class="w-full min-h-[80px] max-h-[160px] resize-none bg-surface border border-outline-variant rounded-DEFAULT p-3 pr-10 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="Ask AI to modify the text..."></textarea>
+<button class="absolute bottom-3 right-3 text-primary hover:text-primary-container transition-colors w-6 h-6 flex items-center justify-center bg-surface rounded-full">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+<p class="font-label-sm text-[11px] text-on-surface-variant mt-2 text-center">AI generated content may require review.</p>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

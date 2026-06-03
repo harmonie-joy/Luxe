@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Calendar - THE LUXE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#80b275",
+                      "primary-fixed-dim": "#e9c176",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#bcf0ae",
+                      "inverse-on-surface": "#f3f0ef",
+                      "primary": "#775a19",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#174414",
+                      "on-tertiary-fixed": "#002201",
+                      "outline-variant": "#d1c5b4",
+                      "on-surface-variant": "#4e4639",
+                      "surface-container-high": "#ebe7e7",
+                      "primary-fixed": "#ffdea5",
+                      "surface-container": "#f0edec",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-fixed": "#0b1d2d",
+                      "tertiary": "#3b6934",
+                      "tertiary-fixed-dim": "#a1d494",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#775a19",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "secondary": "#4f6073",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-primary-fixed": "#261900",
+                      "surface": "#fcf9f8",
+                      "on-secondary-container": "#556679",
+                      "inverse-surface": "#313030",
+                      "surface-dim": "#dcd9d9",
+                      "secondary-fixed": "#d2e4fb",
+                      "error": "#ba1a1a",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#c5a059",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#38485a",
+                      "outline": "#7f7667",
+                      "on-primary-container": "#4e3700",
+                      "background": "#fcf9f8",
+                      "on-tertiary-fixed-variant": "#23501e",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#e9c176",
+                      "on-surface": "#1c1b1b",
+                      "secondary-fixed-dim": "#b7c8de",
+                      "on-background": "#1c1b1b",
+                      "secondary-container": "#d2e4fb",
+                      "surface-bright": "#fcf9f8",
+                      "surface-variant": "#e5e2e1"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "margin-mobile": "16px",
+                      "unit": "8px",
+                      "gutter": "24px",
+                      "sidebar-width": "260px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "headline-lg-mobile": [
+                              "Libre Caslon Text"
+                      ],
+                      "title-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1c5b4;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7f7667;
+        }
+        
+        .premium-border {
+            border: 1px solid #E5E5E1;
+        }
+        
+        .glass-panel {
+            background: rgba(252, 249, 248, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-hidden flex h-screen">
+<!-- SideNavBar (Desktop) -->
+<aside class="hidden md:flex flex-col h-full py-margin-desktop w-[260px] bg-surface border-r border-outline-variant shrink-0 relative z-20">
+<div class="px-gutter mb-12">
+<h1 class="font-display-lg text-display-lg font-black text-primary truncate" title="THE LUXE">THE LUXE</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-2 uppercase tracking-widest">Enterprise Workspace</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 200;">dashboard</span>
+<span class="font-title-md text-title-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 200;">settings_voice</span>
+<span class="font-title-md text-title-md">Brand Voice</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 200;">assignment</span>
+<span class="font-title-md text-title-md">Briefs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 200;">movie_filter</span>
+<span class="font-title-md text-title-md">Studio</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 200;">verified_user</span>
+<span class="font-title-md text-title-md">Compliance</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-r text-primary border-l-2 border-primary bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined font-light text-xl" style="font-variation-settings: 'wght' 300, 'FILL' 1;">calendar_month</span>
+<span class="font-title-md text-title-md">Calendar</span>
+</a>
+</nav>
+<div class="px-gutter mt-auto mb-6">
+<button class="w-full bg-primary text-on-primary font-label-sm text-label-sm py-3 px-4 rounded hover:bg-on-primary-container transition-colors uppercase tracking-wider">
+                Create New Brief
+            </button>
+</div>
+<div class="px-4 border-t border-outline-variant pt-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-lg">account_circle</span>
+<span class="font-title-md text-[14px]">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined font-light text-lg">settings</span>
+<span class="font-title-md text-[14px]">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0 relative h-full">
+<!-- Mobile TopAppBar (Visible only on md:hidden) -->
+<header class="md:hidden flex justify-between items-center w-full h-16 px-margin-mobile bg-surface/80 backdrop-blur-md border-b border-outline-variant z-30 sticky top-0">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">THE LUXE</span>
+<div class="flex gap-4 items-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border premium-border object-cover" data-alt="A close-up portrait of a professional individual in a well-lit studio setting. The lighting is soft and flattering, creating a high-end corporate aesthetic. The background is a subtle, neutral off-white, emphasizing the person's clear expression. The mood is confident, precise, and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc5CPrhxwWd0Ju_sKsLN9BUyJXxyC6VqDl9YYJiFfGzwAzS33G9SdqQVfrtU0B4x9ZeVjIDMRJrc5X_KiAtkZnzogh0oEESKyAJeh6_3y1D3zTADo1YgjhU7cV6s9KbdQ98Ga93ZjcW2RsKUP9f8SCLldzAsD3GdRnIL7hjyytHhxFaZEUwV7bXyRufuTsdLoQdvGP3gq-Z30C4QKsDQUyP8dvg3Zqxe0dBXXz5HNlQMirNWo0l-eCjceh-HIj-oqDFz6hGBtzLo0L"/>
+</div>
+</header>
+<!-- Top Navigation / Filters Bar -->
+<div class="h-20 px-margin-desktop hidden md:flex items-center justify-between border-b premium-border bg-surface shrink-0 z-10">
+<div class="flex items-center gap-6">
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">October 2023</h2>
+<div class="flex gap-2">
+<button class="p-2 border premium-border rounded text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="p-2 border premium-border rounded text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+<button class="px-4 py-2 border premium-border rounded text-on-surface-variant font-label-sm text-label-sm hover:bg-surface-container transition-colors uppercase tracking-wider">
+                        Today
+                    </button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="pl-9 pr-4 py-2 w-64 bg-transparent border premium-border rounded text-body-md focus:border-primary focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder:text-outline-variant" placeholder="Search content..." type="text"/>
+</div>
+<div class="h-6 w-px bg-outline-variant hidden lg:block"></div>
+<div class="flex gap-2">
+<span class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-[#D32F2F]"></span> Critical</span>
+<span class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-[#F57C00]"></span> Pending</span>
+<span class="flex items-center gap-2 text-label-sm font-label-sm text-on-surface-variant"><span class="w-2 h-2 rounded-full bg-[#2D5A27]"></span> Approved</span>
+</div>
+<div class="flex gap-4 items-center ml-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="Workspace Avatar" class="w-9 h-9 rounded-full border premium-border object-cover" data-alt="A close-up portrait of a professional individual in a well-lit studio setting. The lighting is soft and flattering, creating a high-end corporate aesthetic. The background is a subtle, neutral off-white, emphasizing the person's clear expression. The mood is confident, precise, and sophisticated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuTXFyDC2kaKNMSDvcmlLpv0nZJC84qLZh3NFz12vzEgopO4OMs5zmuyO3MsrOpsQPrjg8MMNWK1uSj8Gg4qZE5krXjKbUVx9Bqdhl64ZZTWZNO09QnFnOoiT65OPJFNjBFJGea73PXUV219BCS0whJuzbLz8TMXw0LlravPOyCg0Y-ssRn5EXeKMfh3hCWLgT_kphxs31P8mHKBNu1nXOpU3NGr2PEqlCW4lfFSniF-rv9Gh1knacZKuTLjb6skNBGCksx9DifLTV"/>
+</div>
+</div>
+</div>
+<!-- Dashboard Layout -->
+<div class="flex-1 flex flex-col lg:flex-row overflow-hidden bg-background">
+<!-- Calendar Grid Area -->
+<div class="flex-1 flex flex-col p-4 md:p-margin-desktop overflow-y-auto min-w-0">
+<!-- Days Header -->
+<div class="grid grid-cols-7 gap-px mb-2">
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Mon</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Tue</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Wed</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Thu</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Fri</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Sat</div>
+<div class="text-center font-label-sm text-label-sm text-outline uppercase tracking-widest py-2">Sun</div>
+</div>
+<!-- Calendar Grid (Bento style structure) -->
+<div class="grid grid-cols-7 gap-1 flex-1 auto-rows-[minmax(120px,1fr)]">
+<!-- Previous Month -->
+<div class="bg-surface-container-low p-2 border premium-border rounded opacity-50 relative group">
+<span class="font-title-md text-sm text-on-surface-variant">29</span>
+</div>
+<div class="bg-surface-container-low p-2 border premium-border rounded opacity-50 relative group">
+<span class="font-title-md text-sm text-on-surface-variant">30</span>
+</div>
+<!-- Current Month -->
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">1</span>
+<!-- Content Card: Published -->
+<div class="mt-1 p-2 bg-surface-container rounded border border-outline-variant flex flex-col gap-1 hover:shadow-sm transition-all">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-[10px] uppercase text-tertiary tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#2D5A27]"></span> Published</span>
+<span class="material-symbols-outlined text-[14px] text-outline">photo_camera</span>
+</div>
+<span class="font-body-md text-xs truncate">Fall Campaign Launch</span>
+</div>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">2</span>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">3</span>
+<!-- Content Card: In Review -->
+<div class="mt-1 p-2 bg-surface-container rounded border border-outline-variant flex flex-col gap-1 hover:shadow-sm transition-all border-l-2 border-l-[#F57C00]">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-[10px] uppercase text-[#F57C00] tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#F57C00]"></span> In Review</span>
+<span class="material-symbols-outlined text-[14px] text-outline">article</span>
+</div>
+<span class="font-body-md text-xs truncate">CEO Interview Draft</span>
+</div>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface text-[#D32F2F]">4</span> <!-- Weekend -->
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface text-[#D32F2F]">5</span>
+</div>
+<!-- Week 2 -->
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">6</span>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">7</span>
+<!-- Content Card: Draft -->
+<div class="mt-1 p-2 bg-surface-container-lowest rounded border border-dashed border-outline-variant flex flex-col gap-1 hover:shadow-sm transition-all">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-[10px] uppercase text-outline tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full border border-outline"></span> Draft</span>
+<span class="material-symbols-outlined text-[14px] text-outline">edit_note</span>
+</div>
+<span class="font-body-md text-xs text-on-surface-variant truncate">Q3 Report Summary</span>
+</div>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1 bg-surface-container-low shadow-[inset_0_0_0_1px_#c5a059]">
+<span class="font-title-md text-sm text-primary flex justify-between">8 <span class="font-label-sm text-[10px] uppercase">Today</span></span>
+<!-- Content Card: Scheduled -->
+<div class="mt-1 p-2 bg-surface-container rounded border border-outline-variant flex flex-col gap-1 shadow-sm transition-all border-l-2 border-l-primary relative">
+<!-- Indicator of active selection -->
+<div class="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-r"></div>
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-[10px] uppercase text-primary tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Scheduled</span>
+<span class="material-symbols-outlined text-[14px] text-primary">schedule</span>
+</div>
+<span class="font-body-md text-xs font-medium truncate">Product Teaser Video</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-[9px] text-outline-variant">14:00 EST</span>
+<div class="flex -space-x-1">
+<img alt="Avatar" class="w-4 h-4 rounded-full border border-surface" data-alt="Small avatar of a male professional with a neutral background, creating a high-end corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhjULRt87Av6Ddrkn5aWHOuZBXdrDV_oOPhgk8NlMcA1uY7MwZqfGQkjpYygVLJoQaY-ayXisgNrO-bVpGbMAVZrZYkcl5_fuQkZSa2ovAYrYJmjCJ3ztC4XG6aPkb_9tsHA0rSn8Zl-Rq_YTdYEpca51NGleHYVECHH_dNM6-xgFw5t-ITNy1D7PcG3r1mef9Ot9iZ7tf_L0FnU4e4A_NhTOc_aFvQe9eKT4_dEBR9txoVg3nmr6_u4VFYfIy1gGvBPbSAIe8CxV7"/>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">9</span>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface">10</span>
+<!-- Content Card: Approved -->
+<div class="mt-1 p-2 bg-surface-container rounded border border-outline-variant flex flex-col gap-1 hover:shadow-sm transition-all border-l-2 border-l-[#2D5A27]">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-[10px] uppercase text-tertiary tracking-wider flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-[#2D5A27]"></span> Approved</span>
+<span class="material-symbols-outlined text-[14px] text-outline">check_circle</span>
+</div>
+<span class="font-body-md text-xs truncate">Partner Announcement</span>
+</div>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface text-[#D32F2F]">11</span>
+</div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group flex flex-col gap-1">
+<span class="font-title-md text-sm text-on-surface text-[#D32F2F]">12</span>
+</div>
+<!-- Fill remaining grid roughly for visual completeness -->
+<!-- Week 3 -->
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface">13</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface">14</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface">15</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface">16</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface">17</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface text-[#D32F2F]">18</span></div>
+<div class="bg-surface p-2 border premium-border rounded relative hover:border-outline transition-colors cursor-pointer group"><span class="font-title-md text-sm text-on-surface text-[#D32F2F]">19</span></div>
+</div>
+</div>
+<!-- Right Sidebar: Details & Approvals Panel -->
+<aside class="w-full lg:w-[380px] bg-surface border-l premium-border flex flex-col h-full shrink-0 shadow-[-4px_0_24px_rgba(0,0,0,0.02)] z-10 hidden md:flex">
+<!-- Panel Header -->
+<div class="p-6 border-b premium-border bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary-container bg-surface-container-low text-primary font-label-sm text-[11px] uppercase tracking-widest mb-3">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> Scheduled
+                            </span>
+<h3 class="font-headline-lg text-[22px] leading-tight text-on-surface mb-1">Product Teaser Video</h3>
+<p class="font-label-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span> Oct 8, 14:00 EST
+                            </p>
+</div>
+<button class="text-outline hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-2">
+<button class="flex-1 bg-primary text-on-primary font-label-sm text-label-sm py-2 rounded hover:bg-on-primary-container transition-colors uppercase tracking-wider text-center">
+                            Publish Now
+                        </button>
+<button class="flex-1 bg-transparent border premium-border text-on-surface font-label-sm text-label-sm py-2 rounded hover:bg-surface-container-low transition-colors uppercase tracking-wider text-center">
+                            Edit Brief
+                        </button>
+</div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<!-- Asset Preview -->
+<div class="space-y-3">
+<h4 class="font-label-sm text-outline uppercase tracking-widest text-[11px]">Primary Asset</h4>
+<div class="aspect-video bg-surface-container rounded border premium-border relative overflow-hidden group cursor-pointer">
+<img alt="Video Thumbnail" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A sleek, modern product showcase video thumbnail. The lighting is dramatic and moody, highlighting the elegant curves of an abstract metallic object. The color palette relies on deep blacks and subtle gold reflections, aligning with a high-end, premium brand aesthetic. The scene implies advanced technology and luxury." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-QBo5Yij9cbC43VpbBhHbVOVQ0OJ3LCqKX7plj5zA8zPTCm_G5R3-Q1m-f94uPeQPj8J-A7LUCrgcpzhp178uyEJ3bPfAa8Qfl8MzUi3yQhbLHq8VDoi3DIHloAV8fXuK16sY5a6Pl2qvXNVYlaDRJlkTdmB6IzJaFdcVoHXTmBxbECpsh-si5dbHky_qGqx1u6w05GzdzT_vKAvXC1tcQLplAoqRkz2kkgVMc1D0H56CQMCaMlyAcDaeChy2GuPo1IXd1_R1_KJG"/>
+<div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+<div class="w-12 h-12 rounded-full bg-surface/90 backdrop-blur flex items-center justify-center group-hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-on-primary">play_arrow</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Copy Details -->
+<div class="space-y-3">
+<h4 class="font-label-sm text-outline uppercase tracking-widest text-[11px]">Post Copy</h4>
+<div class="p-4 bg-surface-container-low rounded border premium-border text-body-md text-on-surface leading-relaxed">
+<p>Elevate your everyday with the new standard in precision. Coming this Fall. <br/><br/>#TheLuxe #NewStandard #PremiumDesign</p>
+</div>
+</div>
+<!-- Comments Section -->
+<div class="space-y-4">
+<div class="flex justify-between items-center border-b premium-border pb-2">
+<h4 class="font-label-sm text-outline uppercase tracking-widest text-[11px]">Reviewer Feedback (2)</h4>
+<button class="text-primary font-label-sm text-[11px] uppercase hover:underline">Resolve All</button>
+</div>
+<!-- Comment Item -->
+<div class="flex gap-3">
+<img alt="Reviewer" class="w-8 h-8 rounded-full border premium-border" data-alt="Small avatar of a female executive wearing glasses, professional setting, muted sophisticated lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWfMsuwI35rCsSZq6PbfWSyaZAUEEEBX3UkKIN3UdFpZVXvnCTNzdbX1dXDsVxMmCtJILPnmHOKyurjD78WqVZzbTQUUhib79Do6SgexytKu12k_OhQ5Q0n1fMzwZy71Flyyq3FWtZCmg4jWkFKgW0dgaWgznIFk6rkaIk4HO5zLPMgiznT16HNGs4pxVHhqlXWo5oUQeZC7742RUfVB3L0GxilRa0ipkcqle6_HKX6h9m5e6VjxeE2lRd5KiP4KWunQz3NQgES8TS"/>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-title-md text-[13px] text-on-surface">Sarah Jenkins</span>
+<span class="font-label-sm text-[10px] text-outline">2h ago</span>
+</div>
+<p class="text-[13px] text-on-surface-variant leading-snug">The pacing in the first 3 seconds feels a bit rushed. Can we hold on the wide shot slightly longer before the transition?</p>
+<button class="mt-2 text-primary font-label-sm text-[10px] uppercase hover:underline">Reply</button>
+</div>
+</div>
+<!-- Comment Item -->
+<div class="flex gap-3 opacity-70">
+<img alt="Reviewer" class="w-8 h-8 rounded-full border premium-border" data-alt="Small avatar of a male professional with a neutral background, creating a high-end corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQOcyiV4oC8E4j3IQtNqiJnTx0MArX1LVmmg5UAXjLgokHZipNlbQ150WoS_tGd_PKWctHb7HrJ2H_RMfTtvM8o3prUVuEBnP3jpAiY_2MlO1iImcSYcrIO7S-p7K9RxRK2QGNU8DRUN9MLw_yC1H_pb1NLVZazwgelR4yd3CDXCowFS8pPW63cWXpxmUAtiqLdAMAQDrV9DR8401ikyLGbVLs3nSAakfOdkuTQUyDYVo_uPgDOxzxDu_zqlxu6NRXgtESvpfVKQIB"/>
+<div class="flex-1">
+<div class="flex justify-between items-baseline mb-1">
+<span class="font-title-md text-[13px] text-on-surface">Michael Chen</span>
+<span class="font-label-sm text-[10px] text-outline">Yesterday</span>
+</div>
+<p class="text-[13px] text-on-surface-variant leading-snug">Copy is approved. <span class="inline-block px-1.5 py-0.5 bg-[#2D5A27]/10 text-[#2D5A27] rounded text-[10px] ml-1 border border-[#2D5A27]/20">Approved</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Input area for new comment -->
+<div class="p-4 border-t premium-border bg-surface">
+<div class="relative">
+<input class="w-full pl-4 pr-10 py-2.5 bg-surface-container-low border premium-border rounded text-[13px] focus:border-primary focus:ring-1 focus:ring-primary-container outline-none transition-all placeholder:text-outline-variant" placeholder="Add a comment or tag someone..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary p-1 hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined text-[18px] transform -rotate-45 relative top-px left-px">send</span>
+</button>
+</div>
+</div>
+<!-- Audit Trail Preview (Bottom) -->
+<div class="p-3 border-t premium-border bg-surface-container-lowest text-center">
+<button class="font-label-sm text-[10px] text-outline hover:text-primary transition-colors flex items-center justify-center gap-1 w-full uppercase tracking-widest">
+<span class="material-symbols-outlined text-[14px]">history</span> View Full Audit Trail
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+</body></html>

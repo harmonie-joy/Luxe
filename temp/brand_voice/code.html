@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Brand Voice Setup - THE LUXE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Libre+Caslon+Text:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#80b275",
+                      "primary-fixed-dim": "#e9c176",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#bcf0ae",
+                      "inverse-on-surface": "#f3f0ef",
+                      "primary": "#775a19",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#174414",
+                      "on-tertiary-fixed": "#002201",
+                      "outline-variant": "#d1c5b4",
+                      "on-surface-variant": "#4e4639",
+                      "surface-container-high": "#ebe7e7",
+                      "primary-fixed": "#ffdea5",
+                      "surface-container": "#f0edec",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-fixed": "#0b1d2d",
+                      "tertiary": "#3b6934",
+                      "tertiary-fixed-dim": "#a1d494",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#775a19",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "secondary": "#4f6073",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-primary-fixed": "#261900",
+                      "surface": "#fcf9f8",
+                      "on-secondary-container": "#556679",
+                      "inverse-surface": "#313030",
+                      "surface-dim": "#dcd9d9",
+                      "secondary-fixed": "#d2e4fb",
+                      "error": "#ba1a1a",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#c5a059",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#38485a",
+                      "outline": "#7f7667",
+                      "on-primary-container": "#4e3700",
+                      "background": "#fcf9f8",
+                      "on-tertiary-fixed-variant": "#23501e",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#e9c176",
+                      "on-surface": "#1c1b1b",
+                      "secondary-fixed-dim": "#b7c8de",
+                      "on-background": "#1c1b1b",
+                      "secondary-container": "#d2e4fb",
+                      "surface-bright": "#fcf9f8",
+                      "surface-variant": "#e5e2e1"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "margin-mobile": "16px",
+                      "unit": "8px",
+                      "gutter": "24px",
+                      "sidebar-width": "260px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "headline-lg-mobile": [
+                              "Libre Caslon Text"
+                      ],
+                      "title-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-background');
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: theme('colors.surface-variant');
+            border-radius: theme('borderRadius.full');
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: theme('colors.outline');
+        }
+    </style>
+</head>
+<body class="flex min-h-screen bg-background font-body-md text-body-md antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- Desktop Sidebar (Hidden on Mobile) -->
+<aside class="hidden md:flex flex-col h-screen sticky left-0 top-0 w-sidebar-width bg-surface border-r border-outline-variant py-margin-desktop z-40">
+<div class="px-gutter mb-12">
+<h1 class="font-display-lg text-display-lg font-black text-primary">THE LUXE</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-2 tracking-wider uppercase">Enterprise Workspace</p>
+</div>
+<nav class="flex-1 overflow-y-auto px-unit space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">dashboard</span>
+<span class="font-title-md text-title-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary border-l-2 border-primary bg-surface-container-low" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1; font-weight: 300;">settings_voice</span>
+<span class="font-title-md text-title-md">Brand Voice</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">assignment</span>
+<span class="font-title-md text-title-md">Briefs</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">movie_filter</span>
+<span class="font-title-md text-title-md">Studio</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">verified_user</span>
+<span class="font-title-md text-title-md">Compliance</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">calendar_month</span>
+<span class="font-title-md text-title-md">Calendar</span>
+</a>
+</nav>
+<div class="mt-auto px-unit pt-6 border-t border-outline-variant space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">account_circle</span>
+<span class="font-title-md text-title-md">Profile</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0; font-weight: 300;">settings</span>
+<span class="font-title-md text-title-md">Settings</span>
+</a>
+</div>
+<div class="px-gutter mt-6">
+<button class="w-full bg-primary text-on-primary font-title-md text-title-md py-3 rounded border border-transparent hover:bg-primary-container transition-colors shadow-sm">
+                Create New Brief
+            </button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-w-0">
+<!-- Mobile Top Nav -->
+<header class="md:hidden flex justify-between items-center w-full h-16 px-margin-mobile bg-surface/90 backdrop-blur-md sticky top-0 z-30">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">THE LUXE</h1>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button aria-label="Notifications"><span class="material-symbols-outlined">notifications</span></button>
+<button aria-label="Settings"><span class="material-symbols-outlined">settings</span></button>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 overflow-y-auto px-margin-mobile md:px-margin-desktop py-8 md:py-12 max-w-container-max mx-auto w-full">
+<div class="mb-10">
+<h2 class="font-headline-lg text-headline-lg md:font-display-lg md:text-display-lg text-on-surface mb-2">Define Brand Voice</h2>
+<p class="text-on-surface-variant max-w-2xl">Configure the precise tone, vocabulary, and constraints that dictate your brand's communication style across all enterprise outputs.</p>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Form Setup (Spans 8 columns on large screens) -->
+<div class="lg:col-span-8 space-y-gutter">
+<!-- Section: Core Tone -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-6 md:p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-title-md text-title-md text-on-surface">Core Tonal Attributes</h3>
+<span class="material-symbols-outlined text-outline">tune</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-widest">Select primary modifiers</p>
+<div class="flex flex-wrap gap-3 mb-8">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="tone" type="checkbox" value="professional"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Professional</div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="tone" type="checkbox" value="authoritative"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Authoritative</div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="tone" type="checkbox" value="sophisticated"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Sophisticated</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="tone" type="checkbox" value="approachable"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Approachable</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="tone" type="checkbox" value="visionary"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Visionary</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="tone" type="checkbox" value="playful"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Playful</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="tone" type="checkbox" value="urgent"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-primary/5 peer-checked:text-primary transition-all font-label-sm text-label-sm">Urgent</div>
+</label>
+</div>
+<div class="space-y-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2" for="audience">Target Audience Persona</label>
+<input class="w-full bg-transparent border border-outline-variant rounded px-4 py-3 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" id="audience" placeholder="e.g., C-Suite Executives, Luxury Consumers" type="text"/>
+</div>
+</div>
+</section>
+<!-- Section: Content Samples -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-6 md:p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-title-md text-title-md text-on-surface">Reference Material</h3>
+<span class="material-symbols-outlined text-outline">description</span>
+</div>
+<p class="text-on-surface-variant mb-6 text-sm">Provide examples of text that perfectly encapsulate the desired brand voice. Our engine will analyze this to build the profile.</p>
+<div class="border-2 border-dashed border-outline-variant rounded-lg p-8 text-center hover:bg-surface-container-low transition-colors cursor-pointer mb-6 group">
+<span class="material-symbols-outlined text-4xl text-outline mb-3 group-hover:text-primary transition-colors">upload_file</span>
+<p class="font-title-md text-title-md text-on-surface mb-1">Upload Brand Guidelines</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">PDF, DOCX, or TXT up to 10MB</p>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2" for="sample_text">Or paste sample content directly</label>
+<textarea class="w-full bg-transparent border border-outline-variant rounded px-4 py-3 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-y" id="sample_text" placeholder="Paste marketing copy, press releases, or key messaging here..." rows="5"></textarea>
+</div>
+</section>
+<!-- Section: Constraints -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded p-6 md:p-8">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-title-md text-title-md text-on-surface">Vocabulary Constraints</h3>
+<span class="material-symbols-outlined text-outline">gavel</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2" for="preferred_vocab">Preferred Terminology</label>
+<textarea class="w-full bg-transparent border border-outline-variant rounded px-4 py-3 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" id="preferred_vocab" placeholder="e.g., 'Clients' instead of 'Customers'" rows="4"></textarea>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-error-container mb-2" for="banned_phrases">Restricted / Banned Phrases</label>
+<textarea class="w-full bg-transparent border border-outline-variant rounded px-4 py-3 text-on-surface focus:border-error focus:ring-1 focus:ring-error outline-none transition-colors resize-none" id="banned_phrases" placeholder="e.g., 'Cheap', 'Hack', 'Synergy'" rows="4"></textarea>
+</div>
+</div>
+</section>
+<div class="flex justify-end gap-4 pt-4">
+<button class="px-6 py-3 border border-outline-variant text-on-surface font-title-md text-title-md rounded hover:bg-surface-container-highest transition-colors">Save Draft</button>
+<button class="px-6 py-3 bg-primary text-on-primary font-title-md text-title-md rounded hover:bg-primary-container transition-colors shadow-sm">Generate Voice Profile</button>
+</div>
+</div>
+<!-- Right Column: Live Preview Card (Spans 4 columns) -->
+<div class="lg:col-span-4 mt-8 lg:mt-0">
+<div class="sticky top-[100px]">
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden flex flex-col h-full shadow-sm">
+<!-- Premium Header Graphic Area -->
+<div class="h-32 bg-primary/10 relative overflow-hidden flex items-center justify-center p-6 border-b border-outline-variant">
+<!-- Abstract decorative element -->
+<div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 2px 2px, theme('colors.primary') 1px, transparent 0); background-size: 24px 24px;"></div>
+<div class="relative z-10 text-center">
+<span class="material-symbols-outlined text-4xl text-primary mb-2">auto_awesome</span>
+<h4 class="font-headline-lg-mobile text-headline-lg-mobile text-primary font-bold tracking-tight">Profile Preview</h4>
+</div>
+</div>
+<div class="p-6 flex-1 bg-surface-container-lowest">
+<div class="flex items-center gap-2 mb-4">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Analyzing Inputs...</span>
+</div>
+<div class="space-y-6">
+<!-- Placeholder Skeleton / Preview Content -->
+<div>
+<h5 class="font-title-md text-title-md text-on-surface mb-2">Summary</h5>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                                            The anticipated voice is highly structural, favoring clarity over embellishment. It projects confidence suitable for enterprise engagements, avoiding colloquialisms in favor of precise, industry-standard nomenclature.
+                                        </p>
+</div>
+<div class="border-t border-outline-variant pt-4">
+<h5 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-3">Dominant Traits</h5>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface">Formality</span>
+<div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="w-[85%] h-full bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface">Complexity</span>
+<div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="w-[60%] h-full bg-primary"></div>
+</div>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface">Emotion</span>
+<div class="w-24 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+<div class="w-[20%] h-full bg-primary"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-4 rounded border border-outline-variant border-l-4 border-l-primary mt-4">
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-1">Generated Sample Sentence</p>
+<p class="text-sm text-on-surface italic">"Our architectural approach ensures systemic resilience, providing leadership with actionable clarity rather than superficial metrics."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Bottom Nav -->
+<nav class="md:hidden fixed bottom-0 w-full bg-surface border-t border-outline-variant pb-safe z-40">
+<div class="flex justify-around items-center h-16">
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">dashboard</span>
+<span class="text-[10px] font-medium">Dashboard</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-primary" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]" style="font-variation-settings: 'FILL' 1;">settings_voice</span>
+<span class="text-[10px] font-medium">Voice</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">assignment</span>
+<span class="text-[10px] font-medium">Briefs</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-on-surface-variant" href="#">
+<span class="material-symbols-outlined mb-1 text-[24px]">menu</span>
+<span class="text-[10px] font-medium">More</span>
+</a>
+</div>
+</nav>
+</body></html>

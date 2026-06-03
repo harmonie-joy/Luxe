@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Brief - THE LUXE</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#80b275",
+                      "primary-fixed-dim": "#e9c176",
+                      "on-error-container": "#93000a",
+                      "tertiary-fixed": "#bcf0ae",
+                      "inverse-on-surface": "#f3f0ef",
+                      "primary": "#775a19",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-container": "#174414",
+                      "on-tertiary-fixed": "#002201",
+                      "outline-variant": "#d1c5b4",
+                      "on-surface-variant": "#4e4639",
+                      "surface-container-high": "#ebe7e7",
+                      "primary-fixed": "#ffdea5",
+                      "surface-container": "#f0edec",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f6f3f2",
+                      "on-secondary-fixed": "#0b1d2d",
+                      "tertiary": "#3b6934",
+                      "tertiary-fixed-dim": "#a1d494",
+                      "error-container": "#ffdad6",
+                      "surface-tint": "#775a19",
+                      "on-primary-fixed-variant": "#5d4201",
+                      "secondary": "#4f6073",
+                      "surface-container-highest": "#e5e2e1",
+                      "on-primary-fixed": "#261900",
+                      "surface": "#fcf9f8",
+                      "on-secondary-container": "#556679",
+                      "inverse-surface": "#313030",
+                      "surface-dim": "#dcd9d9",
+                      "secondary-fixed": "#d2e4fb",
+                      "error": "#ba1a1a",
+                      "on-secondary": "#ffffff",
+                      "primary-container": "#c5a059",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed-variant": "#38485a",
+                      "outline": "#7f7667",
+                      "on-primary-container": "#4e3700",
+                      "background": "#fcf9f8",
+                      "on-tertiary-fixed-variant": "#23501e",
+                      "on-error": "#ffffff",
+                      "inverse-primary": "#e9c176",
+                      "on-surface": "#1c1b1b",
+                      "secondary-fixed-dim": "#b7c8de",
+                      "on-background": "#1c1b1b",
+                      "secondary-container": "#d2e4fb",
+                      "surface-bright": "#fcf9f8",
+                      "surface-variant": "#e5e2e1"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "margin-mobile": "16px",
+                      "unit": "8px",
+                      "gutter": "24px",
+                      "sidebar-width": "260px",
+                      "margin-desktop": "40px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Libre Caslon Text"
+                      ],
+                      "headline-lg-mobile": [
+                              "Libre Caslon Text"
+                      ],
+                      "title-md": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "title-md": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex font-body-md text-body-md antialiased">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen py-margin-desktop w-sidebar-width bg-surface border-r border-outline-variant sticky left-0 top-0">
+<div class="px-gutter mb-8">
+<h1 class="font-display-lg text-display-lg font-black text-primary mb-1">THE LUXE</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Enterprise Workspace</p>
+</div>
+<div class="px-gutter mb-8">
+<button class="w-full bg-primary text-on-primary py-3 px-4 rounded font-title-md text-title-md flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors duration-200">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                Create New Brief
+            </button>
+</div>
+<ul class="flex-1 px-4 space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">settings_voice</span>
+                    Brand Voice
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-primary border-l-2 border-primary bg-surface-container-low hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">assignment</span>
+                    Briefs
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">movie_filter</span>
+                    Studio
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+                    Compliance
+                </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+                    Calendar
+                </a>
+</li>
+</ul>
+<div class="px-4 pt-8 border-t border-outline-variant mt-auto">
+<ul class="space-y-1">
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+                        Profile
+                    </a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200 font-title-md text-title-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                        Settings
+                    </a>
+</li>
+</ul>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar (Mobile & Desktop Header) -->
+<header class="flex justify-between items-center w-full h-16 px-margin-mobile md:px-margin-desktop bg-surface/80 backdrop-blur-md border-b border-outline-variant sticky top-0 z-10">
+<div class="md:hidden">
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">THE LUXE</span>
+</div>
+<div class="hidden md:flex flex-1 justify-center space-x-8">
+<!-- Navigation links from JSON -->
+<a class="text-on-surface-variant hover:text-primary transition-colors font-title-md text-title-md" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-title-md text-title-md" href="#">Analytics</a>
+</div>
+<div class="flex items-center gap-4 text-primary">
+<button class="hover:text-on-primary-fixed-variant transition-colors p-2 focus:ring-1 focus:ring-primary-container rounded">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:text-on-primary-fixed-variant transition-colors p-2 focus:ring-1 focus:ring-primary-container rounded">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden ml-2 border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A small circular avatar image showing a generic user profile icon in a sophisticated gold tone, representing a professional enterprise workspace setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA47tzvGB2mquL0blfMQdGcTcx1osqk0H8rNxnnviZDzqSEFbqqbCl9geAQv1yS2-rBltuitqK08aoRN6_N3lSwLFi31UUfyBEVn1qhnX8zXwKhx4RxX_iAN-sTaBn18x_h2edujQMh5hLkMhMS0NmY0VwMzUbYauWPhHdEV_S6B5C9sEgms9dl1J7U4sxqZ1G9_wgXrS_1JvhvpMFgn7OY6WlfvP1ocKtr4sjYGpeuG4zGXgr9j1EGAOt1eWYXz3vVA5j8EZ3yMcfx"/>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 px-margin-mobile md:px-margin-desktop py-8 md:py-12 max-w-container-max mx-auto w-full">
+<div class="max-w-4xl mx-auto">
+<div class="mb-12 text-center md:text-left">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">New Brief</h2>
+<p class="text-on-surface-variant">Define the parameters for your next campaign.</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant rounded p-6 md:p-8 mb-8">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase tracking-widest" for="brief-input">Main Objective</label>
+<textarea class="w-full bg-transparent border-0 border-b border-outline-variant focus:border-primary focus:ring-0 px-0 py-4 text-xl md:text-2xl text-on-surface placeholder-outline resize-none transition-colors" id="brief-input" placeholder="What do you want to create?" rows="4"></textarea>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+<!-- Goal Selection -->
+<div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-widest">Campaign Goal</h3>
+<div class="flex flex-wrap gap-3">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="goal" type="radio"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md">
+                                    Educate
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="goal" type="radio"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md">
+                                    Announce
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="goal" type="radio"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md">
+                                    Promote
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="goal" type="radio"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md">
+                                    Engage
+                                </div>
+</label>
+</div>
+</div>
+<!-- Channel Selection -->
+<div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-widest">Target Channels</h3>
+<div class="flex flex-wrap gap-3">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                                    LinkedIn
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">photo_camera</span>
+                                    Instagram
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">article</span>
+                                    Blog
+                                </div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 border border-outline-variant rounded text-on-surface-variant peer-checked:border-primary peer-checked:bg-surface-container-low peer-checked:text-primary transition-all font-title-md text-title-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+                                    Newsletter
+                                </div>
+</label>
+</div>
+</div>
+</div>
+<!-- Brand Profile Picker -->
+<div class="mb-12">
+<h3 class="font-label-sm text-label-sm text-on-surface-variant mb-4 uppercase tracking-widest">Brand Profile</h3>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant rounded px-4 py-3 font-title-md text-title-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary-container cursor-pointer">
+<option>THE LUXE - Global Corporate</option>
+<option>THE LUXE - Asia Pacific</option>
+<option>THE LUXE - EMEA</option>
+<option>THE LUXE - Americas</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-on-surface-variant">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col sm:flex-row gap-4 items-center justify-end pt-8 border-t border-outline-variant">
+<button class="w-full sm:w-auto px-6 py-3 border border-outline-variant text-on-surface rounded font-title-md text-title-md hover:bg-surface-container-highest transition-colors">
+                        Save as Draft
+                    </button>
+<button class="w-full sm:w-auto px-8 py-3 bg-primary text-on-primary rounded font-title-md text-title-md flex items-center justify-center gap-2 hover:bg-on-primary-fixed-variant transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">magic_button</span>
+                        Generate Drafts
+                    </button>
+</div>
+</div>
+</main>
+</div>
+</body></html>

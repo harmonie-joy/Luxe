@@ -12,6 +12,7 @@ ENV PYTHONUNBUFFERED=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     libpq-dev \
+    netcat-openbsd\
  && rm -rf /var/lib/apt/lists/*
 
 # 4. Use a Virtual Environment inside Docker
@@ -28,6 +29,11 @@ COPY . /app
 
 EXPOSE 8000
 
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 # 7. Use a production-grade server
 # Requires adding 'gunicorn' to your requirements.txt
 CMD ["bash", "-lc", "python manage.py runserver 0.0.0.0:8000"]
