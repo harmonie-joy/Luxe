@@ -1,3 +1,5 @@
+import type { ContentChannel } from "@/types/content";
+
 export type DashboardMetricTone = "primary" | "neutral" | "critical" | "success";
 export type DashboardStatusTone =
   | "primary"
@@ -42,11 +44,8 @@ export interface ReviewQueueItem {
 export interface ScheduledContentItem {
   id: string;
   title: string;
-  channel: string;
-  date: {
-    month: string;
-    day: string;
-  };
+  channel: ContentChannel;
+  scheduledFor: string;
   status: DashboardStatus;
 }
 
@@ -114,7 +113,7 @@ export const mockDashboard = {
       id: "review-q4-brand-manifesto",
       title: "Q4 Brand Manifesto Video",
       owner: "Legal Review",
-      submittedAt: "2 hours ago",
+      submittedAt: "2026-06-03T07:00:00.000Z",
       status: {
         label: "In Review",
         tone: "warning",
@@ -124,7 +123,7 @@ export const mockDashboard = {
       id: "review-spring-collection",
       title: "Spring Collection Brief",
       owner: "Legal Dept.",
-      submittedAt: "5 hours ago",
+      submittedAt: "2026-06-03T04:00:00.000Z",
       status: {
         label: "Approved",
         tone: "success",
@@ -134,7 +133,7 @@ export const mockDashboard = {
       id: "review-social-promo",
       title: "Social Promo A",
       owner: "Brand Voice Check",
-      submittedAt: "Yesterday",
+      submittedAt: "2026-06-02T14:00:00.000Z",
       status: {
         label: "Flagged",
         tone: "critical",
@@ -145,11 +144,8 @@ export const mockDashboard = {
     {
       id: "scheduled-product-teaser",
       title: "Product Teaser Video",
-      channel: "LinkedIn",
-      date: {
-        month: "Oct",
-        day: "8",
-      },
+      channel: "linkedin",
+      scheduledFor: "2026-10-08T09:00:00.000Z",
       status: {
         label: "Scheduled",
         tone: "primary",
@@ -158,11 +154,8 @@ export const mockDashboard = {
     {
       id: "scheduled-executive-series",
       title: "Executive Interview Series",
-      channel: "Blog",
-      date: {
-        month: "Oct",
-        day: "15",
-      },
+      channel: "blog",
+      scheduledFor: "2026-10-15T09:00:00.000Z",
       status: {
         label: "On Track",
         tone: "success",
@@ -171,11 +164,8 @@ export const mockDashboard = {
     {
       id: "scheduled-partner-announcement",
       title: "Partner Announcement",
-      channel: "Newsletter",
-      date: {
-        month: "Oct",
-        day: "18",
-      },
+      channel: "newsletter",
+      scheduledFor: "2026-10-18T09:00:00.000Z",
       status: {
         label: "Pending Compliance",
         tone: "warning",

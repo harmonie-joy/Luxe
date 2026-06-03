@@ -4,6 +4,7 @@ import type {
 } from "@/data/mock-dashboard";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
+import { formatDisplayDate } from "@/lib/formatters";
 
 interface ReviewQueueProps {
   items: readonly ReviewQueueItem[];
@@ -33,7 +34,7 @@ export function ReviewQueue({ items, section }: ReviewQueueProps) {
                 {item.title}
               </h3>
               <p className="luxe-item-meta mt-1 text-sm">
-                {item.owner} · {item.submittedAt}
+                {item.owner} · {formatDisplayDate(item.submittedAt)}
               </p>
             </div>
             <StatusIndicator
