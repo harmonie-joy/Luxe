@@ -1,9 +1,9 @@
-import { mockBrandVoiceSetup } from "@/data/mock-brand-profiles";
+import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
 import { BrandProfileForm } from "@/features/brand-voice/components/brand-profile-form";
 import { BrandProfilePreview } from "@/features/brand-voice/components/brand-profile-preview";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 
-export default function BrandVoicePage() {
+export default async function BrandVoicePage() {
   const {
     bannedPhrases,
     pageHeader,
@@ -11,7 +11,7 @@ export default function BrandVoicePage() {
     sampleContent,
     toneOptions,
     vocabularyRules,
-  } = mockBrandVoiceSetup;
+  } = await getBrandVoiceSetup();
 
   return (
     <div className="flex min-h-full flex-col gap-8">

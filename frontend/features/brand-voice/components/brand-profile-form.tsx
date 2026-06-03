@@ -116,7 +116,7 @@ export function BrandProfileForm({
           />
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-[color:var(--color-border-subtle)] pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-(--color-border-subtle) pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="luxe-form-help">
             MVP preview mode. No API request is made from this form.
           </p>
