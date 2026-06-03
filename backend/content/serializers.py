@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ContentBrief
+from .models import ContentBrief, ContentDraft
 
 
 class ContentBriefSerializer(serializers.ModelSerializer):
@@ -61,6 +61,74 @@ class ContentBriefSerializer(serializers.ModelSerializer):
             "angle": rep["angle"],
             "constraints": rep["constraints"],
             "targetChannels": rep["target_channels"],
+            "createdAt": rep["created_at"],
+            "updatedAt": rep["updated_at"],
+        }
+
+
+class ContentDraftSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContentDraft
+        fields = [
+            "id",
+            "brief",
+            "created_by",
+            "title",
+            "content",
+            "channel",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]
+
+    def validate(self, attrs):
+        brief = attrs.get("brief")
+        channel = attrs.get("channel")
+
+        if self.instance is not None:
+            brief = brief or self.instance.brief
+            channel = channel or self.instance.channel
+
+        if brief and channel and channel not in brief.target_channels:
+            raise serializers.ValidationError(
+                {
+                    "channel": (
+                        "Draft channel must be one of the brief target channels."
+                    )
+                }
+            )
+
+        if brief and channel:
+            duplicate_draft = ContentDraft.objects.filter(
+                brief=brief,
+                channel=channel,
+            )
+            if self.instance is not None:
+                duplicate_draft = duplicate_draft.exclude(pk=self.instance.pk)
+
+            if duplicate_draft.exists():
+                raise serializers.ValidationError(
+                    {
+                        "channel": (
+                            "A draft already exists for this brief and channel."
+                        )
+                    }
+                )
+
+        return attrs
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "workspaceId": str(instance.brief.workspace_id),
+            "briefId": str(rep["brief"]),
+            "title": rep["title"],
+            "content": rep["content"],
+            "channel": rep["channel"],
+            "status": rep["status"],
+            "createdBy": str(rep["created_by"]) if rep["created_by"] else None,
             "createdAt": rep["created_at"],
             "updatedAt": rep["updated_at"],
         }

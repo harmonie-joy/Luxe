@@ -4,15 +4,20 @@ from rest_framework.test import APITestCase
 from brand.models import BrandProfile
 from tenancy.models import Membership, Workspace
 
-from .models import ContentBrief
+from .models import ContentBrief, ContentDraft
 
 User = get_user_model()
 
 BRIEFS_URL = "/api/content-briefs/"
+DRAFTS_URL = "/api/content-drafts/"
 
 
 def brief_detail_url(brief_id):
     return f"{BRIEFS_URL}{brief_id}/"
+
+
+def draft_detail_url(draft_id):
+    return f"{DRAFTS_URL}{draft_id}/"
 
 
 class ContentBriefAPITest(APITestCase):
@@ -61,6 +66,22 @@ class ContentBriefAPITest(APITestCase):
             angle="Other angle",
             constraints="Other constraints",
             target_channels=[ContentBrief.Channel.INSTAGRAM],
+        )
+        self.draft = ContentDraft.objects.create(
+            brief=self.brief,
+            created_by=self.user,
+            title="Private preview LinkedIn draft",
+            content="A considered first look at the autumn couture capsule.",
+            channel=ContentBrief.Channel.LINKEDIN,
+            status=ContentDraft.DraftStatus.DRAFT,
+        )
+        self.other_draft = ContentDraft.objects.create(
+            brief=self.other_brief,
+            created_by=self.other_user,
+            title="Other workspace Instagram draft",
+            content="Foreign workspace content.",
+            channel=ContentBrief.Channel.INSTAGRAM,
+            status=ContentDraft.DraftStatus.IN_REVIEW,
         )
 
     def test_list_returns_only_own_workspace_briefs(self):
@@ -170,6 +191,111 @@ class ContentBriefAPITest(APITestCase):
                 "angle",
                 "constraints",
                 "targetChannels",
+                "createdAt",
+                "updatedAt",
+            },
+        )
+
+    def test_list_returns_only_own_workspace_drafts(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(DRAFTS_URL)
+        self.assertEqual(response.status_code, 200)
+        ids = [draft["id"] for draft in response.data]
+        self.assertIn(str(self.draft.id), ids)
+        self.assertNotIn(str(self.other_draft.id), ids)
+
+    def test_filter_drafts_by_brief(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(DRAFTS_URL, {"brief": str(self.brief.id)})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([draft["id"] for draft in response.data], [str(self.draft.id)])
+
+    def test_create_content_draft(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "brief": str(self.brief.id),
+            "title": "Private preview newsletter draft",
+            "content": "A private note for clients invited to the first viewing.",
+            "channel": ContentBrief.Channel.NEWSLETTER,
+            "status": ContentDraft.DraftStatus.DRAFT,
+        }
+        response = self.client.post(DRAFTS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["workspaceId"], str(self.workspace.id))
+        self.assertEqual(response.data["briefId"], str(self.brief.id))
+        self.assertEqual(response.data["createdBy"], str(self.user.id))
+        self.assertEqual(response.data["channel"], ContentBrief.Channel.NEWSLETTER)
+
+    def test_create_draft_for_foreign_brief_is_denied(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "brief": str(self.other_brief.id),
+            "title": "Forbidden draft",
+            "content": "Should not be created.",
+            "channel": ContentBrief.Channel.INSTAGRAM,
+        }
+        response = self.client.post(DRAFTS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 403)
+
+    def test_create_draft_with_unselected_channel_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "brief": str(self.brief.id),
+            "title": "Invalid X draft",
+            "content": "This brief did not target X.",
+            "channel": ContentBrief.Channel.X,
+        }
+        response = self.client.post(DRAFTS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("channel", response.data)
+
+    def test_create_duplicate_draft_channel_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "brief": str(self.brief.id),
+            "title": "Duplicate LinkedIn draft",
+            "content": "Only one draft per brief channel is allowed.",
+            "channel": ContentBrief.Channel.LINKEDIN,
+        }
+        response = self.client.post(DRAFTS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("channel", response.data)
+
+    def test_update_content_draft(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "title": "Updated LinkedIn draft",
+            "status": ContentDraft.DraftStatus.IN_REVIEW,
+        }
+        response = self.client.patch(
+            draft_detail_url(self.draft.id),
+            payload,
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["title"], "Updated LinkedIn draft")
+        self.assertEqual(response.data["status"], ContentDraft.DraftStatus.IN_REVIEW)
+
+    def test_cross_workspace_draft_retrieve_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(draft_detail_url(self.other_draft.id))
+        self.assertEqual(response.status_code, 404)
+
+    def test_draft_response_shape_matches_frontend_type(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(draft_detail_url(self.draft.id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            set(response.data.keys()),
+            {
+                "id",
+                "workspaceId",
+                "briefId",
+                "title",
+                "content",
+                "channel",
+                "status",
+                "createdBy",
                 "createdAt",
                 "updatedAt",
             },
