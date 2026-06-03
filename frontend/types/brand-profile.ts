@@ -61,3 +61,21 @@ export interface BrandAsset {
   status: BrandAssetStatus;
   createdAt: string;
 }
+
+export interface AssetComment {
+  id: string;
+  assetId: string;
+  authorName: string;
+  authorInitials: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface AssetVoiceScore {
+  assetId: string;
+  overallScore: number;
+  toneAlignmentScore: number;
+  vocabularyMatchScore: number;
+  flaggedPhraseCount: number;
+  analyzedAt: string;
+}

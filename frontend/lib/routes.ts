@@ -9,6 +9,11 @@ export const APP_ROUTES = {
   settings: "/settings",
 } as const;
 
+/** Dynamic route for a single brand asset sample detail page. */
+export function brandVoiceSampleRoute(id: string): string {
+  return `/brand-voice/samples/${id}`;
+}
+
 export type AppRouteKey = keyof typeof APP_ROUTES;
 export type AppRoutePath = (typeof APP_ROUTES)[AppRouteKey];
 
