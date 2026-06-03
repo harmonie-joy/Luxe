@@ -9,7 +9,7 @@ class Workspace(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="created_workspaces",
+        related_name="owned_workspaces",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
