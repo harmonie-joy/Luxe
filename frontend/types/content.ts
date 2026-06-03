@@ -6,6 +6,13 @@ export type ContentChannel =
   | "x"
   | "short_video";
 
+export type CampaignGoal =
+  | "educate"
+  | "announce"
+  | "promote"
+  | "fundraise"
+  | "thought_leadership";
+
 export type DraftStatus =
   | "draft"
   | "in_review"
@@ -15,6 +22,20 @@ export type DraftStatus =
   | "published";
 
 export type ContentLifecycleStatus = DraftStatus;
+
+export interface ContentBrief {
+  id: string;
+  workspaceId: string;
+  brandProfileId: string;
+  contentObjective: string;
+  campaignGoal: CampaignGoal;
+  audience: string;
+  angle: string;
+  constraints: string;
+  targetChannels: readonly ContentChannel[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface ContentDraft {
   id: string;
