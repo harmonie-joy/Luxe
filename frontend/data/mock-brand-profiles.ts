@@ -38,6 +38,8 @@ export const mockBrandVoiceSetup = {
     tone: ["sophisticated", "authoritative", "approachable"],
     preferredVocabulary: ["craftsmanship", "clientele", "curated edit"],
     bannedPhrases: ["affordable luxury", "go viral", "disruptive"],
+    positioningNotes:
+      "THE LUXE occupies the quiet luxury tier — editorial authority without aspirational overreach. Content should feel considered, never promotional. Avoid urgency-led language and trend-chasing framing.",
     sampleCount: 2,
     createdAt: "2026-06-01T09:00:00.000Z",
     updatedAt: "2026-06-02T15:30:00.000Z",

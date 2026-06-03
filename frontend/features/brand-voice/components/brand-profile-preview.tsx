@@ -59,6 +59,15 @@ export function BrandProfilePreview({
           </p>
         </div>
 
+        {profile.positioningNotes && (
+          <div>
+            <p className="luxe-form-help">Positioning notes</p>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--color-text-secondary)]">
+              {profile.positioningNotes}
+            </p>
+          </div>
+        )}
+
         <div>
           <p className="luxe-form-help">Tone summary</p>
           <div className="mt-3 flex flex-wrap gap-2">

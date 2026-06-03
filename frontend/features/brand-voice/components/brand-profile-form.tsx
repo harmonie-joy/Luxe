@@ -103,6 +103,19 @@ export function BrandProfileForm({
           />
         </div>
 
+        <div>
+          <label className="luxe-form-label" htmlFor="positioning-notes">
+            Positioning notes
+          </label>
+          <textarea
+            className="luxe-field mt-2 min-h-28 w-full resize-none px-4 py-3"
+            defaultValue={profile.positioningNotes ?? ""}
+            id="positioning-notes"
+            name="positioningNotes"
+            placeholder="Describe where this brand sits in its market and any overarching content strategy notes."
+          />
+        </div>
+
         <div className="flex flex-col gap-3 border-t border-[color:var(--color-border-subtle)] pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="luxe-form-help">
             MVP preview mode. No API request is made from this form.

@@ -13,6 +13,7 @@ export interface BrandProfile {
   tone: BrandVoiceTone[];
   preferredVocabulary: string[];
   bannedPhrases: string[];
+  positioningNotes?: string;
   sampleCount: number;
   createdAt: string;
   updatedAt: string;
@@ -52,4 +53,20 @@ export interface SampleContentConfig {
   uploadHelpText: string;
   acceptedFormats: readonly string[];
   samples: readonly SampleContentItem[];
+}
+
+// Canonical API-aligned type matching backend BrandAsset model.
+export type BrandAssetSourceType = "pasted" | "uploaded";
+export type BrandAssetStatus = "ready" | "needs_review";
+
+export interface BrandAsset {
+  id: string;
+  brandProfileId: string;
+  title: string;
+  content: string;
+  sourceType: BrandAssetSourceType;
+  format: string;
+  wordCount: number;
+  status: BrandAssetStatus;
+  createdAt: string;
 }
