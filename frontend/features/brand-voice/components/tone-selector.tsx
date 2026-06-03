@@ -1,4 +1,4 @@
-import type { BrandToneOption } from "@/data/mock-brand-profiles";
+import type { BrandToneOption } from "@/types/brand-profile";
 
 interface ToneSelectorProps {
   tones: readonly BrandToneOption[];

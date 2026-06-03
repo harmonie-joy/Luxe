@@ -3,28 +3,37 @@ export type ContentChannel =
   | "instagram"
   | "blog"
   | "newsletter"
-  | "pressRelease";
+  | "x"
+  | "short_video";
 
-export type ContentLifecycleStatus =
+export type DraftStatus =
   | "draft"
-  | "inReview"
+  | "in_review"
+  | "needs_changes"
   | "approved"
   | "scheduled"
   | "published";
 
+export type ContentLifecycleStatus = DraftStatus;
+
 export interface ContentDraft {
   id: string;
+  workspaceId: string;
+  briefId: string;
   title: string;
+  content: string;
   channel: ContentChannel;
-  status: ContentLifecycleStatus;
-  ownerId: string;
+  status: DraftStatus;
+  createdBy: string;
+  createdAt: string;
   updatedAt: string;
 }
 
 export interface ScheduledContent {
   id: string;
   draftId: string;
-  publishAt: string;
+  scheduledFor: string;
   channel: ContentChannel;
-  status: ContentLifecycleStatus;
+  status: DraftStatus;
+  publishedAt?: string;
 }

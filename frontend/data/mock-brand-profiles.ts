@@ -1,6 +1,9 @@
 import type {
+  BannedPhrase,
   BrandProfile,
+  BrandToneOption,
   BrandVoiceTone,
+  SampleContentConfig,
   BrandVocabularyRule,
 } from "@/types/brand-profile";
 
@@ -8,35 +11,6 @@ export interface BrandVoicePageCopy {
   eyebrow: string;
   title: string;
   description: string;
-}
-
-export interface BrandToneOption {
-  value: BrandVoiceTone;
-  label: string;
-  description: string;
-  selected: boolean;
-}
-
-export interface BannedPhrase {
-  id: string;
-  phrase: string;
-  reason: string;
-}
-
-export interface SampleContentItem {
-  id: string;
-  title: string;
-  source: "Pasted sample" | "Uploaded file";
-  format: string;
-  wordCount: number;
-  status: "Ready" | "Needs review";
-}
-
-export interface SampleContentConfig {
-  pasteDefaultValue: string;
-  uploadHelpText: string;
-  acceptedFormats: readonly string[];
-  samples: readonly SampleContentItem[];
 }
 
 export interface BrandVoiceSetupData {

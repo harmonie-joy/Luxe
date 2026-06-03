@@ -1,4 +1,4 @@
-import type { SampleContentConfig } from "@/data/mock-brand-profiles";
+import type { SampleContentConfig } from "@/types/brand-profile";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 

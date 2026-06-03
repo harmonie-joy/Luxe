@@ -2,8 +2,6 @@ import type {
   BannedPhrase,
   BrandToneOption,
   SampleContentItem,
-} from "@/data/mock-brand-profiles";
-import type {
   BrandProfile,
   BrandVocabularyRule,
 } from "@/types/brand-profile";

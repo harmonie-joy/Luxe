@@ -1,23 +1,25 @@
-export type ComplianceSeverity = "success" | "warning" | "danger" | "info";
+export type ComplianceStatus = "green" | "yellow" | "red";
 
-export type ComplianceReviewStatus =
-  | "safeToPublish"
-  | "needsReview"
-  | "blocked";
+export type ComplianceCategory = "gdpr" | "consent" | "ip" | "claims";
 
-export interface ComplianceFinding {
+export type ComplianceSeverity = "low" | "medium" | "high";
+
+export interface ComplianceIssue {
   id: string;
   title: string;
-  category: string;
+  category: ComplianceCategory;
   severity: ComplianceSeverity;
   summary: string;
   suggestedFix?: string;
 }
 
-export interface ComplianceReview {
+export interface ComplianceCheck {
   id: string;
   draftId: string;
-  status: ComplianceReviewStatus;
-  findings: readonly ComplianceFinding[];
-  reviewedAt?: string;
+  status: ComplianceStatus;
+  issues: readonly ComplianceIssue[];
+  checkedAt?: string;
 }
+
+export type ComplianceFinding = ComplianceIssue;
+export type ComplianceReview = ComplianceCheck;
