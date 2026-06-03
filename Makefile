@@ -1,11 +1,31 @@
+.PHONY: up down logs ps dev dev-down dev-restart dev-check
+
+COMPOSE = cd infra && docker compose
+
 up:
-	cd infra && docker compose up --build
+	$(COMPOSE) up --build
 
 down:
-	cd infra && docker compose down
+	$(COMPOSE) down
 
 logs:
-	cd infra && docker compose logs -f --tail=200
+	$(COMPOSE) logs -f --tail=200
 
 ps:
-	cd infra && docker compose ps
+	$(COMPOSE) ps
+
+dev-check:
+	$(COMPOSE) config -q
+
+dev: dev-check
+	$(COMPOSE) up -d --build --remove-orphans
+	$(COMPOSE) ps
+	@echo "Development stack is starting."
+	@echo "Frontend: http://localhost:3000"
+	@echo "Backend:  http://localhost:8000/api/health"
+	@echo "Run 'make logs' to follow logs."
+
+dev-down:
+	$(COMPOSE) down --remove-orphans
+
+dev-restart: dev-down dev

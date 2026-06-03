@@ -18,6 +18,7 @@ Current repo state matters:
 - Django REST Framework is installed in the backend, but the API surface is still minimal.
 - The frontend already contains shared types, route helpers, and mock data that should be treated as early contract signals.
 - Several backend apps are scaffolded but not fully modeled yet, so future changes should extend the canonical model below rather than invent parallel structures.
+- Workspace is the current tenant root for MVP (do not introduce a parallel Organization model unless explicitly requested).
 
 ## Repository Structure
 
@@ -75,6 +76,19 @@ Do not create duplicate domain types inside feature folders when a shared type b
 - Do not import from `temp/`, prototype exports, or other experimental folders unless explicitly instructed.
 - Treat `temp/` as design reference material only, not as production code.
 - If the frontend and backend disagree on a product concept, prefer clarifying the canonical domain model first and then patch the smallest number of files needed.
+
+## Local Development Workflow
+
+Use the repository Make targets as the default local workflow for Docker-based development:
+
+- `make dev-check` validates compose configuration before startup.
+- `make dev` builds and starts the stack in detached mode with health-aware startup ordering.
+- `make ps` shows current service/container status.
+- `make logs` tails logs for troubleshooting.
+- `make dev-down` stops and removes containers.
+- `make dev-restart` restarts the full stack.
+
+When working on Python code outside Docker, use the backend virtual environment at `backend/.venv`.
 
 ## Canonical MVP Domain Model
 
@@ -197,6 +211,14 @@ These values are canonical across Django models, serializers, TypeScript types, 
 - `low`
 - `medium`
 - `high`
+
+### WorkspaceRole
+
+- `owner`
+- `admin`
+- `editor`
+- `reviewer`
+- `viewer`
 
 Rule: any new enum value must be added consistently in backend models, serializers, frontend shared types, mock data, and UI logic in the same task.
 

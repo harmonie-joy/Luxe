@@ -9,11 +9,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U theluxe -d theluxe"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
 
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 3s
 
   minio:
     image: minio/minio:latest
@@ -43,8 +55,16 @@ services:
     volumes:
       - ../backend:/app
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   frontend:
     build:
@@ -59,7 +79,8 @@ services:
       - ../frontend:/app
       - /app/node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   pgdata:
