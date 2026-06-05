@@ -10,6 +10,7 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 | --- | --- | --- | --- |
 | P0 | Align frontend API base environment variable with Docker Compose. | Done | `frontend/lib/api/http-client.ts` now prefers `NEXT_PUBLIC_API_BASE_URL` while preserving `NEXT_PUBLIC_API_URL`. |
 | P0 | Define the minimal active workspace/bootstrap path for frontend API calls. | Ready | Needed before replacing mocks broadly. |
+| P0 | T-BOOT-001: Define authenticated workspace/bootstrap prerequisite path. | Ready | Planning-only prerequisite for later API-connected Draft Studio persistence. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
@@ -25,7 +26,7 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 
 ## Best Next Task for AI
 
-Render the new frontend-only `mock-ai-flow` fixtures in Draft Studio (AI guidance panel, suggestion cards, and loading/failure states) as a contained mock-validation slice. In parallel planning, keep the authenticated workspace/bootstrap definition as the prerequisite for broader API-connected persistence work.
+Execute the Draft Studio mock-validation rendering slice (AI guidance panel, suggestion cards, and loading/failure states) while keeping T-BOOT-001 active as a planning-only prerequisite path for broader API-connected persistence work.
 
 ## Do Not Touch Yet
 

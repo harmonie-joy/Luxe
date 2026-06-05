@@ -108,6 +108,20 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Render `mock-ai-flow` fixtures in Draft Studio UI while staying frontend-only and mock-only.
 
+### 2026-06-05 - Codex - T-BOOT-001 Prerequisite Documentation (Management Finalization)
+
+- Tool: Codex
+- Request: Document T-BOOT-001 as a formal planning-only prerequisite for authenticated workspace/bootstrap before broader API persistence work.
+- Files changed:
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added formal tracking for T-BOOT-001 in progress and active-task memory, including prerequisite sequence (session bootstrap, active workspace resolution, workspace-scoped draft read contract, fallback behavior, and integration order).
+- Human review status: Accepted
+- Verification: Scoped documentation diff review and task-status consistency check across updated memory docs.
+- Decision log update needed: No
+- Next action: Execute the approved Draft Studio mock-render slice and keep T-BOOT-001 as the prerequisite planning track for future API-connected persistence.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

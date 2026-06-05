@@ -131,6 +131,34 @@ Decision Log Update Needed:
 Next Step:
 - Render the new mock fixture states in Draft Studio UI (AI guidance panel, suggestion cards, and failure/loading states) while remaining frontend-only and mock-only.
 
+### 2026-06-05 - T-BOOT-001 Authenticated Workspace Bootstrap Prerequisite Documented (Planning-only)
+
+Worked On:
+- Documented T-BOOT-001 as the planning prerequisite path for future API-connected Draft Studio persistence.
+
+Completed:
+- Defined a minimal prerequisite sequence for persistence work:
+	- session bootstrap contract for active user context,
+	- active workspace resolution contract,
+	- workspace-scoped Draft Studio read contract,
+	- fallback behavior when bootstrap data is unavailable,
+	- integration order from bootstrap to draft read/save persistence.
+- Confirmed this is planning-only and does not include backend or frontend implementation changes.
+
+Problems Found:
+- No new blockers introduced. Existing workspace/bootstrap API availability remains the known dependency.
+
+Files Changed:
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Decision Log Update Needed:
+- No. No architecture, data-model, auth, AI provider, or deployment decision changed.
+
+Next Step:
+- Execute the approved frontend mock-render slice in Draft Studio while keeping T-BOOT-001 as a prerequisite planning track for later API persistence.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
