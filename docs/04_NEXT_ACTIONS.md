@@ -2,15 +2,15 @@
 
 ## Current Sprint Goal
 
-Persist the core Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping and the existing MVP domain contract.
+Persist the core Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping and the existing MVP domain contract. The Create Brief submission step is now connected to the existing ContentBrief API; the next integration work is authenticated workspace bootstrap and Draft Studio persistence.
 
 ## Active Tasks
 
 | Priority | Task | Status | Notes |
 | --- | --- | --- | --- |
-| P0 | Align frontend API base environment variable with Docker Compose. | Ready | `frontend/lib/api/http-client.ts` reads `NEXT_PUBLIC_API_URL`; Compose sets `NEXT_PUBLIC_API_BASE_URL`. |
+| P0 | Align frontend API base environment variable with Docker Compose. | Done | `frontend/lib/api/http-client.ts` now prefers `NEXT_PUBLIC_API_BASE_URL` while preserving `NEXT_PUBLIC_API_URL`. |
 | P0 | Define the minimal active workspace/bootstrap path for frontend API calls. | Ready | Needed before replacing mocks broadly. |
-| P1 | Connect Create Brief form submission to `createContentBrief`. | Ready | Keep mock fallback and navigate toward draft workflow after create. |
+| P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
 | P2 | Add frontend verification for the persisted flow. | Pending | Start with typecheck and focused component or integration tests where practical. |
@@ -23,7 +23,7 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 
 ## Best Next Task for AI
 
-Update `frontend/lib/api/http-client.ts` so the API client accepts Docker Compose's `NEXT_PUBLIC_API_BASE_URL` while preserving the existing `NEXT_PUBLIC_API_URL` fallback, then run the narrowest useful frontend verification. After that, connect the Create Brief page to the existing ContentBrief API using the current shared types and mock fallback.
+Define the minimal active workspace/bootstrap path for authenticated frontend API calls. After that, connect Draft Studio reads and saves to the existing content draft APIs using the created brief context and current shared types.
 
 ## Do Not Touch Yet
 

@@ -1,16 +1,18 @@
 /**
  * Minimal HTTP client used by all API modules.
  *
- * Base URL is read from NEXT_PUBLIC_API_URL so that it can be configured per
- * environment. Falls back to localhost:8000 for local development against the
- * Docker-composed backend.
+ * Base URL is read from NEXT_PUBLIC_API_BASE_URL or NEXT_PUBLIC_API_URL so that
+ * it can be configured per environment. Falls back to localhost:8000 for local
+ * development against the Docker-composed backend.
  *
  * Auth headers are currently a no-op stub. When a session/auth mechanism is
  * introduced, extend `getAuthHeaders` without touching call sites.
  */
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:8000";
 
 export class ApiError extends Error {
   constructor(

@@ -74,6 +74,23 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Test the AI team workflow on one small, scoped coding task.
 
+### 2026-06-05 - Codex - Create Brief API Integration
+
+- Tool: Codex
+- Request: Connect the `/create` frontend brief creation form to the existing backend `ContentBrief` API without changing backend contracts, then QA and accept the implementation.
+- Files changed:
+  - `frontend/features/create/components/create-brief-shell.tsx`
+  - `frontend/lib/api/http-client.ts`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Converted the create brief shell into an interactive client-side form backed by mock defaults, submitted `CreateContentBriefPayload` through `createContentBrief`, added client-side validation, workspace-scoped brand profile selection, loading/success/error states, `/drafts` navigation after create, and API base URL fallback support for `NEXT_PUBLIC_API_BASE_URL`.
+- Human review status: Accepted
+- QA result: Accepted with notes.
+- Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed with the pre-existing calendar `AuditLog` warning; `cd frontend && npm run build` passed with the pre-existing root health dynamic-fetch log.
+- Decision log update needed: No
+- Next action: Define the minimal authenticated workspace/bootstrap path, then connect Draft Studio reads and saves to content draft APIs.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

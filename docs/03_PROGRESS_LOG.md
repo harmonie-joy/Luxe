@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend, but the user-facing workflow remains mostly mock-driven. The safest next product move is to persist one end-to-end slice through existing APIs.
+THE LUXE has a strong MVP contract across backend and frontend. The Create Brief screen is now connected to the existing ContentBrief API, while the broader Draft Studio and Compliance Review flow still needs runtime integration and authenticated workspace bootstrap.
 
 ## Progress Entries
 
@@ -54,6 +54,44 @@ Files Changed:
 Next Step:
 - Test the AI team workflow on one small, scoped coding task.
 
+### 2026-06-05 - Create Brief API Integration Accepted
+
+Worked On:
+- Connected the `/create` frontend brief form to the existing backend `ContentBrief` API.
+
+Completed:
+- Converted the create brief shell into a client-side interactive form.
+- Preserved mock data as the initial form state.
+- Submitted a backend write payload through `createContentBrief` using snake_case fields.
+- Added client-side validation for workspace, brand profile, content objective, campaign goal, audience, and at least one target channel.
+- Kept brand profile selection scoped to the selected workspace.
+- Added loading, disabled, validation, success, and API error states.
+- Navigated to the existing Draft Studio route after successful create.
+- Updated the frontend HTTP client to prefer `NEXT_PUBLIC_API_BASE_URL` while preserving `NEXT_PUBLIC_API_URL`.
+
+Problems Found:
+- Real API submission still depends on the known auth/session and workspace bootstrap blockers.
+- Lint still reports the pre-existing unused `AuditLog` import in `frontend/features/calendar/components/calendar-shell.tsx`.
+- Production build still logs the pre-existing root health-page dynamic fetch message, but exits successfully.
+
+Files Changed:
+- `frontend/features/create/components/create-brief-shell.tsx`
+- `frontend/lib/api/http-client.ts`
+
+QA Status:
+- Accepted with notes.
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed with one pre-existing warning.
+- `cd frontend && npm run build` passed.
+
+Decision Log Update Needed:
+- No. No architecture, backend contract, data model, enum, auth, AI, compliance, or publishing decision changed.
+
+Next Step:
+- Define the minimal authenticated workspace/bootstrap path, then connect Draft Studio reads and saves to the existing content draft APIs.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
@@ -72,6 +110,7 @@ Next Step:
 
 - `make test-be` previously passed with 76 backend tests according to `docs/mvp-progress-report.md`.
 - `npm run typecheck`, `npm run lint`, and `npm run build` previously passed according to `docs/mvp-progress-report.md`, with a noted lint warning about an unused `AuditLog` import.
+- 2026-06-05 Create Brief API integration verification passed: `cd frontend && npm run typecheck`, `cd frontend && npm run lint`, and `cd frontend && npm run build`. Lint retained the pre-existing calendar `AuditLog` warning, and build retained the pre-existing root health dynamic-fetch log.
 - No app verification commands were run as part of the memory scaffolding or consistency audit. Verification was limited to repository inspection, `docs/mvp-progress-report.md` review, and git diff/status review.
 
 ## Open Progress Questions
