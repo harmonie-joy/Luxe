@@ -383,10 +383,28 @@ class ContentBriefAPITest(APITestCase):
 
     def test_create_scheduled_content_with_foreign_workspace_is_denied(self):
         self.client.force_authenticate(user=self.user)
+        new_other_brief = ContentBrief.objects.create(
+            workspace=self.other_workspace,
+            brand_profile=self.other_brand_profile,
+            content_objective="New foreign workspace brief.",
+            campaign_goal=ContentBrief.CampaignGoal.PROMOTE,
+            audience="Other audience",
+            angle="Other angle",
+            constraints="Other constraints",
+            target_channels=[ContentBrief.Channel.LINKEDIN],
+        )
+        unscheduled_other_draft = ContentDraft.objects.create(
+            brief=new_other_brief,
+            created_by=self.other_user,
+            title="Unscheduled foreign workspace draft",
+            content="Unscheduled draft content.",
+            channel=ContentBrief.Channel.LINKEDIN,
+            status=ContentDraft.DraftStatus.APPROVED,
+        )
         payload = {
             "workspace": str(self.other_workspace.id),
-            "draft": str(self.other_draft.id),
-            "channel": ContentBrief.Channel.INSTAGRAM,
+            "draft": str(unscheduled_other_draft.id),
+            "channel": ContentBrief.Channel.LINKEDIN,
             "status": ContentDraft.DraftStatus.SCHEDULED,
             "scheduled_for": "2026-06-14T09:00:00Z",
         }

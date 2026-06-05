@@ -89,7 +89,9 @@ export function CalendarShell({ data }: CalendarShellProps) {
     data.scheduledContent[0]?.id ?? "",
   );
 
-  const [commentsState, setCommentsState] = useState<DraftComment[]>(data.comments);
+  const [commentsState, setCommentsState] = useState<DraftComment[]>(
+    () => [...data.comments],
+  );
   const [newComment, setNewComment] = useState("");
 
   const groups = useMemo(
@@ -298,7 +300,7 @@ export function CalendarShell({ data }: CalendarShellProps) {
                               <span className="font-semibold text-[9px] uppercase tracking-wider opacity-85 truncate">
                                 {CONTENT_CHANNEL_LABELS[item.channel]}
                               </span>
-                              {compColor && (
+                              {compColor && check && (
                                 <span
                                   className="h-2 w-2 rounded-full flex-shrink-0"
                                   style={{ backgroundColor: compColor }}
@@ -383,7 +385,7 @@ export function CalendarShell({ data }: CalendarShellProps) {
                             </div>
 
                             <div className="flex items-center justify-between gap-3 lg:justify-end">
-                              {compColor && (
+                              {compColor && check && (
                                 <span
                                   className="h-2 w-2 rounded-full mr-2"
                                   style={{ backgroundColor: compColor }}

@@ -35,6 +35,8 @@ dev-restart: dev-down dev
 #   make migrate
 #   make makemigrations app=tenancy name=my_migration
 #   make manage cmd="createsuperuser"
+#   make test app=content test=test_create_scheduled_content_with_foreign_workspace_is_denied
+
 migrate:
 	$(COMPOSE) exec backend python manage.py migrate
 
@@ -43,3 +45,6 @@ makemigrations:
 
 manage:
 	$(COMPOSE) exec backend python manage.py $(cmd)
+
+test-be:
+	$(COMPOSE) exec backend python manage.py test $(if $(app),$(app),) $(if $(test),$(test),)
