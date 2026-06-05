@@ -91,6 +91,23 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Define the minimal authenticated workspace/bootstrap path, then connect Draft Studio reads and saves to content draft APIs.
 
+### 2026-06-05 - Codex - Mock AI Flow Fixtures (Frontend-only)
+
+- Tool: Codex
+- Request: Implement the approved first UX-validation task by adding typed frontend-only mock AI flow fixtures without rendering changes.
+- Files changed:
+  - `frontend/data/mock-ai-flow.ts`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added typed fixtures for workspace validation states, brief completeness states, AI guidance loading/ready/failure, draft suggestions, mock AI failure cases, compliance scenario and fix suggestion states, and approval/audit preview entries using canonical enums and realistic IDs/timestamps.
+- Human review status: Accepted
+- QA result: Accepted after remediation.
+- QA remediation: Removed out-of-scope `.github/agents` file additions and aligned a red compliance scenario check ID to existing canonical compliance mock IDs.
+- Verification: `cd frontend && npm run typecheck` passed.
+- Decision log update needed: No
+- Next action: Render `mock-ai-flow` fixtures in Draft Studio UI while staying frontend-only and mock-only.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

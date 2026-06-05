@@ -13,6 +13,8 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
+| P2 | Add typed mock AI flow fixtures for UX validation. | Done | `frontend/data/mock-ai-flow.ts` added and QA-accepted with scope-control remediation. |
+| P2 | Render mock AI guidance and suggestion states in Draft Studio. | Ready | Use `mock-ai-flow` fixtures for loading/ready/failure and suggestion acceptance interactions. |
 | P2 | Add frontend verification for the persisted flow. | Pending | Start with typecheck and focused component or integration tests where practical. |
 
 ## Blockers
@@ -23,7 +25,7 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 
 ## Best Next Task for AI
 
-Define the minimal active workspace/bootstrap path for authenticated frontend API calls. After that, connect Draft Studio reads and saves to the existing content draft APIs using the created brief context and current shared types.
+Render the new frontend-only `mock-ai-flow` fixtures in Draft Studio (AI guidance panel, suggestion cards, and loading/failure states) as a contained mock-validation slice. In parallel planning, keep the authenticated workspace/bootstrap definition as the prerequisite for broader API-connected persistence work.
 
 ## Do Not Touch Yet
 

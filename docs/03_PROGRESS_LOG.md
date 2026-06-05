@@ -92,6 +92,45 @@ Decision Log Update Needed:
 Next Step:
 - Define the minimal authenticated workspace/bootstrap path, then connect Draft Studio reads and saves to the existing content draft APIs.
 
+### 2026-06-05 - Mock AI Flow Fixtures Accepted (Frontend-only)
+
+Worked On:
+- Added a frontend-only typed fixture contract for AI-assisted UX validation in Draft Studio and Compliance Review without rendering or backend changes.
+
+Completed:
+- Added `frontend/data/mock-ai-flow.ts` with typed fixtures for:
+	- workspace validation states,
+	- brief input states,
+	- AI guidance states (loading, ready, failure),
+	- draft suggestion sets,
+	- AI failure scenarios,
+	- compliance scenario states,
+	- compliance fix suggestion states,
+	- approval and audit-event preview entries.
+- Kept canonical enums aligned via shared frontend type imports.
+- Reused existing workspace, brief, draft, compliance check, and issue IDs from current mock datasets.
+- Kept all fixture timestamps in ISO 8601 string format.
+
+Problems Found:
+- Initial implementation included out-of-scope `.github/agents` file additions and one non-reused compliance check ID variant.
+
+QA Outcome:
+- QA first pass: Changes Required.
+- QA remediation completed: out-of-scope files removed and compliance check ID aligned to existing mock IDs.
+- QA re-review: Accepted.
+
+Files Changed:
+- `frontend/data/mock-ai-flow.ts`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+
+Decision Log Update Needed:
+- No. No architecture, data-model, auth, compliance posture, or integration-strategy decision changed.
+
+Next Step:
+- Render the new mock fixture states in Draft Studio UI (AI guidance panel, suggestion cards, and failure/loading states) while remaining frontend-only and mock-only.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
