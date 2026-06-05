@@ -15,10 +15,24 @@ This repository is a monorepo with:
 
 Current repo state matters:
 
-- Django REST Framework is installed in the backend, but the API surface is still minimal.
+- Django REST Framework is installed in the backend, and API routes now cover most canonical MVP domains.
 - The frontend already contains shared types, route helpers, and mock data that should be treated as early contract signals.
-- Several backend apps are scaffolded but not fully modeled yet, so future changes should extend the canonical model below rather than invent parallel structures.
+- The main product gap is frontend integration: most screens still use mocks and do not persist create/edit/review actions yet.
+- Some backend surfaces remain intentionally incomplete, including workspace/bootstrap APIs, dashboard aggregation, automatic audit logging, and real AI orchestration.
 - Workspace is the current tenant root for MVP (do not introduce a parallel Organization model unless explicitly requested).
+
+## Project Memory Read Order
+
+Before suggesting implementation or architecture changes, use the repo memory docs as the source of truth:
+
+1. `docs/00_PROJECT_BRIEF.md`
+2. `docs/01_ARCHITECTURE.md`
+3. `docs/02_DECISIONS.md`
+4. `docs/03_PROGRESS_LOG.md`
+5. `docs/04_NEXT_ACTIONS.md`
+6. `docs/05_AI_WORK_LOG.md`
+
+If a change affects architecture, data model, scope, integrations, compliance approach, or workflow priority, suggest updates to the relevant memory docs.
 
 ## Repository Structure
 
