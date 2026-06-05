@@ -73,7 +73,7 @@ class ComplianceIssue(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("category", "-severity", "title")
+        ordering = ("category", "title")
         indexes = [
             models.Index(fields=["compliance_check", "category"]),
             models.Index(fields=["category", "severity"]),

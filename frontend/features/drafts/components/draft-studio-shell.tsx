@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 import { StatusIndicator } from "@/components/ui/status-indicator";
@@ -11,6 +12,7 @@ import {
   DRAFT_STATUS_LABELS,
   formatDisplayDate,
 } from "@/lib/formatters";
+import { complianceReviewRoute } from "@/lib/routes";
 import type { ContentDraft, DraftStatus } from "@/types/content";
 
 interface DraftStudioShellProps {
@@ -190,12 +192,20 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
                   ? "Draft saved locally. API update wiring is ready for the next integration pass."
                   : "Edits stay in this studio until you save the active channel draft."}
               </p>
-              <button
-                className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold"
-                type="submit"
-              >
-                Save draft
-              </button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Link
+                  className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-center text-sm font-semibold"
+                  href={complianceReviewRoute(currentDraft.id)}
+                >
+                  Review compliance
+                </Link>
+                <button
+                  className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold"
+                  type="submit"
+                >
+                  Save draft
+                </button>
+              </div>
             </div>
           </form>
         </SurfaceCard>

@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('compliance_check', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='issues', to='compliance.compliancecheck')),
             ],
             options={
-                'ordering': ('category', '-severity', 'title'),
+                'ordering': ('category', 'title'),
             },
         ),
         migrations.AddIndex(
