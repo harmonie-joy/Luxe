@@ -52,9 +52,32 @@ export interface ContentDraft {
 
 export interface ScheduledContent {
   id: string;
+  workspaceId: string;
   draftId: string;
-  scheduledFor: string;
   channel: ContentChannel;
   status: DraftStatus;
-  publishedAt?: string;
+  scheduledFor: string;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export interface DraftComment {
+  id: string;
+  draftId: string;
+  authorName: string;
+  authorInitials: string;
+  body: string;
+  createdAt: string;
+}
+
+export interface AuditLog {
+  id: string;
+  workspaceId: string;
+  action: string;
+  targetType: string;
+  targetId: string;
+  description: string;
+  createdAt: string;
+}
+
