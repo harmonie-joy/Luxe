@@ -72,3 +72,31 @@ Founder / CTO
 npm run lint
 npm run test
 npm run build
+```
+
+Replace the commands above with the narrowest useful verification for the task. Use backend, frontend, or documentation-only checks as appropriate.
+
+## Manual Verification
+- [ ] Confirm the user-facing flow or documentation reads correctly.
+- [ ] Confirm workspace scoping and privacy expectations are preserved where relevant.
+- [ ] Confirm no files outside the approved scope were changed.
+
+## QA Checklist
+- [ ] Scope matches approved handoff.
+- [ ] Acceptance criteria are covered.
+- [ ] Correctness risk reviewed.
+- [ ] Type safety or contract alignment reviewed.
+- [ ] Error handling reviewed.
+- [ ] Loading, empty, and error states reviewed if frontend was touched.
+- [ ] Tests or manual verification reviewed.
+- [ ] Regression risk reviewed.
+- [ ] Security and privacy risk reviewed.
+- [ ] Documentation updates reviewed.
+- [ ] Decision-log requirement reviewed.
+
+## Management Agent Final Update
+- Progress log update:
+- Next actions update:
+- AI work log update:
+- Decision log needed:
+- Final acceptance status:

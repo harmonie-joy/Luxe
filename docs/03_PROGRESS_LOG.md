@@ -21,6 +21,39 @@ THE LUXE has a strong MVP contract across backend and frontend, but the user-fac
 - Added a data-model authority note to `docs/01_ARCHITECTURE.md` so current implementation summaries reference, rather than replace, `docs/the_luxe_data_model_source_of_truth.md`.
 - Tightened `docs/04_NEXT_ACTIONS.md` so the best next engineering task names the specific API base URL file and expected fallback behavior.
 
+### 2026-06-05 - AI Development Team Workflow
+
+Worked On:
+- Added minimal AI development team workflow documentation and prompts.
+
+Completed:
+- Added or completed Management Agent, Coding Agent, and QA Agent coordination workflow.
+- Created `prompts/coding-agent.md`.
+- Created `prompts/qa-agent.md`.
+- Updated `AGENTS.md` with AI team workflow rules.
+- Updated `prompts/management-agent.md` with coordination, handoff, approval, and QA responsibilities.
+- Completed or updated `docs/10_AI_TEAM_OPERATING_MODEL.md`.
+- Completed or updated `docs/11_AGENT_HANDOFF_TEMPLATE.md`.
+
+Problems Found:
+- `docs/10_AI_TEAM_OPERATING_MODEL.md` and `docs/11_AGENT_HANDOFF_TEMPLATE.md` already existed, so they were updated instead of recreated.
+
+Decisions Made:
+- Use a three-agent development workflow: Management Agent, Coding Agent, and QA Agent.
+- Use risk levels L0-L4 to control approval requirements.
+- Require Founder/CTO approval for L3 and L4 changes.
+
+Files Changed:
+- `AGENTS.md`
+- `prompts/management-agent.md`
+- `prompts/coding-agent.md`
+- `prompts/qa-agent.md`
+- `docs/10_AI_TEAM_OPERATING_MODEL.md`
+- `docs/11_AGENT_HANDOFF_TEMPLATE.md`
+
+Next Step:
+- Test the AI team workflow on one small, scoped coding task.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

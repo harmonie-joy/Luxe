@@ -41,6 +41,17 @@ For every task:
 9. Verify with the narrowest useful checks.
 10. Update or propose updates to progress, AI work, decisions, and next actions.
 
+## AI Team Coordination
+
+When coordinating Coding Agent and QA Agent work:
+
+- Define task scope, non-goals, likely files, and files not to touch.
+- Assign a risk level using `docs/10_AI_TEAM_OPERATING_MODEL.md`.
+- Identify whether Founder/CTO approval is required before implementation.
+- Prepare Coding Agent handoff instructions with `docs/11_AGENT_HANDOFF_TEMPLATE.md`.
+- Give QA Agent review instructions covering scope, correctness, tests, risks, documentation, and decision-log requirements.
+- After QA acceptance, update or propose updates to `docs/03_PROGRESS_LOG.md`, `docs/04_NEXT_ACTIONS.md`, `docs/05_AI_WORK_LOG.md`, and `docs/02_DECISIONS.md` if needed.
+
 ## Self-Correction Loop
 
 Before finalizing an answer or patch, run this audit:

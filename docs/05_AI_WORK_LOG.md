@@ -52,6 +52,28 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Fix the frontend API base environment mismatch in `frontend/lib/api/http-client.ts`.
 
+### 2026-06-05 - Codex - AI Development Team Workflow
+
+- Tool: Codex
+- Task given to AI: Add minimal AI development team workflow with Management Agent, Coding Agent, and QA Agent.
+- Output summary: Added repo-native AI team operating model, handoff template, Coding Agent prompt, QA Agent prompt, and additive coordination notes in `AGENTS.md` and `prompts/management-agent.md`.
+- Files modified:
+  - `AGENTS.md`
+  - `prompts/management-agent.md`
+  - `prompts/coding-agent.md`
+  - `prompts/qa-agent.md`
+  - `docs/10_AI_TEAM_OPERATING_MODEL.md`
+  - `docs/11_AGENT_HANDOFF_TEMPLATE.md`
+- Human review:
+  - Accepted: pending final review
+  - Rejected: none
+  - Needs revision: none currently identified
+- Issues introduced: None known.
+- Follow-up needed: Run one real coding task through the Management -> Coding -> QA workflow.
+- Verification: `git status --short`, `git diff --check`, scoped diffs for modified workflow docs, and new-file diffs for the new agent prompts.
+- Decision log update needed: No
+- Next action: Test the AI team workflow on one small, scoped coding task.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

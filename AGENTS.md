@@ -252,6 +252,14 @@ When asked to modify code, follow this order:
 8. Add or update tests where practical.
 9. Avoid unrelated refactors.
 
+## AI Team Workflow
+
+- Management Agent creates the task brief, assigns risk level, and defines approved scope.
+- Coding Agent implements only the approved scope.
+- QA Agent reviews implementation before acceptance.
+- Management Agent updates project memory after accepted work.
+- L3/L4 changes require explicit Founder/CTO approval.
+
 ## Things Not To Do
 
 Codex must not:
