@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ContentBrief, ContentDraft, ScheduledContent
+from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
 
 
 class ContentBriefSerializer(serializers.ModelSerializer):
@@ -208,4 +208,28 @@ class ScheduledContentSerializer(serializers.ModelSerializer):
             "publishedAt": rep["published_at"],
             "createdAt": rep["created_at"],
             "updatedAt": rep["updated_at"],
+        }
+
+
+class ApprovalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Approval
+        fields = [
+            "id",
+            "draft",
+            "user",
+            "role",
+            "created_at",
+        ]
+        read_only_fields = ["id", "user", "created_at"]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "workspaceId": str(instance.draft.brief.workspace_id),
+            "draftId": str(rep["draft"]),
+            "userId": str(rep["user"]) if rep["user"] else None,
+            "role": rep["role"],
+            "createdAt": rep["created_at"],
         }

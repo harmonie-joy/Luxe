@@ -1,7 +1,12 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import ContentBriefViewSet, ContentDraftViewSet, ScheduledContentViewSet
+from .views import (
+    ApprovalViewSet,
+    ContentBriefViewSet,
+    ContentDraftViewSet,
+    ScheduledContentViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"content-briefs", ContentBriefViewSet, basename="content-brief")
@@ -11,6 +16,7 @@ router.register(
     ScheduledContentViewSet,
     basename="scheduled-content",
 )
+router.register(r"approvals", ApprovalViewSet, basename="approval")
 
 urlpatterns = [
     path("", include(router.urls)),

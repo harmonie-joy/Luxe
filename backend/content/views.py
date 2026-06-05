@@ -3,8 +3,9 @@ from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 
-from .models import ContentBrief, ContentDraft, ScheduledContent
+from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
 from .serializers import (
+    ApprovalSerializer,
     ContentBriefSerializer,
     ContentDraftSerializer,
     ScheduledContentSerializer,
@@ -190,6 +191,50 @@ class ScheduledContentViewSet(viewsets.ModelViewSet):
         if draft.brief.workspace_id != workspace.id:
             raise PermissionDenied(
                 "You do not have permission to schedule a draft from another workspace."
+            )
+
+        serializer.save()
+
+
+class ApprovalViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for Approval, scoped through the parent ContentDraft -> ContentBrief workspace.
+    """
+
+    serializer_class = ApprovalSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = (
+            Approval.objects.select_related(
+                "draft",
+                "draft__brief",
+                "draft__brief__workspace",
+                "user",
+            )
+            .filter(draft__brief__workspace__memberships__user=self.request.user)
+        )
+        draft_id = self.request.query_params.get("draft")
+        if draft_id:
+            qs = qs.filter(draft=draft_id)
+        return qs
+
+    def perform_create(self, serializer):
+        draft = serializer.validated_data["draft"]
+
+        if not draft.brief.workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to approve drafts in this workspace."
+            )
+
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        draft = serializer.validated_data.get("draft", serializer.instance.draft)
+
+        if not draft.brief.workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to approve drafts in this workspace."
             )
 
         serializer.save()

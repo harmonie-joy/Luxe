@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContentBrief, ContentDraft, ScheduledContent
+from .models import ContentBrief, ContentDraft, ScheduledContent, Approval
 
 
 @admin.register(ContentBrief)
@@ -65,3 +65,21 @@ class ScheduledContentAdmin(admin.ModelAdmin):
         "workspace__name",
     )
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(Approval)
+class ApprovalAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "draft",
+        "user",
+        "role",
+        "created_at",
+    )
+    list_filter = ("role", "draft__brief__workspace")
+    search_fields = (
+        "draft__title",
+        "user__username",
+        "user__email",
+    )
+    readonly_fields = ("created_at",)

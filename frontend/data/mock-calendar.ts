@@ -252,6 +252,7 @@ export const mockCalendarPage = {
     {
       id: "audit-01",
       workspaceId,
+      userId: "user-mario-salamanca",
       action: "draft_created",
       targetType: "content_draft",
       targetId: "draft-private-preview-newsletter",
@@ -261,6 +262,7 @@ export const mockCalendarPage = {
     {
       id: "audit-02",
       workspaceId,
+      userId: "user-mario-salamanca",
       action: "draft_created",
       targetType: "content_draft",
       targetId: "draft-private-preview-linkedin",
@@ -270,6 +272,7 @@ export const mockCalendarPage = {
     {
       id: "audit-03",
       workspaceId,
+      userId: null,
       action: "compliance_checked",
       targetType: "content_draft",
       targetId: "draft-private-preview-newsletter",
@@ -279,6 +282,7 @@ export const mockCalendarPage = {
     {
       id: "audit-04",
       workspaceId,
+      userId: null,
       action: "compliance_checked",
       targetType: "content_draft",
       targetId: "draft-private-preview-linkedin",
@@ -288,6 +292,7 @@ export const mockCalendarPage = {
     {
       id: "audit-05",
       workspaceId,
+      userId: "user-mario-salamanca",
       action: "status_changed",
       targetType: "content_draft",
       targetId: "draft-private-preview-newsletter",
@@ -297,6 +302,7 @@ export const mockCalendarPage = {
     {
       id: "audit-06",
       workspaceId,
+      userId: "user-sarah-connor",
       action: "status_changed",
       targetType: "content_draft",
       targetId: "draft-private-preview-linkedin",
@@ -306,6 +312,7 @@ export const mockCalendarPage = {
     {
       id: "audit-07",
       workspaceId,
+      userId: "user-mario-salamanca",
       action: "draft_created",
       targetType: "content_draft",
       targetId: "draft-atelier-blog",
@@ -315,6 +322,7 @@ export const mockCalendarPage = {
     {
       id: "audit-08",
       workspaceId,
+      userId: null,
       action: "published",
       targetType: "scheduled_content",
       targetId: "scheduled-atelier-blog",

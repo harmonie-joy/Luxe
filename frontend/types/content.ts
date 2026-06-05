@@ -1,3 +1,5 @@
+import type { WorkspaceRole } from "@/types/workspace";
+
 export type ContentChannel =
   | "linkedin"
   | "instagram"
@@ -62,6 +64,15 @@ export interface ScheduledContent {
   updatedAt: string;
 }
 
+export interface Approval {
+  id: string;
+  workspaceId: string;
+  draftId: string;
+  userId: string | null;
+  role: WorkspaceRole;
+  createdAt: string;
+}
+
 export interface DraftComment {
   id: string;
   draftId: string;
@@ -74,10 +85,10 @@ export interface DraftComment {
 export interface AuditLog {
   id: string;
   workspaceId: string;
+  userId: string | null;
   action: string;
   targetType: string;
   targetId: string;
   description: string;
   createdAt: string;
 }
-

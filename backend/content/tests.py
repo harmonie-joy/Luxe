@@ -4,13 +4,14 @@ from rest_framework.test import APITestCase
 from brand.models import BrandProfile
 from tenancy.models import Membership, Workspace
 
-from .models import ContentBrief, ContentDraft, ScheduledContent
+from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
 
 User = get_user_model()
 
 BRIEFS_URL = "/api/content-briefs/"
 DRAFTS_URL = "/api/content-drafts/"
 SCHEDULED_CONTENT_URL = "/api/scheduled-content/"
+APPROVALS_URL = "/api/approvals/"
 
 
 def brief_detail_url(brief_id):
@@ -23,6 +24,10 @@ def draft_detail_url(draft_id):
 
 def scheduled_content_detail_url(scheduled_content_id):
     return f"{SCHEDULED_CONTENT_URL}{scheduled_content_id}/"
+
+
+def approval_detail_url(approval_id):
+    return f"{APPROVALS_URL}{approval_id}/"
 
 
 class ContentBriefAPITest(APITestCase):
@@ -101,6 +106,16 @@ class ContentBriefAPITest(APITestCase):
             channel=ContentBrief.Channel.INSTAGRAM,
             status=ContentDraft.DraftStatus.SCHEDULED,
             scheduled_for="2026-06-13T09:00:00Z",
+        )
+        self.approval = Approval.objects.create(
+            draft=self.draft,
+            user=self.user,
+            role=Membership.Role.EDITOR,
+        )
+        self.other_approval = Approval.objects.create(
+            draft=self.other_draft,
+            user=self.other_user,
+            role=Membership.Role.REVIEWER,
         )
 
     def test_list_returns_only_own_workspace_briefs(self):
@@ -485,5 +500,70 @@ class ContentBriefAPITest(APITestCase):
                 "publishedAt",
                 "createdAt",
                 "updatedAt",
+            },
+        )
+
+    def test_list_returns_only_own_workspace_approvals(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(APPROVALS_URL)
+        self.assertEqual(response.status_code, 200)
+        ids = [approval["id"] for approval in response.data]
+        self.assertIn(str(self.approval.id), ids)
+        self.assertNotIn(str(self.other_approval.id), ids)
+
+    def test_filter_approvals_by_draft(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(APPROVALS_URL, {"draft": str(self.draft.id)})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [approval["id"] for approval in response.data],
+            [str(self.approval.id)],
+        )
+
+    def test_unauthenticated_approval_list_is_rejected(self):
+        response = self.client.get(APPROVALS_URL)
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_create_approval(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "draft": str(self.draft.id),
+            "user": str(self.other_user.id),
+            "role": Membership.Role.REVIEWER,
+        }
+        response = self.client.post(APPROVALS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["workspaceId"], str(self.workspace.id))
+        self.assertEqual(response.data["draftId"], str(self.draft.id))
+        self.assertEqual(response.data["userId"], str(self.user.id))
+        self.assertEqual(response.data["role"], Membership.Role.REVIEWER)
+
+    def test_create_approval_for_foreign_draft_is_denied(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "draft": str(self.other_draft.id),
+            "role": Membership.Role.REVIEWER,
+        }
+        response = self.client.post(APPROVALS_URL, payload, format="json")
+        self.assertEqual(response.status_code, 403)
+
+    def test_cross_workspace_approval_retrieve_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(approval_detail_url(self.other_approval.id))
+        self.assertEqual(response.status_code, 404)
+
+    def test_approval_response_shape_matches_frontend_type(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(approval_detail_url(self.approval.id))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            set(response.data.keys()),
+            {
+                "id",
+                "workspaceId",
+                "draftId",
+                "userId",
+                "role",
+                "createdAt",
             },
         )

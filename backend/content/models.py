@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 
 from brand.models import BrandProfile
-from tenancy.models import Workspace
+from tenancy.models import Membership, Workspace
 
 
 class ContentBrief(models.Model):
@@ -157,3 +157,34 @@ class ScheduledContent(models.Model):
 
     def __str__(self) -> str:
         return f"{self.draft} scheduled for {self.scheduled_for:%Y-%m-%d %H:%M}"
+
+
+class Approval(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    draft = models.ForeignKey(
+        ContentDraft,
+        on_delete=models.CASCADE,
+        related_name="approvals",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approvals",
+    )
+    role = models.CharField(
+        max_length=32,
+        choices=Membership.Role.choices,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["draft"]),
+            models.Index(fields=["user"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Approval for {self.draft} by {self.user} ({self.role})"
