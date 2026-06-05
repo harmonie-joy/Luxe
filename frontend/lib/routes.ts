@@ -14,6 +14,11 @@ export function brandVoiceSampleRoute(id: string): string {
   return `/brand-voice/samples/${id}`;
 }
 
+/** Dynamic route for reviewing compliance results for a single content draft. */
+export function complianceReviewRoute(draftId: string): string {
+  return `${APP_ROUTES.compliance}/${draftId}`;
+}
+
 export type AppRouteKey = keyof typeof APP_ROUTES;
 export type AppRoutePath = (typeof APP_ROUTES)[AppRouteKey];
 

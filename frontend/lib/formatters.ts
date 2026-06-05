@@ -1,4 +1,9 @@
 import type { BrandAssetSourceType, BrandAssetStatus } from "@/types/brand-profile";
+import type {
+  ComplianceCategory,
+  ComplianceSeverity,
+  ComplianceStatus,
+} from "@/types/compliance";
 import type { ContentChannel, DraftStatus } from "@/types/content";
 
 export const BRAND_ASSET_SOURCE_LABELS: Record<BrandAssetSourceType, string> = {
@@ -27,6 +32,25 @@ export const DRAFT_STATUS_LABELS: Record<DraftStatus, string> = {
   approved: "Approved",
   scheduled: "Scheduled",
   published: "Published",
+};
+
+export const COMPLIANCE_STATUS_LABELS: Record<ComplianceStatus, string> = {
+  green: "Green",
+  yellow: "Yellow",
+  red: "Red",
+};
+
+export const COMPLIANCE_CATEGORY_LABELS: Record<ComplianceCategory, string> = {
+  gdpr: "GDPR",
+  consent: "Consent",
+  ip: "IP",
+  claims: "Claims",
+};
+
+export const COMPLIANCE_SEVERITY_LABELS: Record<ComplianceSeverity, string> = {
+  low: "Low",
+  medium: "Medium",
+  high: "High",
 };
 
 /**
