@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ContentBrief, ContentDraft
+from .models import ContentBrief, ContentDraft, ScheduledContent
 
 
 class ContentBriefSerializer(serializers.ModelSerializer):
@@ -130,6 +130,82 @@ class ContentDraftSerializer(serializers.ModelSerializer):
             "channel": rep["channel"],
             "status": rep["status"],
             "createdBy": str(rep["created_by"]) if rep["created_by"] else None,
+            "createdAt": rep["created_at"],
+            "updatedAt": rep["updated_at"],
+        }
+
+
+class ScheduledContentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ScheduledContent
+        fields = [
+            "id",
+            "workspace",
+            "draft",
+            "channel",
+            "status",
+            "scheduled_for",
+            "published_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        validators = []
+
+    def validate(self, attrs):
+        workspace = attrs.get("workspace")
+        draft = attrs.get("draft")
+        channel = attrs.get("channel")
+
+        if self.instance is not None:
+            workspace = workspace or self.instance.workspace
+            draft = draft or self.instance.draft
+            channel = channel or self.instance.channel
+
+        if workspace and draft and draft.brief.workspace_id != workspace.id:
+            raise serializers.ValidationError(
+                {
+                    "draft": (
+                        "Scheduled draft must belong to the selected workspace."
+                    )
+                }
+            )
+
+        if draft and channel and channel != draft.channel:
+            raise serializers.ValidationError(
+                {
+                    "channel": (
+                        "Scheduled content channel must match the linked draft channel."
+                    )
+                }
+            )
+
+        if draft:
+            duplicate_item = ScheduledContent.objects.filter(draft=draft)
+            if self.instance is not None:
+                duplicate_item = duplicate_item.exclude(pk=self.instance.pk)
+
+            if duplicate_item.exists():
+                raise serializers.ValidationError(
+                    {
+                        "draft": (
+                            "A scheduled content item already exists for this draft."
+                        )
+                    }
+                )
+
+        return attrs
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "workspaceId": str(rep["workspace"]),
+            "draftId": str(rep["draft"]),
+            "channel": rep["channel"],
+            "status": rep["status"],
+            "scheduledFor": rep["scheduled_for"],
+            "publishedAt": rep["published_at"],
             "createdAt": rep["created_at"],
             "updatedAt": rep["updated_at"],
         }

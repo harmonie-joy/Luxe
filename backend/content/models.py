@@ -113,3 +113,47 @@ class ContentDraft(models.Model):
 
     def __str__(self) -> str:
         return f"{self.title} ({self.get_channel_display()})"
+
+
+class ScheduledContent(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.CASCADE,
+        related_name="scheduled_content",
+    )
+    draft = models.ForeignKey(
+        ContentDraft,
+        on_delete=models.CASCADE,
+        related_name="scheduled_items",
+    )
+    channel = models.CharField(
+        max_length=32,
+        choices=ContentBrief.Channel.choices,
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=ContentDraft.DraftStatus.choices,
+        default=ContentDraft.DraftStatus.SCHEDULED,
+    )
+    scheduled_for = models.DateTimeField()
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("scheduled_for",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["draft"],
+                name="unique_scheduled_content_per_draft",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["workspace", "scheduled_for"]),
+            models.Index(fields=["workspace", "status"]),
+            models.Index(fields=["channel", "scheduled_for"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.draft} scheduled for {self.scheduled_for:%Y-%m-%d %H:%M}"

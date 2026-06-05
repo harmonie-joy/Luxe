@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ContentBrief, ContentDraft
+from .models import ContentBrief, ContentDraft, ScheduledContent
 
 
 @admin.register(ContentBrief)
@@ -38,5 +38,30 @@ class ContentDraftAdmin(admin.ModelAdmin):
         "content",
         "brief__content_objective",
         "brief__workspace__name",
+    )
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(ScheduledContent)
+class ScheduledContentAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "workspace",
+        "draft",
+        "channel",
+        "status",
+        "scheduled_for",
+        "published_at",
+    )
+    list_filter = (
+        "workspace",
+        "channel",
+        "status",
+        "scheduled_for",
+    )
+    search_fields = (
+        "draft__title",
+        "draft__content",
+        "workspace__name",
     )
     readonly_fields = ("created_at", "updated_at")

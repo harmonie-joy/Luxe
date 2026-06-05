@@ -3,8 +3,12 @@ from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 
-from .models import ContentBrief, ContentDraft
-from .serializers import ContentBriefSerializer, ContentDraftSerializer
+from .models import ContentBrief, ContentDraft, ScheduledContent
+from .serializers import (
+    ContentBriefSerializer,
+    ContentDraftSerializer,
+    ScheduledContentSerializer,
+)
 
 
 class ContentBriefViewSet(viewsets.ModelViewSet):
@@ -122,6 +126,70 @@ class ContentDraftViewSet(viewsets.ModelViewSet):
         if not brief.workspace.memberships.filter(user=self.request.user).exists():
             raise PermissionDenied(
                 "You do not have permission to move drafts into this brief."
+            )
+
+        serializer.save()
+
+
+class ScheduledContentViewSet(viewsets.ModelViewSet):
+    """
+    CRUD for ScheduledContent, scoped directly to workspaces the authenticated
+    user belongs to. Supports optional filtering by ?workspace=<id> and
+    ?draft=<uuid>.
+    """
+
+    serializer_class = ScheduledContentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = (
+            ScheduledContent.objects.select_related(
+                "workspace",
+                "draft",
+                "draft__brief",
+                "draft__brief__workspace",
+            )
+            .filter(workspace__memberships__user=self.request.user)
+        )
+        workspace_id = self.request.query_params.get("workspace")
+        draft_id = self.request.query_params.get("draft")
+        if workspace_id:
+            qs = qs.filter(workspace=workspace_id)
+        if draft_id:
+            qs = qs.filter(draft=draft_id)
+        return qs
+
+    def perform_create(self, serializer):
+        workspace = serializer.validated_data["workspace"]
+        draft = serializer.validated_data["draft"]
+
+        if not workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to schedule content in this workspace."
+            )
+
+        if draft.brief.workspace_id != workspace.id:
+            raise PermissionDenied(
+                "You do not have permission to schedule a draft from another workspace."
+            )
+
+        serializer.save()
+
+    def perform_update(self, serializer):
+        workspace = serializer.validated_data.get(
+            "workspace",
+            serializer.instance.workspace,
+        )
+        draft = serializer.validated_data.get("draft", serializer.instance.draft)
+
+        if not workspace.memberships.filter(user=self.request.user).exists():
+            raise PermissionDenied(
+                "You do not have permission to move scheduled content into this workspace."
+            )
+
+        if draft.brief.workspace_id != workspace.id:
+            raise PermissionDenied(
+                "You do not have permission to schedule a draft from another workspace."
             )
 
         serializer.save()
