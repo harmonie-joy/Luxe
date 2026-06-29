@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
+import { getSession } from "@/lib/api/auth";
+import { getBrandProfiles } from "@/lib/api/brand-voice";
 import {
   createContentBrief,
   type CreateContentBriefPayload,
@@ -42,6 +44,46 @@ function getInitialFormState(data: CreateBriefPageData): CreateBriefFormState {
     angle: data.brief.angle,
     constraints: data.brief.constraints,
     targetChannels: [...data.brief.targetChannels],
+  };
+}
+
+function buildLivePageData(
+  fallbackData: CreateBriefPageData,
+  session: Awaited<ReturnType<typeof getSession>>,
+  profiles: readonly BrandProfile[],
+): CreateBriefPageData {
+  const workspaces =
+    session.workspaces.length > 0
+      ? session.workspaces.map((workspace) => ({
+          id: workspace.id,
+          name: workspace.name,
+          selected: workspace.id === session.activeWorkspaceId,
+        }))
+      : fallbackData.workspaces;
+
+  const preferredWorkspaceId =
+    session.activeWorkspaceId ??
+    workspaces.find((workspace) => workspace.selected)?.id ??
+    fallbackData.brief.workspaceId;
+
+  const preferredProfile = profiles.find(
+    (profile) => profile.workspaceId === preferredWorkspaceId,
+  );
+
+  return {
+    ...fallbackData,
+    workspaces,
+    brandProfiles: profiles.length > 0 ? profiles : fallbackData.brandProfiles,
+    brief: {
+      ...fallbackData.brief,
+      workspaceId: preferredWorkspaceId,
+      brandProfileId:
+        preferredProfile?.id ??
+        fallbackData.brandProfiles.find(
+          (profile) => profile.workspaceId === preferredWorkspaceId,
+        )?.id ??
+        fallbackData.brief.brandProfileId,
+    },
   };
 }
 
@@ -128,30 +170,67 @@ function renderSelectableOptions<TValue extends CampaignGoal | ContentChannel>(
 
 export function CreateBriefShell({ data }: CreateBriefShellProps) {
   const router = useRouter();
+  const [pageData, setPageData] = useState<CreateBriefPageData>(data);
   const [formState, setFormState] = useState<CreateBriefFormState>(() =>
     getInitialFormState(data),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [hasLoadedLiveData, setHasLoadedLiveData] = useState(false);
+
+  useEffect(() => {
+    if (hasLoadedLiveData) return;
+
+    let isActive = true;
+
+    async function loadLiveData() {
+      try {
+        const [session, profiles] = await Promise.all([
+          getSession(),
+          getBrandProfiles(),
+        ]);
+
+        if (!isActive) return;
+
+        const nextPageData = buildLivePageData(data, session, profiles);
+        setPageData(nextPageData);
+        setFormState(getInitialFormState(nextPageData));
+      } catch {
+        if (isActive) {
+          setPageData(data);
+        }
+      } finally {
+        if (isActive) {
+          setHasLoadedLiveData(true);
+        }
+      }
+    }
+
+    void loadLiveData();
+
+    return () => {
+      isActive = false;
+    };
+  }, [data, hasLoadedLiveData]);
 
   const availableProfiles = useMemo(
     () =>
-      data.brandProfiles.filter(
+      pageData.brandProfiles.filter(
         (profile) => profile.workspaceId === formState.workspaceId,
       ),
-    [data.brandProfiles, formState.workspaceId],
+    [pageData.brandProfiles, formState.workspaceId],
   );
 
-  const selectedWorkspaceName = getWorkspaceName(data, formState.workspaceId);
-  const selectedBrandProfile = getBrandProfile(data, formState.brandProfileId);
-  const selectedChannelLabels = data.channelOptions
+  const selectedWorkspaceName = getWorkspaceName(pageData, formState.workspaceId);
+  const selectedBrandProfile = getBrandProfile(pageData, formState.brandProfileId);
+  const selectedChannelLabels = pageData.channelOptions
     .filter((option) => formState.targetChannels.includes(option.value))
     .map((option) => option.label);
 
   function handleWorkspaceChange(event: ChangeEvent<HTMLSelectElement>) {
     const nextWorkspaceId = event.target.value;
-    const nextProfiles = data.brandProfiles.filter(
+    const nextProfiles = pageData.brandProfiles.filter(
       (profile) => profile.workspaceId === nextWorkspaceId,
     );
 
@@ -244,9 +323,9 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
   return (
     <div className="flex min-h-full flex-col gap-8">
       <header className="max-w-4xl">
-        <p className="luxe-eyebrow">{data.pageHeader.eyebrow}</p>
-        <h1 className="luxe-page-title mt-3">{data.pageHeader.title}</h1>
-        <p className="luxe-page-description mt-4">{data.pageHeader.description}</p>
+        <p className="luxe-eyebrow">{pageData.pageHeader.eyebrow}</p>
+        <h1 className="luxe-page-title mt-3">{pageData.pageHeader.title}</h1>
+        <p className="luxe-page-description mt-4">{pageData.pageHeader.description}</p>
       </header>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -255,8 +334,8 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
             <p className="luxe-eyebrow">Brief Setup</p>
             <h2 className="luxe-section-title mt-2">Structured Content Brief</h2>
             <p className="luxe-form-help mt-2">
-              Use the backend-aligned fields below to create a brief for the
-              draft workflow.
+              The form now uses the live workspace and brand-profile records from
+              the Docker-backed backend so the save request uses real IDs.
             </p>
           </div>
 
@@ -277,7 +356,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
                   onChange={handleWorkspaceChange}
                   value={formState.workspaceId}
                 >
-                  {data.workspaces.map((workspace) => (
+                  {pageData.workspaces.map((workspace) => (
                     <option key={workspace.id} value={workspace.id}>
                       {workspace.name}
                     </option>
@@ -330,7 +409,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               <span className="luxe-form-label">Campaign goal</span>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {renderSelectableOptions(
-                  data.campaignGoalOptions,
+                  pageData.campaignGoalOptions,
                   "campaignGoal",
                   [formState.campaignGoal],
                   (value) => handleCampaignGoalChange(value),
@@ -386,7 +465,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               <span className="luxe-form-label">Target channels</span>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {renderSelectableOptions(
-                  data.channelOptions,
+                  pageData.channelOptions,
                   "targetChannels",
                   formState.targetChannels,
                   handleTargetChannelChange,

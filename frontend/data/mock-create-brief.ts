@@ -33,12 +33,12 @@ export interface CreateBriefPageData {
   channelOptions: readonly CreateBriefSelectableOption<ContentChannel>[];
 }
 
-const workspaceTheLuxe = "workspace-the-luxe";
-const workspaceEditorial = "workspace-editorial";
+const workspaceTheLuxe = "11111111-1111-4111-8111-111111111111";
+const workspaceEditorial = "22222222-2222-4222-8222-222222222222";
 
 const brandProfiles: readonly BrandProfile[] = [
   {
-    id: "the-luxe-signature",
+    id: "33333333-3333-4333-8333-333333333333",
     workspaceId: workspaceTheLuxe,
     name: "THE LUXE Signature Voice",
     audience:
@@ -66,7 +66,7 @@ const brandProfiles: readonly BrandProfile[] = [
     updatedAt: "2026-06-03T10:00:00.000Z",
   },
   {
-    id: "private-client-services",
+    id: "44444444-4444-4444-8444-444444444444",
     workspaceId: workspaceTheLuxe,
     name: "Private Client Services",
     audience:
@@ -93,7 +93,7 @@ const brandProfiles: readonly BrandProfile[] = [
     updatedAt: "2026-06-03T12:00:00.000Z",
   },
   {
-    id: "editorial-partnerships",
+    id: "55555555-5555-4555-8555-555555555555",
     workspaceId: workspaceEditorial,
     name: "Editorial Partnerships",
     audience:
@@ -122,9 +122,9 @@ const brandProfiles: readonly BrandProfile[] = [
 ];
 
 const brief: ContentBrief = {
-  id: "brief-private-preview-event",
+  id: "66666666-6666-4666-8666-666666666666",
   workspaceId: workspaceTheLuxe,
-  brandProfileId: "private-client-services",
+  brandProfileId: "44444444-4444-4444-8444-444444444444",
   contentObjective:
     "Invite top-tier clients to a private preview of the autumn couture capsule before the wider editorial launch.",
   campaignGoal: "announce",
