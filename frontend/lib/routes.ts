@@ -1,5 +1,7 @@
 export const APP_ROUTES = {
   home: "/",
+  login: "/login",
+  signup: "/signup",
   dashboard: "/dashboard",
   brandVoice: "/brand-voice",
   create: "/create",

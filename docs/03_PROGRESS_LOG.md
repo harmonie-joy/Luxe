@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The Create Brief screen is now connected to the existing ContentBrief API, while the broader Draft Studio and Compliance Review flow still needs runtime integration and authenticated workspace bootstrap.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected; Draft Studio and Compliance Review still need broader runtime integration.
 
 ## Progress Entries
 
@@ -159,6 +159,48 @@ Decision Log Update Needed:
 Next Step:
 - Execute the approved frontend mock-render slice in Draft Studio while keeping T-BOOT-001 as a prerequisite planning track for later API persistence.
 
+### 2026-06-29 - Homepage and Auth Provider Flow
+
+Worked On:
+- Built the root homepage prototype and connected signup/login to a backend session flow.
+
+Completed:
+- Replaced the root backend-health placeholder with a dark luxury homepage based on the supplied prototype.
+- Added `/login` and `/signup` frontend routes with form handling, CSRF preparation, workspace bootstrap, and dashboard redirect.
+- Added `django-allauth[headless]` as the backend auth provider package and configured allauth headless/session support.
+- Added backend auth endpoints for CSRF, signup, login, logout, current session, and workspace bootstrap.
+- Added an idempotent `seed_demo` management command for local demo credentials and workspace data.
+- Removed `next/font` runtime build dependency so frontend builds do not require Google Fonts network access.
+
+Problems Found:
+- Local backend tests could not use the default Postgres connection because the service was not running; targeted auth tests passed with a temporary SQLite database.
+- Frontend lint still reports the pre-existing unused `AuditLog` import in `frontend/features/calendar/components/calendar-shell.tsx`.
+
+Files Changed:
+- `backend/config/settings.py`
+- `backend/config/urls.py`
+- `backend/requirements/base.txt`
+- `backend/tenancy/`
+- `frontend/app/`
+- `frontend/features/auth/`
+- `frontend/features/home/`
+- `frontend/lib/api/`
+- `frontend/lib/routes.ts`
+- `frontend/types/auth.ts`
+- `frontend/styles/theme.css`
+
+Verification:
+- `cd backend && DATABASE_URL=sqlite:////tmp/theluxe-auth-test.sqlite3 .venv/bin/python manage.py test tenancy` passed.
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed with the pre-existing calendar warning.
+- `cd frontend && npm run build` passed outside the sandbox after Turbopack hit a sandbox port-binding restriction.
+
+Decision Log Update Needed:
+- Yes. Added D-0007 for django-allauth headless plus Django sessions.
+
+Next Step:
+- Run `make migrate`, then `make manage cmd="seed_demo"` in the Docker stack and manually verify homepage -> signup/login -> dashboard against the running backend.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
@@ -166,6 +208,7 @@ Next Step:
 - Frontend routes exist for dashboard, brand voice, create brief, draft studio, compliance review, and calendar.
 - Frontend shared types and mock data cover the intended MVP flow.
 - API clients exist for brand voice, content briefs, content drafts, scheduled content, and compliance.
+- Auth clients and backend session endpoints now exist for signup, login, logout, workspace bootstrap, and current-user session reads.
 
 ### Existing Prototype Audit Snapshot
 
@@ -178,10 +221,10 @@ Next Step:
 - `make test-be` previously passed with 76 backend tests according to `docs/mvp-progress-report.md`.
 - `npm run typecheck`, `npm run lint`, and `npm run build` previously passed according to `docs/mvp-progress-report.md`, with a noted lint warning about an unused `AuditLog` import.
 - 2026-06-05 Create Brief API integration verification passed: `cd frontend && npm run typecheck`, `cd frontend && npm run lint`, and `cd frontend && npm run build`. Lint retained the pre-existing calendar `AuditLog` warning, and build retained the pre-existing root health dynamic-fetch log.
+- 2026-06-29 homepage/auth verification passed: targeted tenancy auth tests with temporary SQLite, frontend typecheck, frontend lint with the pre-existing calendar warning, and frontend production build outside the sandbox.
 - No app verification commands were run as part of the memory scaffolding or consistency audit. Verification was limited to repository inspection, `docs/mvp-progress-report.md` review, and git diff/status review.
 
 ## Open Progress Questions
 
-- Which workspace/bootstrap API should the frontend use for a minimal authenticated session path?
 - Should comments and voice scores stay UI-only or become canonical MVP entities?
 - Should dashboard data be backed by a dedicated aggregate endpoint or composed from existing APIs?

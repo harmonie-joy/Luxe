@@ -2,15 +2,16 @@
 
 ## Current Sprint Goal
 
-Persist the core Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping and the existing MVP domain contract. The Create Brief submission step is now connected to the existing ContentBrief API; the next integration work is authenticated workspace bootstrap and Draft Studio persistence.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping and the existing MVP domain contract. Homepage and auth session bootstrap now exist; the next integration work is runtime verification in Docker and Draft Studio persistence.
 
 ## Active Tasks
 
 | Priority | Task | Status | Notes |
 | --- | --- | --- | --- |
 | P0 | Align frontend API base environment variable with Docker Compose. | Done | `frontend/lib/api/http-client.ts` now prefers `NEXT_PUBLIC_API_BASE_URL` while preserving `NEXT_PUBLIC_API_URL`. |
-| P0 | Define the minimal active workspace/bootstrap path for frontend API calls. | Ready | Needed before replacing mocks broadly. |
-| P0 | T-BOOT-001: Define authenticated workspace/bootstrap prerequisite path. | Ready | Planning-only prerequisite for later API-connected Draft Studio persistence. |
+| P0 | Define the minimal active workspace/bootstrap path for frontend API calls. | Done | `/api/auth/me/` and `/api/auth/bootstrap-workspace/` now return session workspace data. |
+| P0 | T-BOOT-001: Define authenticated workspace/bootstrap prerequisite path. | Done | Implemented as a minimal session/bootstrap API, not a full workspace selector. |
+| P0 | Run auth provider migrations and seed the demo workspace in Docker. | Ready | Run `make migrate`, then `make manage cmd="seed_demo"` after rebuilding with `django-allauth[headless]`. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
@@ -20,13 +21,12 @@ Persist the core Create Brief -> Draft Studio -> Compliance Review workflow whil
 
 ## Blockers
 
-- No frontend-auth-compatible login/session flow.
-- No workspace or membership API for user-facing workspace selection.
+- No full workspace switcher or membership management UI.
 - Product screens still use mocks by default.
 
 ## Best Next Task for AI
 
-Execute the Draft Studio mock-validation rendering slice (AI guidance panel, suggestion cards, and loading/failure states) while keeping T-BOOT-001 active as a planning-only prerequisite path for broader API-connected persistence work.
+Rebuild the Docker stack, run migrations and `seed_demo`, then manually verify homepage -> login/signup -> dashboard. After that, connect Draft Studio reads and saves to the existing content draft APIs.
 
 ## Do Not Touch Yet
 

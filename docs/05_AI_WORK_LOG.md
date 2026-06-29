@@ -122,6 +122,32 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Execute the approved Draft Studio mock-render slice and keep T-BOOT-001 as the prerequisite planning track for future API-connected persistence.
 
+### 2026-06-29 - Codex - Homepage and Django Allauth Signup/Login Flow
+
+- Tool: Codex
+- Request: Implement the homepage plan with signup, seed command, auth provider, and new package in ponytail/full mode.
+- Files changed:
+  - `backend/config/settings.py`
+  - `backend/config/urls.py`
+  - `backend/requirements/base.txt`
+  - `backend/tenancy/`
+  - `frontend/app/`
+  - `frontend/features/auth/`
+  - `frontend/features/home/`
+  - `frontend/lib/api/`
+  - `frontend/lib/routes.ts`
+  - `frontend/types/auth.ts`
+  - `frontend/styles/theme.css`
+  - `docs/02_DECISIONS.md`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added a dark luxury root homepage, login/signup pages, cookie/CSRF-aware frontend API client, django-allauth headless package/configuration, local auth/session endpoints, workspace bootstrap, and an idempotent demo seed command.
+- Human review status: Pending
+- Verification: `cd backend && DATABASE_URL=sqlite:////tmp/theluxe-auth-test.sqlite3 .venv/bin/python manage.py test tenancy` passed; `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed with the pre-existing calendar warning; `cd frontend && npm run build` passed outside the sandbox.
+- Decision log update needed: Yes, D-0007 added.
+- Next action: Rebuild Docker, run `make migrate`, run `make manage cmd="seed_demo"`, and manually verify homepage -> auth -> dashboard.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

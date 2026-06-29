@@ -5,8 +5,8 @@
  * it can be configured per environment. Falls back to localhost:8000 for local
  * development against the Docker-composed backend.
  *
- * Auth headers are currently a no-op stub. When a session/auth mechanism is
- * introduced, extend `getAuthHeaders` without touching call sites.
+ * Session auth uses browser cookies. Unsafe requests also send Django's CSRF
+ * cookie when it exists.
  */
 
 const API_BASE_URL =
@@ -25,21 +25,39 @@ export class ApiError extends Error {
   }
 }
 
-/** Stub — replace with real token/session retrieval when auth is added. */
-function getAuthHeaders(): HeadersInit {
-  return {};
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null;
+
+  const prefix = `${name}=`;
+  return (
+    document.cookie
+      .split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith(prefix))
+      ?.slice(prefix.length) ?? null
+  );
+}
+
+function getCsrfHeaders(method: string): HeadersInit {
+  if (["GET", "HEAD", "OPTIONS", "TRACE"].includes(method.toUpperCase())) {
+    return {};
+  }
+
+  const token = getCookie("csrftoken");
+  return token ? { "X-CSRFToken": token } : {};
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
+  const method = init.method ?? "GET";
 
   const headers: HeadersInit = {
     "Content-Type": "application/json",
-    ...getAuthHeaders(),
+    ...getCsrfHeaders(method),
     ...(init.headers ?? {}),
   };
 
-  const response = await fetch(url, { ...init, headers });
+  const response = await fetch(url, { ...init, credentials: "include", headers });
 
   if (!response.ok) {
     let detail = response.statusText;

@@ -10,6 +10,7 @@
 | D-0004 | 2026-06-05 | Accepted | Keep publishing integrations out of scope until scheduled content and approvals are stable. | Calendar and approval workflow need to be persisted before external publishing creates more operational risk. | `AGENTS.md`, `docs/mvp-progress-report.md` |
 | D-0005 | 2026-06-05 | Accepted | Use shared frontend domain types in `frontend/types/` and backend `TextChoices` enum strings as the canonical contract. | The repo already aligns most enum values across Django models, serializers, TypeScript types, and mock data. | `AGENTS.md`, `frontend/types/`, `backend/*/models.py` |
 | D-0006 | 2026-06-05 | Accepted | Keep authenticated workspace/bootstrap definition as a prerequisite planning track before broader API-connected Draft Studio persistence. | Persistence work depends on deterministic active workspace resolution, workspace-scoped reads, and clear fallback behavior; sequencing this first reduces integration churn and scope risk. | `docs/04_NEXT_ACTIONS.md`, `docs/03_PROGRESS_LOG.md` |
+| D-0007 | 2026-06-29 | Accepted | Use django-allauth headless plus Django sessions for MVP signup/login. | The founder requested signup, seed data, an auth provider, and a new package; allauth keeps auth repo-native without adding hosted-provider setup or JWT complexity. | `backend/config/settings.py`, `backend/requirements/base.txt`, `frontend/lib/api/auth.ts` |
 
 ## Decision Entry Template
 

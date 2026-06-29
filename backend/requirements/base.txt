@@ -2,6 +2,7 @@
 Django>=5.0,<6.0
 # DRF 3.15+ supports Django 5.2
 djangorestframework>=3.15,<4.0
+django-allauth[headless]>=65,<66
 
 # Database & Environment
 # --- Database (Psycopg 3 is the modern, non-blocking standard) ---
