@@ -2,7 +2,7 @@
 
 ## Current Sprint Goal
 
-Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand voice extraction and draft generation, and Draft Studio can generate and save persisted drafts; the next integration work is Compliance Review persistence.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand voice extraction and draft generation, and Draft Studio can generate, save, and switch brief-scoped persisted drafts; the next integration work is Compliance Review persistence.
 
 ## Active Tasks
 
@@ -16,6 +16,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 | P0 | T-AI-002: Add Brand Voice Extraction API contract. | Done | GitHub issue #9. `POST /api/ai/brand/extract/` validates workspace/profile/assets, calls the mock-backed local AI service, returns `aiRunId` and schema-valid suggestions, and does not mutate `BrandProfile`. |
 | P0 | T-AI-004: Add AI Draft Generation API. | Done | GitHub issue #12. `POST /api/ai/drafts/generate/` validates workspace/brief/channel access, calls local draft generation, upserts `ContentDraft` records, and returns draft records plus `AIRun` IDs. |
 | P0 | T-AI-005: Connect Draft Studio to AI draft generation. | Done | GitHub issue #14. Draft Studio loads persisted brief/draft data, generates drafts for target channels, renders returned drafts, and saves title/content edits through the existing draft API. |
+| P0 | T-UX-001: Clarify Brief and Draft workflow. | Done | GitHub issue #16. Create Brief routes to `/drafts?brief=<id>`, Draft Studio shows the selected brief, supports brief switching, and clarifies brief versus draft concepts. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | T-AI-003: Connect Brand Voice Setup to extraction endpoint. | Done | GitHub issue #10. The page can analyze selected samples, render suggestions, preserve mock fallback, and accept suggestions through the existing profile update API in API mode. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
