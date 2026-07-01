@@ -16,6 +16,7 @@ export interface BrandVoiceSetupData {
   profile: BrandProfile;
   toneOptions: readonly BrandToneOption[];
   sampleContent: SampleContentConfig;
+  source: "api" | "mock";
 }
 
 export const mockBrandVoiceSetup = {
@@ -142,4 +143,5 @@ export const mockBrandVoiceSetup = {
       },
     ] satisfies BrandAsset[],
   },
+  source: "mock",
 } satisfies BrandVoiceSetupData;

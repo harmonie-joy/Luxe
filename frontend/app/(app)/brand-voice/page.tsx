@@ -1,10 +1,11 @@
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
+import { BrandVoiceAiPanel } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import { BrandProfileForm } from "@/features/brand-voice/components/brand-profile-form";
 import { BrandProfilePreview } from "@/features/brand-voice/components/brand-profile-preview";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 
 export default async function BrandVoicePage() {
-  const { pageHeader, profile, sampleContent, toneOptions } =
+  const { pageHeader, profile, sampleContent, source, toneOptions } =
     await getBrandVoiceSetup();
 
   return (
@@ -22,6 +23,11 @@ export default async function BrandVoicePage() {
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-6">
           <BrandProfileForm profile={profile} toneOptions={toneOptions} />
+          <BrandVoiceAiPanel
+            profile={profile}
+            samples={sampleContent.samples}
+            source={source}
+          />
           <SampleContentUploader sampleContent={sampleContent} />
         </div>
 
