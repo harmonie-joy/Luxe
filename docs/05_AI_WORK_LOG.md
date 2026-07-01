@@ -212,6 +212,25 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
 - Next action: Connect Brand Voice Setup UI to the extraction endpoint with confirmation-gated profile updates.
 
+### 2026-07-01 - Codex - T-AI-003 Brand Voice AI Suggestions Panel
+
+- Tool: Codex
+- Request: Add a frontend Brand Voice AI suggestions panel on `/brand-voice`, backed by the T-AI-002 endpoint in API mode and deterministic local suggestions in mock mode.
+- Files changed:
+  - `frontend/app/(app)/brand-voice/page.tsx`
+  - `frontend/data/mock-brand-profiles.ts`
+  - `frontend/features/brand-voice/components/brand-voice-ai-panel.tsx`
+  - `frontend/features/brand-voice/data/get-brand-voice-setup.ts`
+  - `frontend/lib/api/ai.ts`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #10, added a typed AI API helper, added sample selection and analysis UI, rendered brand voice suggestions, preserved mock fallback behavior, and added confirmation-gated profile updates through the existing BrandProfile update API.
+- Human review status: Pending
+- Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed outside the sandbox after the known Turbopack internal port-binding restriction.
+- Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
+- Next action: Connect Draft Studio reads/saves to the existing content draft APIs.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

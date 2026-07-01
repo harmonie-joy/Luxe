@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and the first product-facing local AI endpoint now exists for brand voice extraction; Draft Studio and Compliance Review still need broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and Brand Voice Setup now exposes local-first AI suggestions against selected samples; Draft Studio and Compliance Review still need broader runtime integration.
 
 ## Progress Entries
 
@@ -323,6 +323,40 @@ Decision Log Update Needed:
 
 Next Step:
 - Connect Brand Voice Setup UI to the new extraction endpoint, keeping suggestions review-only until the user explicitly saves changes.
+
+### 2026-07-01 - T-AI-003 Brand Voice AI Suggestions Panel
+
+Worked On:
+- Connected the Brand Voice Setup frontend to the brand voice extraction workflow.
+
+Completed:
+- Created GitHub issue #10 for T-AI-003.
+- Added a typed frontend AI API helper for `POST /api/ai/brand/extract/`.
+- Added an AI suggestions panel to `/brand-voice`.
+- Let users select current sample assets, run analysis, review loading/success/error states, and inspect suggested audience, tones, vocabulary, banned phrases, and positioning notes.
+- Preserved mock fallback with deterministic local suggestions when `/brand-voice` is using mock data.
+- Added `Accept Suggestions`, replacing BrandProfile voice fields through the existing update API in API mode and confirming locally in mock mode.
+
+Files Changed:
+- `frontend/app/(app)/brand-voice/page.tsx`
+- `frontend/data/mock-brand-profiles.ts`
+- `frontend/features/brand-voice/components/brand-voice-ai-panel.tsx`
+- `frontend/features/brand-voice/data/get-brand-voice-setup.ts`
+- `frontend/lib/api/ai.ts`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed outside the sandbox after Turbopack hit the known internal port-binding restriction.
+
+Decision Log Update Needed:
+- No. This implements D-0008 and does not change the AI provider strategy.
+
+Next Step:
+- Connect Draft Studio reads and saves to the existing content draft APIs, or add the next API-connected AI workflow after the core draft path is stable.
 
 ### Existing MVP Implementation Snapshot
 

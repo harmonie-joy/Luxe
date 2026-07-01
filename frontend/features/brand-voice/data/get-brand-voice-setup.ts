@@ -17,6 +17,7 @@
  * - pageHeader    : static copy — not from API
  * - toneOptions   : derived from the full canonical tone list + profile.tone
  * - sampleContent : static config fields + live/mock assets
+ * - source        : whether returned data came from API or mock fallback
  */
 
 import {
@@ -99,6 +100,7 @@ function buildFromProfile(profile: BrandProfile): BrandVoiceSetupData {
       ...SAMPLE_CONTENT_CONFIG,
       samples: [],
     },
+    source: "api",
   };
 }
 
