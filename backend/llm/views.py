@@ -21,10 +21,9 @@ def extract_brand_voice(request):
     serializer.is_valid(raise_exception=True)
 
     assets = serializer.validated_data["assets"]
-    sample_text = "\n\n".join(asset.content for asset in assets)
     suggestions, run = extract_brand_voice_with_run(
         serializer.validated_data["workspace"],
-        sample_text,
+        assets,
         user=request.user,
     )
 
@@ -76,6 +75,7 @@ def generate_drafts(request):
         drafts.append(_draft_response(draft))
 
     return Response({"aiRunIds": ai_run_ids, "drafts": drafts})
+
 
 def _draft_response(draft):
     return {

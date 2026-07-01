@@ -10,27 +10,29 @@ from .schemas import (
 )
 
 
-def extract_brand_voice(workspace, sample_text, user=None, provider=None):
+def extract_brand_voice(workspace, samples, user=None, provider=None):
+    context = _brand_voice_extraction_context(samples)
     return _run_ai_task(
         workspace=workspace,
         user=user,
         provider=provider,
         task_type=AIRun.TaskType.BRAND_VOICE_EXTRACTION,
         schema=BrandVoiceExtractionResult,
-        prompt=f"Extract brand voice from this sample:\n{sample_text}",
-        input_data={"sample_text": sample_text},
+        prompt=_brand_voice_extraction_prompt(context),
+        input_data=context,
     )
 
 
-def extract_brand_voice_with_run(workspace, sample_text, user=None, provider=None):
+def extract_brand_voice_with_run(workspace, samples, user=None, provider=None):
+    context = _brand_voice_extraction_context(samples)
     return _run_ai_task(
         workspace=workspace,
         user=user,
         provider=provider,
         task_type=AIRun.TaskType.BRAND_VOICE_EXTRACTION,
         schema=BrandVoiceExtractionResult,
-        prompt=f"Extract brand voice from this sample:\n{sample_text}",
-        input_data={"sample_text": sample_text},
+        prompt=_brand_voice_extraction_prompt(context),
+        input_data=context,
         return_run=True,
     )
 
@@ -116,6 +118,72 @@ def _run_ai_task(
     if return_run:
         return result, run
     return result
+
+
+def _brand_voice_extraction_context(samples):
+    if isinstance(samples, str):
+        return {
+            "assets": [
+                {
+                    "title": "Sample",
+                    "format": "",
+                    "content": samples,
+                }
+            ]
+        }
+
+    return {
+        "assets": [
+            {
+                "title": asset.title,
+                "format": asset.format,
+                "content": asset.content,
+            }
+            for asset in samples
+        ]
+    }
+
+
+def _brand_voice_extraction_prompt(context):
+    return (
+        "Extract a reusable THE LUXE Brand Voice DNA profile from the selected "
+        "brand assets. Return valid JSON only.\n\n"
+        "Output fields must be: audience, tone, preferred_vocabulary, "
+        "banned_phrases, positioning_notes. Use exactly one tone value from: "
+        "professional, authoritative, sophisticated, approachable, visionary. "
+        "preferred_vocabulary may be an array of specific strings. "
+        "banned_phrases may be an array of specific strings.\n\n"
+        "Prioritize specificity over broad adjectives. Infer voice from the "
+        "asset content, titles, and formats. Distinguish audience, tone, "
+        "vocabulary, and positioning. Avoid generic phrases like engaging "
+        "content, high quality, boost your brand, or stand out online unless "
+        "the assets clearly justify them. Do not invent metrics, case studies, "
+        "testimonials, guarantees, or unsupported claims. Favor practical "
+        "creator, solo operator, service business, and SME language.\n\n"
+        "The audience must identify buyer type, maturity level, pain points, "
+        "and desired outcome. The positioning must explain what the brand wants "
+        "to be known for, how it creates value, and what makes it different.\n\n"
+        "positioning_notes must be structured exactly like this text template:\n"
+        "Voice DNA:\n"
+        "- Brand personality:\n"
+        "- Sentence style:\n"
+        "- Pacing:\n"
+        "- Formality:\n"
+        "- Positioning:\n"
+        "- Proof style:\n"
+        "- Claim boundaries:\n\n"
+        "Sound like:\n"
+        "- ...\n\n"
+        "Avoid sounding like:\n"
+        "- ...\n\n"
+        "Do examples:\n"
+        "1. ...\n"
+        "2. ...\n\n"
+        "Don't examples:\n"
+        "1. ...\n"
+        "2. ...\n\n"
+        f"Selected assets:\n{json.dumps(context, indent=2)}"
+    )
 
 
 def _draft_generation_context(brief, channel):
