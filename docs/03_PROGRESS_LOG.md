@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, save, and switch persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -318,6 +318,38 @@ Files Changed:
 
 Verification:
 - `make test-be` passed with 88 backend tests.
+
+### 2026-07-01 - T-UX-002 Delete Brief Destructive Action
+
+Worked On:
+- Added a destructive Delete Brief action to Draft Studio.
+
+Completed:
+- Created GitHub issue #18 for T-UX-002.
+- Added `deleteContentBrief(id)` using `DELETE /api/content-briefs/{id}/`.
+- Added a Current Brief delete button and confirmation dialog.
+- Warned that deleting a brief permanently deletes the brief, generated drafts, saved edits, compliance checks and issues, approvals, and scheduled content.
+- Preserved demo fallback by deleting local brief state without an API call.
+- On success, clears current drafts, switches to another brief when one exists, or routes to `/create` when none remain.
+- Preserved existing draft generation and save behavior.
+
+Files Changed:
+- `frontend/lib/api/content-briefs.ts`
+- `frontend/features/drafts/components/draft-studio-shell.tsx`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed.
+
+Decision Log Update Needed:
+- No. Existing backend delete/cascade behavior is reused without model or architecture changes.
+
+Next Step:
+- Connect Compliance Review to persisted compliance checks and issues.
 
 Decision Log Update Needed:
 - No. This implements D-0008 and does not change the AI provider strategy.

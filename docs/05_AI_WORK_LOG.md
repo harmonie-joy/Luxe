@@ -284,6 +284,22 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This is frontend UX clarification only.
 - Next action: Connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-01 - Codex - T-UX-002 Delete Brief Destructive Action
+
+- Tool: Codex with GitHub connector and ponytail workflow
+- Request: Add a safe destructive Delete Brief action to Draft Studio and create the GitHub issue before implementation.
+- Files changed:
+  - `frontend/lib/api/content-briefs.ts`
+  - `frontend/features/drafts/components/draft-studio-shell.tsx`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #18, added `deleteContentBrief(id)`, added a destructive Current Brief delete button and confirmation dialog with cascade warning copy, called backend DELETE in API mode, preserved demo fallback, cleared deleted-brief drafts, switched to another brief when available, and routed to `/create` when no briefs remain.
+- Human review status: Pending
+- Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed.
+- Decision log update needed: No. Existing backend delete and cascade contracts were reused without model or architecture changes.
+- Next action: Connect Compliance Review to persisted compliance checks and issues.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

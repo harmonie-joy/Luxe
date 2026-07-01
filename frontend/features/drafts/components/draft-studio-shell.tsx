@@ -9,7 +9,7 @@ import type { StatusIndicatorTone } from "@/components/ui/status-indicator";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { generateDrafts } from "@/lib/api/ai";
 import { getSession } from "@/lib/api/auth";
-import { getContentBriefs } from "@/lib/api/content-briefs";
+import { deleteContentBrief, getContentBriefs } from "@/lib/api/content-briefs";
 import { getContentDrafts, updateContentDraft } from "@/lib/api/content-drafts";
 import { ApiError } from "@/lib/api/http-client";
 import {
@@ -17,7 +17,7 @@ import {
   DRAFT_STATUS_LABELS,
   formatDisplayDate,
 } from "@/lib/formatters";
-import { complianceReviewRoute, draftStudioRoute } from "@/lib/routes";
+import { APP_ROUTES, complianceReviewRoute, draftStudioRoute } from "@/lib/routes";
 import type { ContentBrief, ContentDraft, DraftStatus } from "@/types/content";
 import type { DraftStudioViewData } from "@/features/drafts/data/get-draft-studio-page";
 
@@ -49,6 +49,15 @@ const DATA_SOURCE_TONES = {
   api: "success",
   mock: "neutral",
 } as const satisfies Record<DataSource, StatusIndicatorTone>;
+
+const DELETE_WARNING_ITEMS = [
+  "the brief",
+  "generated drafts",
+  "saved edits",
+  "compliance checks and issues",
+  "approvals",
+  "scheduled content",
+] as const;
 
 function getDraftById(
   drafts: readonly ContentDraft[],
@@ -106,6 +115,9 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const [generationMessage, setGenerationMessage] = useState("");
   const [saveStatus, setSaveStatus] = useState<RequestStatus>("idle");
   const [saveMessage, setSaveMessage] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteStatus, setDeleteStatus] = useState<RequestStatus>("idle");
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -174,6 +186,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     : "neutral";
   const savedCurrentDraft = currentDraft ? savedDraftId === currentDraft.id : false;
   const canGenerate = generationStatus !== "loading" && dataSource !== "loading";
+  const canDelete = deleteStatus !== "loading" && dataSource !== "loading";
   const targetChannelLabels = brief.targetChannels
     .map((channel) => CONTENT_CHANNEL_LABELS[channel])
     .join(", ");
@@ -191,6 +204,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     setGenerationMessage("");
     setSaveStatus("idle");
     setSaveMessage("");
+    setDeleteStatus("idle");
+    setDeleteMessage("");
     router.replace(draftStudioRoute(selectedBrief.id));
 
     if (dataSource !== "api") {
@@ -212,6 +227,61 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     } catch (error) {
       setDataSource("mock");
       setLoadMessage(errorMessage(error));
+    }
+  }
+
+  async function handleDeleteBrief() {
+    if (!canDelete) return;
+
+    setDeleteStatus("loading");
+    setDeleteMessage("Deleting brief.");
+
+    try {
+      if (dataSource === "api") {
+        await deleteContentBrief(brief.id);
+      }
+
+      const remainingBriefs = briefs.filter((item) => item.id !== brief.id);
+      const nextBrief = remainingBriefs[0];
+
+      setBriefs(remainingBriefs);
+      setDrafts([]);
+      setActiveDraftId("");
+      setSavedDraftId(null);
+      setDeleteDialogOpen(false);
+      setDeleteStatus("success");
+      setDeleteMessage(
+        dataSource === "api" ? "Brief deleted." : "Demo brief deleted locally.",
+      );
+      setGenerationStatus("idle");
+      setGenerationMessage("");
+      setSaveStatus("idle");
+      setSaveMessage("");
+
+      if (!nextBrief) {
+        router.push(APP_ROUTES.create);
+        return;
+      }
+
+      setBrief(nextBrief);
+      router.replace(draftStudioRoute(nextBrief.id));
+
+      if (dataSource !== "api") {
+        setLoadMessage("Demo brief selected.");
+        return;
+      }
+
+      const nextDrafts = await getContentDrafts(nextBrief.id);
+      setDrafts(nextDrafts);
+      setActiveDraftId(nextDrafts[0]?.id ?? "");
+      setLoadMessage(
+        nextDrafts.length > 0
+          ? "Persisted drafts loaded."
+          : "No drafts have been generated for this brief yet.",
+      );
+    } catch (error) {
+      setDeleteStatus("error");
+      setDeleteMessage(errorMessage(error));
     }
   }
 
@@ -349,28 +419,55 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
             </p>
           </div>
 
-          {briefs.length > 1 ? (
-            <div>
-              <label className="luxe-form-label" htmlFor="brief-selector">
-                Switch brief
-              </label>
-              <select
-                className="luxe-field mt-2 h-12 w-full px-4"
-                id="brief-selector"
-                onChange={(event) => {
-                  void selectBrief(event.currentTarget.value);
-                }}
-                value={brief.id}
-              >
-                {briefs.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.contentObjective}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
+          <div className="flex flex-col gap-3">
+            {briefs.length > 1 ? (
+              <div>
+                <label className="luxe-form-label" htmlFor="brief-selector">
+                  Switch brief
+                </label>
+                <select
+                  className="luxe-field mt-2 h-12 w-full px-4"
+                  id="brief-selector"
+                  onChange={(event) => {
+                    void selectBrief(event.currentTarget.value);
+                  }}
+                  value={brief.id}
+                >
+                  {briefs.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.contentObjective}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
+            <button
+              className="luxe-danger-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={!canDelete}
+              onClick={() => {
+                setDeleteDialogOpen(true);
+                setDeleteStatus("idle");
+                setDeleteMessage("");
+              }}
+              type="button"
+            >
+              Delete Brief
+            </button>
+          </div>
         </div>
+
+        {deleteMessage ? (
+          <p
+            className={
+              deleteStatus === "error"
+                ? "text-sm font-medium text-(--color-danger)"
+                : "luxe-form-help"
+            }
+          >
+            {deleteMessage}
+          </p>
+        ) : null}
 
         <div className="grid gap-3 md:grid-cols-3">
           <div className="luxe-preview-stat p-4">
@@ -601,6 +698,70 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
           ) : null}
         </aside>
       </div>
+
+      {deleteDialogOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div
+            aria-labelledby="delete-brief-title"
+            aria-modal="true"
+            className="luxe-panel flex w-full max-w-xl flex-col gap-6 p-6"
+            role="dialog"
+          >
+            <div>
+              <p className="luxe-eyebrow">Delete Brief</p>
+              <h2 className="luxe-section-title mt-2" id="delete-brief-title">
+                Permanently delete this brief?
+              </h2>
+              <p className="luxe-form-help mt-3">
+                This cannot be undone. Deleting this brief permanently deletes:
+              </p>
+            </div>
+
+            <ul className="list-disc space-y-2 pl-5 text-sm leading-6">
+              {DELETE_WARNING_ITEMS.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+
+            {deleteMessage ? (
+              <p
+                className={
+                  deleteStatus === "error"
+                    ? "text-sm font-medium text-(--color-danger)"
+                    : "luxe-form-help"
+                }
+              >
+                {deleteMessage}
+              </p>
+            ) : null}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold"
+                disabled={deleteStatus === "loading"}
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setDeleteStatus("idle");
+                  setDeleteMessage("");
+                }}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="luxe-danger-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={deleteStatus === "loading"}
+                onClick={() => {
+                  void handleDeleteBrief();
+                }}
+                type="button"
+              >
+                {deleteStatus === "loading" ? "Deleting..." : "Delete Brief"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

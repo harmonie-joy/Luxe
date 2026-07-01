@@ -54,3 +54,7 @@ export function updateContentBrief(
 ): Promise<ContentBrief> {
   return httpClient.patch<ContentBrief>(`/api/content-briefs/${id}/`, payload);
 }
+
+export function deleteContentBrief(id: string): Promise<void> {
+  return httpClient.delete<void>(`/api/content-briefs/${id}/`);
+}
