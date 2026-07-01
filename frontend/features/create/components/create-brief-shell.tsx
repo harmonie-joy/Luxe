@@ -11,7 +11,7 @@ import {
   type CreateContentBriefPayload,
 } from "@/lib/api/content-briefs";
 import { ApiError } from "@/lib/api/http-client";
-import { APP_ROUTES } from "@/lib/routes";
+import { draftStudioRoute } from "@/lib/routes";
 import type { BrandProfile } from "@/types/brand-profile";
 import type {
   CreateBriefPageData,
@@ -310,9 +310,9 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
     setApiError(null);
 
     try {
-      await createContentBrief(payload);
+      const createdBrief = await createContentBrief(payload);
       setFormMessage("Brief saved. Opening Draft Studio.");
-      router.push(APP_ROUTES.drafts);
+      router.push(draftStudioRoute(createdBrief.id));
     } catch (error) {
       setApiError(getApiErrorMessage(error));
     } finally {
@@ -334,8 +334,8 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
             <p className="luxe-eyebrow">Brief Setup</p>
             <h2 className="luxe-section-title mt-2">Structured Content Brief</h2>
             <p className="luxe-form-help mt-2">
-              The form now uses the live workspace and brand-profile records from
-              the Docker-backed backend so the save request uses real IDs.
+              Briefs define what you want to create and why. Draft Studio turns
+              that brief into editable channel drafts.
             </p>
           </div>
 

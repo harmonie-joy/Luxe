@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { StatusIndicator } from "@/components/ui/status-indicator";
@@ -16,12 +17,13 @@ import {
   DRAFT_STATUS_LABELS,
   formatDisplayDate,
 } from "@/lib/formatters";
-import { complianceReviewRoute } from "@/lib/routes";
+import { complianceReviewRoute, draftStudioRoute } from "@/lib/routes";
 import type { ContentBrief, ContentDraft, DraftStatus } from "@/types/content";
 import type { DraftStudioViewData } from "@/features/drafts/data/get-draft-studio-page";
 
 interface DraftStudioShellProps {
   data: DraftStudioViewData;
+  initialBriefId?: string;
 }
 
 type DataSource = "loading" | "api" | "mock";
@@ -90,7 +92,9 @@ function generatedDraftToContentDraft(
   };
 }
 
-export function DraftStudioShell({ data }: DraftStudioShellProps) {
+export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps) {
+  const router = useRouter();
+  const [briefs, setBriefs] = useState<ContentBrief[]>([data.brief]);
   const [brief, setBrief] = useState<ContentBrief>(data.brief);
   const [drafts, setDrafts] = useState<ContentDraft[]>([...data.drafts]);
   const [activeDraftId, setActiveDraftId] = useState(data.drafts[0]?.id ?? "");
@@ -112,9 +116,13 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
           getSession(),
           getContentBriefs(),
         ]);
+        const workspaceBriefs = briefs.filter(
+          (item) => item.workspaceId === session.activeWorkspaceId,
+        );
+        const availableBriefs = workspaceBriefs.length > 0 ? workspaceBriefs : briefs;
         const selectedBrief =
-          briefs.find((item) => item.workspaceId === session.activeWorkspaceId) ??
-          briefs[0];
+          availableBriefs.find((item) => item.id === initialBriefId) ??
+          availableBriefs[0];
 
         if (!selectedBrief) {
           if (!cancelled) {
@@ -127,11 +135,16 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
         const selectedDrafts = await getContentDrafts(selectedBrief.id);
         if (cancelled) return;
 
+        setBriefs(availableBriefs);
         setBrief(selectedBrief);
         setDrafts(selectedDrafts);
         setActiveDraftId(selectedDrafts[0]?.id ?? "");
         setDataSource("api");
-        setLoadMessage("Persisted drafts loaded.");
+        setLoadMessage(
+          selectedDrafts.length > 0
+            ? "Persisted drafts loaded."
+            : "No drafts have been generated for this brief yet.",
+        );
       } catch (error) {
         if (process.env.NODE_ENV === "development") {
           console.warn(
@@ -150,7 +163,7 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [data.brief, initialBriefId]);
 
   const currentDraft = getDraftById(drafts, activeDraftId);
   const activeStatusLabel = currentDraft
@@ -164,6 +177,43 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
   const targetChannelLabels = brief.targetChannels
     .map((channel) => CONTENT_CHANNEL_LABELS[channel])
     .join(", ");
+  const hasExistingDrafts = drafts.length > 0;
+
+  async function selectBrief(nextBriefId: string) {
+    const selectedBrief = briefs.find((item) => item.id === nextBriefId);
+    if (!selectedBrief) return;
+
+    setBrief(selectedBrief);
+    setDrafts([]);
+    setActiveDraftId("");
+    setSavedDraftId(null);
+    setGenerationStatus("idle");
+    setGenerationMessage("");
+    setSaveStatus("idle");
+    setSaveMessage("");
+    router.replace(draftStudioRoute(selectedBrief.id));
+
+    if (dataSource !== "api") {
+      setLoadMessage("Demo brief selected.");
+      return;
+    }
+
+    setLoadMessage("Loading drafts for the selected brief.");
+
+    try {
+      const selectedDrafts = await getContentDrafts(selectedBrief.id);
+      setDrafts(selectedDrafts);
+      setActiveDraftId(selectedDrafts[0]?.id ?? "");
+      setLoadMessage(
+        selectedDrafts.length > 0
+          ? "Persisted drafts loaded."
+          : "No drafts have been generated for this brief yet.",
+      );
+    } catch (error) {
+      setDataSource("mock");
+      setLoadMessage(errorMessage(error));
+    }
+  }
 
   function handleDraftChange(draftId: string, updates: Partial<ContentDraft>) {
     setDrafts((currentDrafts) => updateDraftById(currentDrafts, draftId, updates));
@@ -289,12 +339,66 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
       </header>
 
       <SurfaceCard className="flex flex-col gap-4" padding="sm">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+          <div>
+            <p className="luxe-eyebrow">Current Brief</p>
+            <h2 className="luxe-section-title mt-2">{brief.contentObjective}</h2>
+            <p className="luxe-form-help mt-3">
+              Brief = what you want to create and why. Draft = generated,
+              editable content for one channel.
+            </p>
+          </div>
+
+          {briefs.length > 1 ? (
+            <div>
+              <label className="luxe-form-label" htmlFor="brief-selector">
+                Switch brief
+              </label>
+              <select
+                className="luxe-field mt-2 h-12 w-full px-4"
+                id="brief-selector"
+                onChange={(event) => {
+                  void selectBrief(event.currentTarget.value);
+                }}
+                value={brief.id}
+              >
+                {briefs.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.contentObjective}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="luxe-preview-stat p-4">
+            <p className="luxe-label-sm">Audience</p>
+            <p className="mt-2 text-sm leading-6">{brief.audience}</p>
+          </div>
+          <div className="luxe-preview-stat p-4">
+            <p className="luxe-label-sm">Why this content exists</p>
+            <p className="mt-2 text-sm leading-6">{brief.angle || brief.campaignGoal}</p>
+          </div>
+          <div className="luxe-preview-stat p-4">
+            <p className="luxe-label-sm">Guardrails</p>
+            <p className="mt-2 text-sm leading-6">
+              {brief.constraints || "No constraints added."}
+            </p>
+          </div>
+        </div>
+      </SurfaceCard>
+
+      <SurfaceCard className="flex flex-col gap-4" padding="sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="luxe-eyebrow">AI Draft Generation</p>
-            <h2 className="luxe-section-title mt-2">Generate channel drafts</h2>
+            <p className="luxe-eyebrow">Generate Channel Drafts</p>
+            <h2 className="luxe-section-title mt-2">Create drafts from this brief</h2>
             <p className="luxe-form-help mt-2">
-              Channels: {targetChannelLabels || "None selected"}
+              One brief can produce multiple channel drafts. Channels:
+              {" "}
+              {targetChannelLabels || "None selected"}
             </p>
           </div>
           <button
@@ -306,6 +410,13 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
             {generationStatus === "loading" ? "Generating..." : "Generate Drafts"}
           </button>
         </div>
+
+        {hasExistingDrafts ? (
+          <p className="luxe-preview-stat p-4 text-sm">
+            Regenerating will update the existing drafts for this brief and its
+            selected channels.
+          </p>
+        ) : null}
 
         {generationMessage ? (
           <p
@@ -324,9 +435,9 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
         <SurfaceCard className="flex min-h-0 flex-col gap-6">
           <div className="flex flex-col gap-4 border-b border-(--color-border-subtle) pb-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="luxe-eyebrow">Channel Drafts</p>
+              <p className="luxe-eyebrow">Drafts from this Brief</p>
               <h2 className="luxe-section-title mt-2">
-                One working draft per selected channel
+                Generated, editable channel outputs
               </h2>
             </div>
 
@@ -370,6 +481,13 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
                 void handleSave();
               }}
             >
+              <div>
+                <p className="luxe-eyebrow">Active Draft</p>
+                <h2 className="luxe-section-title mt-2">
+                  {CONTENT_CHANNEL_LABELS[currentDraft.channel]}
+                </h2>
+              </div>
+
               <div>
                 <label className="luxe-form-label" htmlFor="draft-title">
                   Draft title
@@ -422,7 +540,7 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
                     className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-center text-sm font-semibold"
                     href={complianceReviewRoute(currentDraft.id)}
                   >
-                    Review compliance
+                    Review this Draft
                   </Link>
                   <button
                     className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
@@ -437,38 +555,15 @@ export function DraftStudioShell({ data }: DraftStudioShellProps) {
           ) : (
             <div className="luxe-preview-stat space-y-3 p-4">
               <p className="font-medium">No drafts for this brief yet.</p>
-              <p className="luxe-form-help">{loadMessage}</p>
+              <p className="luxe-form-help">
+                {loadMessage} Generate channel drafts to create editable content
+                outputs from the selected brief.
+              </p>
             </div>
           )}
         </SurfaceCard>
 
         <aside className="space-y-6">
-          <SurfaceCard className="flex flex-col gap-5">
-            <div>
-              <p className="luxe-eyebrow">Brief Context</p>
-              <h2 className="luxe-section-title mt-2">Source Brief</h2>
-            </div>
-
-            <div className="space-y-4">
-              <div className="luxe-preview-stat p-4">
-                <p className="luxe-label-sm">Objective</p>
-                <p className="mt-2 text-sm leading-6">
-                  {brief.contentObjective}
-                </p>
-              </div>
-
-              <div className="luxe-preview-stat p-4">
-                <p className="luxe-label-sm">Audience</p>
-                <p className="mt-2 text-sm leading-6">{brief.audience}</p>
-              </div>
-
-              <div className="luxe-preview-stat p-4">
-                <p className="luxe-label-sm">Constraints</p>
-                <p className="mt-2 text-sm leading-6">{brief.constraints}</p>
-              </div>
-            </div>
-          </SurfaceCard>
-
           {currentDraft ? (
             <SurfaceCard className="flex flex-col gap-4">
               <div>

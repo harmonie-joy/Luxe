@@ -266,6 +266,24 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy, data model strategy, or MVP scope.
 - Next action: Connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-01 - Codex - T-UX-001 Clarify Brief and Draft Workflow
+
+- Tool: Codex
+- Request: Clarify Brief -> Draft workflow UX before continuing to Compliance Review.
+- Files changed:
+  - `frontend/app/(app)/drafts/page.tsx`
+  - `frontend/features/create/components/create-brief-shell.tsx`
+  - `frontend/features/drafts/components/draft-studio-shell.tsx`
+  - `frontend/lib/routes.ts`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #16, routed newly created briefs to `/drafts?brief=<id>`, read the `brief` query parameter in Draft Studio, added a Current Brief section and brief selector, clarified Brief versus Draft copy, renamed the main workflow sections, added no-draft and regeneration states, and preserved generation/save/mock fallback behavior.
+- Human review status: Pending
+- Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed outside the sandbox after the known Turbopack port-binding sandbox failure.
+- Decision log update needed: No. This is frontend UX clarification only.
+- Next action: Connect Compliance Review to persisted compliance checks and issues.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

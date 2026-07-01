@@ -20,6 +20,12 @@ export function complianceReviewRoute(draftId: string): string {
   return `${APP_ROUTES.compliance}/${draftId}`;
 }
 
+/** Draft Studio route, optionally scoped to a selected content brief. */
+export function draftStudioRoute(briefId?: string): string {
+  if (!briefId) return APP_ROUTES.drafts;
+  return `${APP_ROUTES.drafts}?brief=${encodeURIComponent(briefId)}`;
+}
+
 export type AppRouteKey = keyof typeof APP_ROUTES;
 export type AppRoutePath = (typeof APP_ROUTES)[AppRouteKey];
 

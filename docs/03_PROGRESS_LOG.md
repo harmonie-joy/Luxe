@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, and save persisted drafts. Compliance Review still needs broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, save, and switch persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -411,6 +411,42 @@ Verification:
 
 Decision Log Update Needed:
 - No. This implements the accepted local-first AI strategy in D-0008 without changing provider strategy, data model strategy, or MVP scope.
+
+Next Step:
+- Connect Compliance Review to persisted compliance checks and issues.
+
+### 2026-07-01 - T-UX-001 Clarify Brief and Draft Workflow
+
+Worked On:
+- Polished the Brief -> Draft Studio workflow copy, routing, and selection behavior.
+
+Completed:
+- Created GitHub issue #16 for T-UX-001.
+- Updated Create Brief success routing to open `/drafts?brief=<createdBriefId>`.
+- Added a shared Draft Studio route helper for optional brief scoping.
+- Updated the Draft Studio page to read the `brief` query parameter.
+- Added an explicit Current Brief section explaining that briefs define intent and drafts are editable channel outputs.
+- Added a brief selector for multiple persisted briefs and reloaded the draft list when switching briefs.
+- Renamed Draft Studio sections to clarify Current Brief, Generate Channel Drafts, Drafts from this Brief, Active Draft, and Review this Draft.
+- Added an empty state for selected briefs with no drafts and a regeneration warning when drafts already exist.
+- Preserved persisted generation, edit/save behavior, and mock fallback.
+
+Files Changed:
+- `frontend/app/(app)/drafts/page.tsx`
+- `frontend/features/create/components/create-brief-shell.tsx`
+- `frontend/features/drafts/components/draft-studio-shell.tsx`
+- `frontend/lib/routes.ts`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed outside the sandbox after the known Turbopack port-binding sandbox failure.
+
+Decision Log Update Needed:
+- No. This clarifies frontend workflow UX without changing data model, AI provider strategy, or MVP scope.
 
 Next Step:
 - Connect Compliance Review to persisted compliance checks and issues.
