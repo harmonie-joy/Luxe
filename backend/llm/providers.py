@@ -29,6 +29,8 @@ class OllamaProvider:
         self.base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self.model = model or settings.OLLAMA_MODEL
         self.timeout = timeout
+        if not self.model:
+            raise AIProviderError("OLLAMA_MODEL must be set when AI_PROVIDER=ollama.")
 
     def generate(self, prompt, schema):
         response = requests.post(

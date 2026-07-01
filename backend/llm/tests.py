@@ -7,7 +7,7 @@ from content.models import ContentBrief, ContentDraft
 from tenancy.models import Membership, Workspace
 
 from .models import AIRun
-from .providers import AIProviderError, MockProvider
+from .providers import AIProviderError, MockProvider, OllamaProvider
 from .schemas import (
     BrandVoiceExtractionResult,
     ComplianceReviewResult,
@@ -24,6 +24,16 @@ from .services import (
 User = get_user_model()
 BRAND_EXTRACT_URL = "/api/ai/brand/extract/"
 DRAFT_GENERATE_URL = "/api/ai/drafts/generate/"
+
+
+class RecordingProvider(MockProvider):
+    def __init__(self):
+        super().__init__()
+        self.prompt = ""
+
+    def generate(self, prompt, schema):
+        self.prompt = prompt
+        return super().generate(prompt, schema)
 
 
 class MockAIServiceTests(TestCase):
@@ -109,6 +119,73 @@ class MockAIServiceTests(TestCase):
         self.assertIn("Mock provider failure", run.error)
         self.assertEqual(run.output_data, {})
         self.assertIsNotNone(run.completed_at)
+
+    def test_draft_generation_prompt_includes_brief_and_brand_voice_context(self):
+        profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Prompt Voice",
+            audience="Premium founders",
+            tone=["professional", "sophisticated"],
+            preferred_vocabulary=[
+                {
+                    "preferred_term": "clientele",
+                    "restricted_terms": ["customers"],
+                    "note": "Use elevated language.",
+                }
+            ],
+            banned_phrases=[
+                {
+                    "phrase": "cheap",
+                    "reason": "Conflicts with premium positioning.",
+                }
+            ],
+            positioning_notes="Quiet authority.",
+        )
+        brief = ContentBrief.objects.create(
+            workspace=self.workspace,
+            brand_profile=profile,
+            content_objective="Announce a private preview.",
+            campaign_goal=ContentBrief.CampaignGoal.ANNOUNCE,
+            audience="Existing clients",
+            angle="Calm editorial invitation",
+            constraints="Avoid discount language.",
+            target_channels=[ContentBrief.Channel.LINKEDIN],
+        )
+        provider = RecordingProvider()
+
+        generate_draft(
+            self.workspace,
+            brief,
+            ContentBrief.Channel.LINKEDIN,
+            user=self.user,
+            provider=provider,
+        )
+
+        self.assertIn("Announce a private preview.", provider.prompt)
+        self.assertIn("linkedin", provider.prompt)
+        self.assertIn("Premium founders", provider.prompt)
+        self.assertIn("clientele", provider.prompt)
+        self.assertIn("cheap", provider.prompt)
+        run = AIRun.objects.get()
+        self.assertEqual(
+            run.input_data["brief"]["content_objective"],
+            "Announce a private preview.",
+        )
+        self.assertEqual(run.input_data["channel"], ContentBrief.Channel.LINKEDIN)
+        self.assertEqual(
+            run.input_data["brand_profile"]["preferred_vocabulary"][0][
+                "preferred_term"
+            ],
+            "clientele",
+        )
+
+    @override_settings(OLLAMA_MODEL="")
+    def test_ollama_provider_requires_model_from_environment(self):
+        with self.assertRaisesMessage(
+            AIProviderError,
+            "OLLAMA_MODEL must be set when AI_PROVIDER=ollama.",
+        ):
+            OllamaProvider(base_url="http://localhost:11434")
 
 
 @override_settings(AI_PROVIDER="mock")
@@ -256,6 +333,20 @@ class DraftGenerationAPITests(APITestCase):
             name="Draft Voice",
             audience="Premium founders",
             tone=["professional"],
+            preferred_vocabulary=[
+                {
+                    "preferred_term": "clientele",
+                    "restricted_terms": ["customers"],
+                    "note": "Use elevated language.",
+                }
+            ],
+            banned_phrases=[
+                {
+                    "phrase": "cheap",
+                    "reason": "Conflicts with premium positioning.",
+                }
+            ],
+            positioning_notes="Quiet authority.",
         )
         self.other_profile = BrandProfile.objects.create(
             workspace=self.other_workspace,
@@ -325,6 +416,33 @@ class DraftGenerationAPITests(APITestCase):
         )
         self.assertTrue(all(run.provider == "mock" for run in runs))
         self.assertTrue(all(run.status == AIRun.Status.SUCCEEDED for run in runs))
+        for run in runs:
+            self.assertEqual(
+                run.input_data["brief"]["content_objective"],
+                "Announce a private preview.",
+            )
+            self.assertEqual(run.input_data["brief"]["campaign_goal"], "announce")
+            self.assertEqual(run.input_data["brief"]["audience"], "Existing clients")
+            self.assertEqual(run.input_data["brief"]["angle"], "Quiet authority")
+            self.assertEqual(
+                run.input_data["brief"]["constraints"],
+                "Avoid discount language.",
+            )
+            self.assertIn(run.input_data["channel"], channels)
+            self.assertEqual(
+                run.input_data["brand_profile"]["audience"],
+                "Premium founders",
+            )
+            self.assertEqual(
+                run.input_data["brand_profile"]["preferred_vocabulary"][0][
+                    "preferred_term"
+                ],
+                "clientele",
+            )
+            self.assertEqual(
+                run.input_data["brand_profile"]["banned_phrases"][0]["phrase"],
+                "cheap",
+            )
 
     def test_unauthenticated_request_is_rejected(self):
         response = self.client.post(DRAFT_GENERATE_URL, self.payload(), format="json")

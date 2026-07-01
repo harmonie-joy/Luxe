@@ -298,6 +298,24 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Human review status: Pending
 - Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed.
 - Decision log update needed: No. Existing backend delete and cascade contracts were reused without model or architecture changes.
+### 2026-07-01 - Codex - T-AI-006 Real Local Ollama Draft Generation with Brand Voice
+
+- Tool: Codex
+- Request: Make AI draft generation use real local Ollama calls with ContentBrief and linked BrandProfile context while preserving the existing Draft Studio generation contract.
+- Files changed:
+  - `backend/config/settings.py`
+  - `backend/llm/providers.py`
+  - `backend/llm/services.py`
+  - `backend/llm/tests.py`
+  - `backend/llm/views.py`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #20, changed draft generation to pass the full ContentBrief and linked BrandProfile voice context into provider prompts and `AIRun.input_data`, required `OLLAMA_MODEL` when `AI_PROVIDER=ollama`, kept `MockProvider` as the automated-test default, and preserved the `POST /api/ai/drafts/generate/` response contract.
+- Local Ollama setup: run `ollama list`, copy the exact model name, set `AI_PROVIDER=ollama`, set `OLLAMA_MODEL=<model-name>`, and use `OLLAMA_BASE_URL=http://host.docker.internal:11434` when the backend runs in Docker while Ollama runs on the host.
+- Human review status: Pending
+- Verification: `DATABASE_URL=sqlite:////tmp/theluxe-ai-006-test.sqlite3 .venv/bin/python manage.py test llm content` passed with 54 tests; `make test-be` passed with 98 backend tests.
+- Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
 - Next action: Connect Compliance Review to persisted compliance checks and issues.
 
 ## Entry Template
