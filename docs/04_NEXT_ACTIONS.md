@@ -2,7 +2,7 @@
 
 ## Current Sprint Goal
 
-Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand voice extraction and draft generation, and Draft Studio can generate, save, switch, and delete brief-scoped persisted drafts; the next integration work is Compliance Review persistence.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand voice extraction and draft generation, Draft Studio can generate, save, switch, and delete brief-scoped persisted drafts, and local Ollama draft generation now includes BrandProfile voice context; the next integration work is Compliance Review persistence.
 
 ## Active Tasks
 
@@ -16,6 +16,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 | P0 | T-AI-002: Add Brand Voice Extraction API contract. | Done | GitHub issue #9. `POST /api/ai/brand/extract/` validates workspace/profile/assets, calls the mock-backed local AI service, returns `aiRunId` and schema-valid suggestions, and does not mutate `BrandProfile`. |
 | P0 | T-AI-004: Add AI Draft Generation API. | Done | GitHub issue #12. `POST /api/ai/drafts/generate/` validates workspace/brief/channel access, calls local draft generation, upserts `ContentDraft` records, and returns draft records plus `AIRun` IDs. |
 | P0 | T-AI-005: Connect Draft Studio to AI draft generation. | Done | GitHub issue #14. Draft Studio loads persisted brief/draft data, generates drafts for target channels, renders returned drafts, and saves title/content edits through the existing draft API. |
+| P0 | T-AI-006: Real Local Ollama Draft Generation with Brand Voice. | Done | GitHub issue #20. Draft generation now sends ContentBrief plus linked BrandProfile context to the provider, requires `OLLAMA_MODEL` for Ollama, and keeps the existing endpoint contract stable. |
 | P0 | T-UX-001: Clarify Brief and Draft workflow. | Done | GitHub issue #16. Create Brief routes to `/drafts?brief=<id>`, Draft Studio shows the selected brief, supports brief switching, and clarifies brief versus draft concepts. |
 | P0 | T-UX-002: Add Delete Brief destructive action. | Done | GitHub issue #18. Draft Studio deletes the current brief through `DELETE /api/content-briefs/{id}/`, warns about cascade deletion, clears local drafts, switches to another brief, or routes to `/create`. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
@@ -32,6 +33,14 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 ## Best Next Task for AI
 
 Connect Compliance Review to persisted compliance checks and issues, starting with loading checks by draft ID and preserving the existing review UI shape.
+
+## Local Ollama Draft Generation Setup
+
+- Run `ollama list` on the host machine.
+- Confirm the exact model name available locally.
+- Set `AI_PROVIDER=ollama`.
+- Set `OLLAMA_MODEL=<model-name>`.
+- If the backend runs in Docker and Ollama runs on the host, set `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 
 ## Do Not Touch Yet
 

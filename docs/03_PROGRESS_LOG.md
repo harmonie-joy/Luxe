@@ -483,6 +483,46 @@ Decision Log Update Needed:
 Next Step:
 - Connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-01 - T-AI-006 Real Local Ollama Draft Generation with Brand Voice
+
+Worked On:
+- Made AI draft generation use the linked ContentBrief and BrandProfile context when calling the provider.
+
+Completed:
+- Created GitHub issue #20 for T-AI-006.
+- Updated draft generation to pass structured brief context into `AIRun.input_data`, including content objective, campaign goal, audience, angle, constraints, target channels, and selected channel.
+- Added linked BrandProfile context to generation input and prompt instructions, including audience, tone, preferred vocabulary, banned phrases, and positioning notes.
+- Tightened the prompt so providers are asked for valid JSON matching `DraftGenerationResult`.
+- Removed the hardcoded Ollama model default; `OLLAMA_MODEL` must be supplied when `AI_PROVIDER=ollama`.
+- Kept `MockProvider` as the default provider for tests and local automated verification.
+- Preserved the existing `POST /api/ai/drafts/generate/` frontend contract and persisted `ContentDraft` behavior.
+
+Files Changed:
+- `backend/config/settings.py`
+- `backend/llm/providers.py`
+- `backend/llm/services.py`
+- `backend/llm/tests.py`
+- `backend/llm/views.py`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `DATABASE_URL=sqlite:////tmp/theluxe-ai-006-test.sqlite3 .venv/bin/python manage.py test llm content` passed with 54 tests.
+- `make test-be` passed with 98 backend tests.
+
+Decision Log Update Needed:
+- No. This implements the accepted local-first AI strategy in D-0008 without changing provider strategy.
+
+Local Ollama Setup:
+- Run `ollama list` on the host machine and copy the exact model name.
+- Set `AI_PROVIDER=ollama`.
+- Set `OLLAMA_MODEL=<model-name>`.
+- If the backend runs in Docker and Ollama runs on the host, set `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+
+Next Step:
+- Connect Compliance Review to persisted compliance checks and issues.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

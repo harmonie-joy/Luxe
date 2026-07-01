@@ -50,11 +50,10 @@ def generate_drafts(request):
     ai_run_ids = []
     drafts = []
 
-    brief_text = _format_brief_for_generation(brief)
     for channel in serializer.validated_data["channels"]:
         result, run = generate_draft_with_run(
             workspace,
-            brief_text,
+            brief,
             channel,
             user=request.user,
         )
@@ -77,19 +76,6 @@ def generate_drafts(request):
         drafts.append(_draft_response(draft))
 
     return Response({"aiRunIds": ai_run_ids, "drafts": drafts})
-
-
-def _format_brief_for_generation(brief):
-    return "\n".join(
-        [
-            f"Objective: {brief.content_objective}",
-            f"Campaign goal: {brief.campaign_goal}",
-            f"Audience: {brief.audience}",
-            f"Angle: {brief.angle}",
-            f"Constraints: {brief.constraints}",
-        ]
-    )
-
 
 def _draft_response(draft):
     return {
