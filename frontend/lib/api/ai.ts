@@ -1,4 +1,5 @@
 import { httpClient } from "./http-client";
+import type { ContentChannel, DraftStatus } from "@/types/content";
 
 export interface BrandVoiceExtractionRequest {
   workspace: string;
@@ -35,6 +36,35 @@ export function extractBrandVoice(
 ): Promise<BrandVoiceExtractionResponse> {
   return httpClient.post<BrandVoiceExtractionResponse>(
     "/api/ai/brand/extract/",
+    payload,
+  );
+}
+
+export interface DraftGenerationRequest {
+  workspace: string;
+  brief: string;
+  channels: readonly ContentChannel[];
+}
+
+export interface GeneratedDraft {
+  id: string;
+  brief: string;
+  channel: ContentChannel;
+  title: string;
+  content: string;
+  status: DraftStatus;
+}
+
+export interface DraftGenerationResponse {
+  aiRunIds: readonly string[];
+  drafts: readonly GeneratedDraft[];
+}
+
+export function generateDrafts(
+  payload: DraftGenerationRequest,
+): Promise<DraftGenerationResponse> {
+  return httpClient.post<DraftGenerationResponse>(
+    "/api/ai/drafts/generate/",
     payload,
   );
 }

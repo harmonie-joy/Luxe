@@ -249,6 +249,23 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy, data model strategy, or MVP scope.
 - Next action: Run `make test-be` in a Docker-enabled shell, then connect Draft Studio to the draft generation endpoint and existing content draft read/save APIs.
 
+### 2026-07-01 - Codex - T-AI-005 Draft Studio AI Generation UI
+
+- Tool: Codex
+- Request: Connect Draft Studio to the backend AI Draft Generation API so users can generate persisted drafts, review returned drafts, and save edits through existing content draft APIs.
+- Files changed:
+  - `frontend/features/drafts/components/draft-studio-shell.tsx`
+  - `frontend/features/drafts/data/get-draft-studio-page.ts`
+  - `frontend/lib/api/ai.ts`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #14, added a typed `generateDrafts()` helper, connected Draft Studio to live session/brief/draft loading in the browser, added Generate Drafts for the current brief target channels, refreshed persisted draft records after generation, saved title/content edits through `updateContentDraft`, preserved mock fallback for unavailable API data, and removed the stale duplicate Brand Voice Ready row from Next Actions.
+- Human review status: Pending
+- Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed outside the sandbox after the known Turbopack port-binding sandbox failure.
+- Decision log update needed: No. This implements D-0008 without changing AI provider strategy, data model strategy, or MVP scope.
+- Next action: Connect Compliance Review to persisted compliance checks and issues.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title
