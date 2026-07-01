@@ -14,7 +14,5 @@ import {
 export async function getSampleAsset(
   id: string,
 ): Promise<SampleAssetPageData | null> {
-  // MVP: always use mock data.
-  // Future: fetch `/api/brand-assets/${id}` and merge with comments + score.
   return getMockSampleAsset(id);
 }

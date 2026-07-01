@@ -1,8 +1,6 @@
 import { CreateBriefShell } from "@/features/create/components/create-brief-shell";
-import { getCreateBriefPage } from "@/features/create/data/get-create-brief-page";
+import { mockCreateBriefPage } from "@/data/mock-create-brief";
 
-export default async function CreateBriefPage() {
-  const data = await getCreateBriefPage();
-
-  return <CreateBriefShell data={data} />;
+export default function CreateBriefPage() {
+  return <CreateBriefShell data={mockCreateBriefPage} />;
 }

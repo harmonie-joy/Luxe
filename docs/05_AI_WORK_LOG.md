@@ -148,6 +148,29 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: Yes, D-0007 added.
 - Next action: Rebuild Docker, run `make migrate`, run `make manage cmd="seed_demo"`, and manually verify homepage -> auth -> dashboard.
 
+### 2026-07-01 - Codex - Ponytail Cleanup Pass
+
+- Tool: Codex
+- Request: Apply the ponytail audit changes and verify with Docker.
+- Files changed:
+  - `backend/requirements/base.txt`
+  - `infra/docker-compose.yml`
+  - `backend/config/settings.py`
+  - `backend/llm/`
+  - `frontend/`
+  - `scripts/`
+  - `AGENTS.md`
+  - `README.md`
+  - `docs/01_ARCHITECTURE.md`
+  - `docs/02_DECISIONS.md`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Removed unused queue/storage/data dependencies and services, deleted the empty `llm` scaffold, removed unimplemented Settings navigation, cut UI-only brand asset comments and voice-score surfaces, deleted unused mock wrappers/default SVGs/memory scripts, and cleared the existing frontend lint warning.
+- Human review status: Pending
+- Verification: `make dev-check` passed; `make dev` rebuilt and started the Docker stack; `make test-be` passed with 79 tests; `docker exec infra-frontend-1 npm run typecheck`, `docker exec infra-frontend-1 npm run lint`, and `docker exec infra-frontend-1 npm run build` passed.
+- Decision log update needed: Yes, D-0003 wording updated.
+- Next action: Continue with Docker-verified homepage/auth runtime validation and Draft Studio persistence.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

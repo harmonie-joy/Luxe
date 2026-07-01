@@ -8,10 +8,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # 3. Install minimal system dependencies
-# Added libpq-dev in case you switch from psycopg[binary] to source later
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    libpq-dev \
     netcat-openbsd\
  && rm -rf /var/lib/apt/lists/*
 
@@ -34,10 +32,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
-# 7. Use a production-grade server
-# Requires adding 'gunicorn' to your requirements.txt
 CMD ["bash", "-lc", "python manage.py runserver 0.0.0.0:8000"]
-
 
 
 

@@ -201,6 +201,33 @@ Decision Log Update Needed:
 Next Step:
 - Run `make migrate`, then `make manage cmd="seed_demo"` in the Docker stack and manually verify homepage -> signup/login -> dashboard against the running backend.
 
+### 2026-07-01 - Ponytail Cleanup Pass
+
+Worked On:
+- Removed over-scaffolded and unused MVP code surfaces.
+
+Completed:
+- Removed unused backend queue/storage/data dependencies and Docker Redis/MinIO services.
+- Removed the empty `llm` Django app scaffold while keeping real AI integrations out of scope.
+- Removed the unimplemented Settings navigation target.
+- Removed frontend-only brand asset comments and voice-score UI/types that had no backend contract.
+- Removed two mock-only page data wrappers, unused default public SVGs, and unused memory helper scripts.
+- Cleaned the pre-existing unused `AuditLog` frontend import warning.
+
+Verification:
+- `make dev-check` passed.
+- `make dev` rebuilt and started Docker services.
+- `make test-be` passed with 79 backend tests.
+- `docker exec infra-frontend-1 npm run typecheck` passed.
+- `docker exec infra-frontend-1 npm run lint` passed.
+- `docker exec infra-frontend-1 npm run build` passed.
+
+Decision Log Update Needed:
+- Yes. D-0003 wording was updated to reflect that no AI runtime app exists.
+
+Next Step:
+- Continue with Docker-verified homepage/auth runtime validation and Draft Studio persistence.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

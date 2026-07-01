@@ -60,7 +60,6 @@ Current backend apps include:
 - `brand/` for brand profile and brand input entities
 - `content/` for briefs, drafts, channel outputs, and scheduling
 - `compliance/` for checks and issues
-- `llm/` for AI orchestration boundaries only when explicitly requested
 
 ### Frontend
 

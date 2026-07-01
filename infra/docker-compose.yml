@@ -16,29 +16,6 @@ services:
       retries: 12
       start_period: 5s
 
-  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-      start_period: 3s
-
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: minio
-      MINIO_ROOT_PASSWORD: minio123456
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    volumes:
-      - miniodata:/data
-
   backend:
     build:
       context: ../backend
@@ -46,7 +23,6 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings
       DATABASE_URL: postgres://theluxe:theluxe@postgres:5432/theluxe
-      REDIS_URL: redis://redis:6379/0
       DEBUG: "1"
       SECRET_KEY: django-insecure-u3w8q(z^m5g^6@2gmb_jcy+7)9i(pwg#rk6@+#c6f@v@muan&l
       ALLOWED_HOSTS: "*"
@@ -56,8 +32,6 @@ services:
       - ../backend:/app
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
@@ -84,4 +58,3 @@ services:
 
 volumes:
   pgdata:
-  miniodata:

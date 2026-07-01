@@ -12,14 +12,3 @@ psycopg[binary]>=3.2,<4.0
 # --- Environment & Security ---
 django-environ>=0.11,<1.0
 django-cors-headers>=4.4,<5.0
-
-# Task Queue (Stable branch)
-celery>=5.4,<6.0
-redis>=5.2,<6.0
-
-# Data Validation (Pydantic V2 is the long-term play)
-pydantic>=2.10,<3.0
-requests>=2.32,<3.0
-
-# --- Production Server (Crucial for 5-year uptime) ---
-gunicorn>=23.0,<24.0

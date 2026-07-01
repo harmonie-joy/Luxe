@@ -49,24 +49,6 @@ function BellIcon() {
   );
 }
 
-function SettingsIcon() {
-  return (
-    <svg
-      aria-hidden
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
-      <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.4-2.7a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.5A7 7 0 0 0 19 12Z" />
-    </svg>
-  );
-}
-
 function UserIcon() {
   return (
     <svg
@@ -87,21 +69,12 @@ function UserIcon() {
 
 interface TopbarActionProps {
   children: ReactNode;
-  href?: string;
   label: string;
 }
 
-function TopbarAction({ children, href, label }: TopbarActionProps) {
+function TopbarAction({ children, label }: TopbarActionProps) {
   const className =
     "luxe-icon-action luxe-focus-ring grid h-10 w-10 place-items-center rounded-full";
-
-  if (href) {
-    return (
-      <Link aria-label={label} className={className} href={href}>
-        {children}
-      </Link>
-    );
-  }
 
   return (
     <button aria-label={label} className={className} type="button">
@@ -162,9 +135,6 @@ export function AppTopbar() {
       <div className="flex shrink-0 items-center gap-1 sm:gap-2">
         <TopbarAction label="Notifications">
           <BellIcon />
-        </TopbarAction>
-        <TopbarAction href={APP_ROUTES.settings} label="Settings">
-          <SettingsIcon />
         </TopbarAction>
         <TopbarAction label="Profile menu">
           <UserIcon />

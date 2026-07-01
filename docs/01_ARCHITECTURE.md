@@ -3,7 +3,7 @@
 ## Tech Stack
 
 - Monorepo with `backend/`, `frontend/`, `infra/`, `docs/`, and `prompts/`.
-- Backend: Django, Django REST Framework, PostgreSQL in local Docker, Redis, MinIO.
+- Backend: Django, Django REST Framework, PostgreSQL in local Docker.
 - Frontend: Next.js App Router, TypeScript, Tailwind v4 token bridge, CSS custom properties in `frontend/styles/theme.css`.
 - Local workflow: Make targets and Docker Compose under `infra/docker-compose.yml`.
 - Project memory: Markdown-first docs in `docs/`, root `AGENTS.md`, tool-specific instruction files, and reusable prompts.
@@ -26,7 +26,6 @@
 - `content`: Content briefs, content drafts, scheduled content, and approvals.
 - `compliance`: Compliance checks and compliance issues.
 - `audit`: Audit logs.
-- `llm`: AI orchestration boundary only; no real provider integration yet.
 
 ### Frontend
 
@@ -79,13 +78,11 @@ This is a compact summary of the current implemented MVP shape from `docs/mvp-pr
 
 ## Known Gaps
 
-- No frontend-auth-compatible session or workspace selection path yet.
-- No workspace or membership API for frontend bootstrap.
+- No full workspace switcher or membership management UI yet.
 - No dashboard aggregate API.
 - Create Brief, Draft Studio, Compliance Review, Calendar, approvals, and audit surfaces are not fully API-connected in the UI.
 - No frontend tests yet.
 - No automatic audit logging from domain actions yet.
-- `frontend/lib/api/http-client.ts` reads `NEXT_PUBLIC_API_URL`, while Docker Compose sets `NEXT_PUBLIC_API_BASE_URL`.
 
 ## Verification Commands
 

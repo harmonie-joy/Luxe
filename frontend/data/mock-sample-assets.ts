@@ -2,19 +2,13 @@
  * Mock data for the sample asset detail page.
  *
  * Keyed by BrandAsset.id so the page can look up a sample by route param.
- * Each entry includes the full asset content, a comment thread, and an
- * optional pre-computed voice score. A null voiceScore means the sample
- * has not been analyzed yet.
+ * Each entry includes the full asset content needed by the detail page.
  *
  * Shape contract is kept API-compatible: replace getMockSampleAsset with an
  * API fetch without touching the consuming components.
  */
 
-import type {
-  AssetComment,
-  AssetVoiceScore,
-  BrandAsset,
-} from "@/types/brand-profile";
+import type { BrandAsset } from "@/types/brand-profile";
 
 // ---------------------------------------------------------------------------
 // UI-layer composition type (page-level, not a domain entity)
@@ -22,8 +16,6 @@ import type {
 
 export interface SampleAssetPageData {
   asset: BrandAsset;
-  comments: AssetComment[];
-  voiceScore: AssetVoiceScore | null;
   brandProfileName: string;
 }
 
@@ -47,32 +39,6 @@ The collection arrives without announcement—precisely the point. Each piece is
       status: "ready",
       createdAt: "2026-06-01T09:00:00.000Z",
       updatedAt: "2026-06-02T10:00:00.000Z",
-    },
-    comments: [
-      {
-        id: "comment-001",
-        assetId: "editorial-launch-note",
-        authorName: "Sophia Laurent",
-        authorInitials: "SL",
-        body: "The tone is exactly right—restrained without being cold. This is a good reference for newsletter openers going forward.",
-        createdAt: "2026-06-01T11:30:00.000Z",
-      },
-      {
-        id: "comment-002",
-        assetId: "editorial-launch-note",
-        authorName: "Marcus Webb",
-        authorInitials: "MW",
-        body: "Agreed. Worth preserving 'arrives without announcement' in the vocabulary guide — it captures the quiet luxury positioning precisely.",
-        createdAt: "2026-06-02T09:15:00.000Z",
-      },
-    ],
-    voiceScore: {
-      assetId: "editorial-launch-note",
-      overallScore: 91,
-      toneAlignmentScore: 94,
-      vocabularyMatchScore: 88,
-      flaggedPhraseCount: 0,
-      analyzedAt: "2026-06-02T10:00:00.000Z",
     },
     brandProfileName: "THE LUXE Signature Voice",
   },
@@ -103,17 +69,6 @@ Channel notes:
       createdAt: "2026-06-01T10:15:00.000Z",
       updatedAt: "2026-06-01T14:00:00.000Z",
     },
-    comments: [
-      {
-        id: "comment-003",
-        assetId: "atelier-collection-brief",
-        authorName: "Sophia Laurent",
-        authorInitials: "SL",
-        body: "This brief needs review before it can be used as a training sample—there are a few phrases that conflict with the banned list. Flagging for the team.",
-        createdAt: "2026-06-01T14:00:00.000Z",
-      },
-    ],
-    voiceScore: null,
     brandProfileName: "THE LUXE Signature Voice",
   },
 };

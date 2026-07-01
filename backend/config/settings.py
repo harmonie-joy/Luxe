@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     # local apps
     "tenancy",
     "audit",
-    "llm",
     "brand",
     "content",
     "compliance",

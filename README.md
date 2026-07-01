@@ -3,7 +3,7 @@
 Monorepo:
 - backend: Django + DRF
 - frontend: Next.js
-- infra: docker-compose for local dev (postgres, redis, minio)
+- infra: docker-compose for local dev (postgres)
 
 ## Quickstart (local)
 1) make dev

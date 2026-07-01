@@ -13,7 +13,7 @@ import {
   formatDisplayDate,
   formatShortDate,
 } from "@/lib/formatters";
-import type { ContentDraft, DraftStatus, ScheduledContent, DraftComment, AuditLog } from "@/types/content";
+import type { ContentDraft, DraftStatus, ScheduledContent, DraftComment } from "@/types/content";
 import type { ComplianceStatus } from "@/types/compliance";
 
 interface CalendarShellProps {

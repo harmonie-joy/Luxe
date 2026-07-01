@@ -8,7 +8,6 @@ export const APP_ROUTES = {
   drafts: "/drafts",
   compliance: "/compliance",
   calendar: "/calendar",
-  settings: "/settings",
 } as const;
 
 /** Dynamic route for a single brand asset sample detail page. */
@@ -30,8 +29,7 @@ export type NavigationIcon =
   | "create"
   | "drafts"
   | "compliance"
-  | "calendar"
-  | "settings";
+  | "calendar";
 
 export type NavigationItem = Readonly<{
   href: AppRoutePath;
@@ -71,14 +69,6 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
     href: APP_ROUTES.calendar,
     icon: "calendar",
     label: "Calendar",
-  },
-] as const;
-
-export const FOOTER_NAV_ITEMS: readonly NavigationItem[] = [
-  {
-    href: APP_ROUTES.settings,
-    icon: "settings",
-    label: "Settings",
   },
 ] as const;
 
