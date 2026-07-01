@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and local AI endpoints now exist for brand voice extraction and persisted draft generation; Draft Studio and Compliance Review still need broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, and save persisted drafts. Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -380,6 +380,40 @@ Decision Log Update Needed:
 
 Next Step:
 - Connect Draft Studio to the new draft generation endpoint, then persist draft edits through the existing content draft APIs.
+
+### 2026-07-01 - T-AI-005 Draft Studio AI Generation UI
+
+Worked On:
+- Connected Draft Studio to persisted draft generation and save flows.
+
+Completed:
+- Created GitHub issue #14 for T-AI-005.
+- Added `generateDrafts()` for `POST /api/ai/drafts/generate/`.
+- Replaced the Draft Studio simulated AI controls with a live Generate Drafts action.
+- Loaded the current authenticated workspace brief and existing drafts in the browser, with mock data fallback when the API is unavailable.
+- Used the selected brief target channels as generation channels.
+- Rendered generated persisted drafts and refreshed canonical draft records after generation.
+- Saved title/content edits through the existing content draft PATCH helper.
+- Kept the task frontend-only with no backend, compliance, calendar, publishing, queue, vector DB, or cloud AI changes.
+
+Files Changed:
+- `frontend/features/drafts/components/draft-studio-shell.tsx`
+- `frontend/features/drafts/data/get-draft-studio-page.ts`
+- `frontend/lib/api/ai.ts`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed outside the sandbox after the known Turbopack port-binding sandbox failure.
+
+Decision Log Update Needed:
+- No. This implements the accepted local-first AI strategy in D-0008 without changing provider strategy, data model strategy, or MVP scope.
+
+Next Step:
+- Connect Compliance Review to persisted compliance checks and issues.
 
 ### Existing MVP Implementation Snapshot
 
