@@ -20,6 +20,19 @@ def extract_brand_voice(workspace, sample_text, user=None, provider=None):
     )
 
 
+def extract_brand_voice_with_run(workspace, sample_text, user=None, provider=None):
+    return _run_ai_task(
+        workspace=workspace,
+        user=user,
+        provider=provider,
+        task_type=AIRun.TaskType.BRAND_VOICE_EXTRACTION,
+        schema=BrandVoiceExtractionResult,
+        prompt=f"Extract brand voice from this sample:\n{sample_text}",
+        input_data={"sample_text": sample_text},
+        return_run=True,
+    )
+
+
 def generate_draft(workspace, brief, channel, user=None, provider=None):
     return _run_ai_task(
         workspace=workspace,
@@ -56,7 +69,16 @@ def review_compliance(workspace, draft, user=None, provider=None):
     )
 
 
-def _run_ai_task(workspace, user, provider, task_type, schema, prompt, input_data):
+def _run_ai_task(
+    workspace,
+    user,
+    provider,
+    task_type,
+    schema,
+    prompt,
+    input_data,
+    return_run=False,
+):
     provider = provider or get_provider()
     run = AIRun.objects.create(
         workspace=workspace,
@@ -74,4 +96,6 @@ def _run_ai_task(workspace, user, provider, task_type, schema, prompt, input_dat
         raise
 
     run.mark_succeeded(result.model_dump(mode="json"))
+    if return_run:
+        return result, run
     return result

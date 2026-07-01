@@ -192,6 +192,26 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: Yes, D-0008 added.
 - Next action: Approve the backend API contract before wiring these AI services into user-facing workflows.
 
+### 2026-07-01 - Codex - T-AI-002 Brand Voice Extraction API Contract
+
+- Tool: Codex
+- Request: Implement the backend-only `POST /api/ai/brand/extract/` contract using the existing local-first AI foundation and create/update the GitHub task first.
+- Files changed:
+  - `backend/config/urls.py`
+  - `backend/llm/serializers.py`
+  - `backend/llm/services.py`
+  - `backend/llm/tests.py`
+  - `backend/llm/urls.py`
+  - `backend/llm/views.py`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #9, added an authenticated brand voice extraction endpoint, validated workspace/profile/asset ownership, reused the mock-backed local AI service, returned `aiRunId` plus schema-valid suggestions, and kept `BrandProfile` unchanged until an explicit save flow exists.
+- Human review status: Pending
+- Verification: `make test-be` passed with 88 backend tests.
+- Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
+- Next action: Connect Brand Voice Setup UI to the extraction endpoint with confirmation-gated profile updates.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

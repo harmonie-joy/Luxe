@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected; Draft Studio and Compliance Review still need broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and the first product-facing local AI endpoint now exists for brand voice extraction; Draft Studio and Compliance Review still need broader runtime integration.
 
 ## Progress Entries
 
@@ -290,6 +290,39 @@ Decision Log Update Needed:
 
 Next Step:
 - Run Docker migrations/checks/tests after rebuilding backend dependencies.
+
+### 2026-07-01 - T-AI-002 Brand Voice Extraction API Contract
+
+Worked On:
+- Added the first authenticated backend API contract on top of the local-first AI orchestration foundation.
+
+Completed:
+- Created GitHub issue #9 for T-AI-002.
+- Added `POST /api/ai/brand/extract/`.
+- Added request validation for workspace membership, brand profile ownership, and selected brand asset ownership.
+- Concatenated selected `BrandAsset.content` values as sample input for `extract_brand_voice`.
+- Returned `aiRunId` and schema-valid `BrandVoiceExtractionResult` suggestions without mutating `BrandProfile`.
+- Added backend tests for authenticated success, unauthenticated rejection, foreign workspace rejection, foreign asset rejection, missing asset validation, `AIRun` creation, and no profile mutation.
+
+Files Changed:
+- `backend/config/urls.py`
+- `backend/llm/serializers.py`
+- `backend/llm/services.py`
+- `backend/llm/tests.py`
+- `backend/llm/urls.py`
+- `backend/llm/views.py`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `make test-be` passed with 88 backend tests.
+
+Decision Log Update Needed:
+- No. This implements D-0008 and does not change the AI provider strategy.
+
+Next Step:
+- Connect Brand Voice Setup UI to the new extraction endpoint, keeping suggestions review-only until the user explicitly saves changes.
 
 ### Existing MVP Implementation Snapshot
 
