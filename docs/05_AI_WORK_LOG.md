@@ -318,6 +318,26 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
 - Next action: Connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-01 - Codex - T-AI-006 Improve Brand Voice Extraction Quality
+
+- Tool: Codex with GitHub connector and ponytail workflow
+- Request: Improve Brand Voice extraction quality so selected samples produce a stronger reusable Voice DNA profile before draft generation is resumed.
+- Files changed:
+  - `backend/llm/providers.py`
+  - `backend/llm/schemas.py`
+  - `backend/llm/services.py`
+  - `backend/llm/tests.py`
+  - `backend/llm/views.py`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #23, changed Brand Voice extraction to pass selected BrandAsset title, format, and content into provider context, replaced the simple extraction prompt with Voice DNA instructions, constrained tone validation to canonical values, normalized simple provider string arrays into the existing frontend-compatible vocabulary and banned phrase object shape, and made the deterministic mock output richer while preserving the endpoint contract.
+- Local Ollama setup: run `ollama list`, copy the exact model name, set `AI_PROVIDER=ollama`, set `OLLAMA_MODEL=<model-name>`, and use `OLLAMA_BASE_URL=http://host.docker.internal:11434` when the backend runs in Docker while Ollama runs on the host.
+- Human review status: Pending
+- Verification: `DATABASE_URL=sqlite:////tmp/theluxe-brand-voice-quality.sqlite3 .venv/bin/python manage.py test llm brand` passed with 39 tests; `make test-be` passed with 99 backend tests after Docker socket approval.
+- Decision log update needed: No. This improves prompt quality inside D-0008 without changing provider strategy, data model, or MVP scope.
+- Next action: Run a manual local Ollama Brand Voice extraction smoke test with real samples, then validate draft generation using the improved BrandProfile guidance.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

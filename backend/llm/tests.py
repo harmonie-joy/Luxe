@@ -120,6 +120,38 @@ class MockAIServiceTests(TestCase):
         self.assertEqual(run.output_data, {})
         self.assertIsNotNone(run.completed_at)
 
+    def test_brand_voice_extraction_prompt_includes_asset_context(self):
+        profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Extraction Voice",
+            audience="Service business owners",
+            tone=["professional"],
+        )
+        asset = BrandAsset.objects.create(
+            brand_profile=profile,
+            title="Homepage sample",
+            format="landing_page",
+            content="We help consultants explain their offer without hype.",
+        )
+        provider = RecordingProvider()
+
+        result = extract_brand_voice(
+            self.workspace,
+            [asset],
+            user=self.user,
+            provider=provider,
+        )
+
+        self.assertIsInstance(result, BrandVoiceExtractionResult)
+        self.assertIn("Homepage sample", provider.prompt)
+        self.assertIn("landing_page", provider.prompt)
+        self.assertIn("consultants explain their offer", provider.prompt)
+        self.assertIn("Voice DNA", result.positioning_notes)
+        run = AIRun.objects.get()
+        self.assertEqual(run.input_data["assets"][0]["title"], "Homepage sample")
+        self.assertEqual(run.input_data["assets"][0]["format"], "landing_page")
+        self.assertIn("without hype", run.input_data["assets"][0]["content"])
+
     def test_draft_generation_prompt_includes_brief_and_brand_voice_context(self):
         profile = BrandProfile.objects.create(
             workspace=self.workspace,
@@ -213,11 +245,13 @@ class BrandVoiceExtractionAPITests(APITestCase):
         self.asset = BrandAsset.objects.create(
             brand_profile=self.profile,
             title="Editorial Sample",
+            format="editorial",
             content="Precise editorial language for premium teams.",
         )
         self.second_asset = BrandAsset.objects.create(
             brand_profile=self.profile,
             title="Launch Sample",
+            format="launch_note",
             content="Calm launch notes with practical clarity.",
         )
         self.other_asset = BrandAsset.objects.create(
@@ -244,6 +278,8 @@ class BrandVoiceExtractionAPITests(APITestCase):
             response.data["suggestions"]
         )
         self.assertEqual(suggestions.audience, response.data["suggestions"]["audience"])
+        self.assertEqual(len(suggestions.tone), 1)
+        self.assertIn("Voice DNA", suggestions.positioning_notes)
 
     def test_unauthenticated_request_is_rejected(self):
         response = self.client.post(BRAND_EXTRACT_URL, self.payload(), format="json")
@@ -296,8 +332,21 @@ class BrandVoiceExtractionAPITests(APITestCase):
         self.assertEqual(run.task_type, AIRun.TaskType.BRAND_VOICE_EXTRACTION)
         self.assertEqual(run.provider, "mock")
         self.assertEqual(run.status, AIRun.Status.SUCCEEDED)
-        self.assertIn(self.asset.content, run.input_data["sample_text"])
-        self.assertIn(self.second_asset.content, run.input_data["sample_text"])
+        self.assertEqual(run.input_data["assets"][0]["title"], self.asset.title)
+        self.assertEqual(run.input_data["assets"][0]["format"], self.asset.format)
+        self.assertIn(self.asset.content, run.input_data["assets"][0]["content"])
+        self.assertEqual(
+            run.input_data["assets"][1]["title"],
+            self.second_asset.title,
+        )
+        self.assertEqual(
+            run.input_data["assets"][1]["format"],
+            self.second_asset.format,
+        )
+        self.assertIn(
+            self.second_asset.content,
+            run.input_data["assets"][1]["content"],
+        )
 
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.audience, original_profile["audience"])

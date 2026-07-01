@@ -63,22 +63,54 @@ def get_provider():
 
 MOCK_RESULTS: dict[str, dict] = {
     "BrandVoiceExtractionResult": {
-        "audience": "Founders and brand teams seeking polished content.",
-        "tone": ["professional", "sophisticated"],
+        "audience": (
+            "Creators, solo operators, service businesses, and SME founders "
+            "who need polished content that explains value clearly without "
+            "sounding inflated or generic."
+        ),
+        "tone": ["professional"],
         "preferred_vocabulary": [
             {
-                "preferred_term": "clientele",
-                "restricted_terms": ["customers"],
-                "note": "Use elevated brand language.",
+                "preferred_term": "practical clarity",
+                "restricted_terms": ["engaging content", "boost your brand"],
+                "note": "Use when explaining how the brand turns ideas into usable content.",
+            },
+            {
+                "preferred_term": "brand voice",
+                "restricted_terms": ["vibe", "magic formula"],
+                "note": "Use for the reusable communication system behind drafts.",
             }
         ],
         "banned_phrases": [
             {
                 "phrase": "go viral",
-                "reason": "Conflicts with restrained positioning.",
+                "reason": "Overpromises attention and does not fit a controlled brand voice.",
+            },
+            {
+                "phrase": "stand out online",
+                "reason": "Too generic unless a sample proves this exact positioning.",
             }
         ],
-        "positioning_notes": "Quiet authority with practical clarity.",
+        "positioning_notes": (
+            "Voice DNA:\n"
+            "- Brand personality: Clear, useful, composed, and operator-aware.\n"
+            "- Sentence style: Direct sentences with enough detail to guide action.\n"
+            "- Pacing: Calm and explanatory, not hype-led.\n"
+            "- Formality: Professional but human.\n"
+            "- Positioning: Turns brand guidance into reusable content decisions.\n"
+            "- Proof style: Prefer concrete process notes and observed patterns.\n"
+            "- Claim boundaries: Avoid guaranteed outcomes, invented metrics, and inflated performance claims.\n\n"
+            "Sound like:\n"
+            "- A practical brand strategist helping a small team make better content decisions.\n\n"
+            "Avoid sounding like:\n"
+            "- A generic marketing guru promising instant reach.\n\n"
+            "Do examples:\n"
+            "1. Use this voice when you need a clear launch note with restraint.\n"
+            "2. Explain the value in concrete terms before asking for action.\n\n"
+            "Don't examples:\n"
+            "1. This will skyrocket your engagement overnight.\n"
+            "2. Boost your brand with high quality content that stands out online."
+        ),
     },
     "DraftGenerationResult": {
         "title": "A considered launch note",

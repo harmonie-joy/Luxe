@@ -1,11 +1,18 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 ComplianceStatus = Literal["green", "yellow", "red"]
 ComplianceCategory = Literal["gdpr", "consent", "ip", "claims"]
 ComplianceSeverity = Literal["low", "medium", "high"]
+BrandVoiceTone = Literal[
+    "professional",
+    "authoritative",
+    "sophisticated",
+    "approachable",
+    "visionary",
+]
 
 
 class VocabularyRuleResult(BaseModel):
@@ -21,10 +28,37 @@ class BannedPhraseResult(BaseModel):
 
 class BrandVoiceExtractionResult(BaseModel):
     audience: str
-    tone: list[str] = Field(default_factory=list)
+    tone: list[BrandVoiceTone] = Field(default_factory=list)
     preferred_vocabulary: list[VocabularyRuleResult] = Field(default_factory=list)
     banned_phrases: list[BannedPhraseResult] = Field(default_factory=list)
     positioning_notes: str = ""
+
+    @field_validator("tone", mode="before")
+    @classmethod
+    def normalize_tone(cls, value):
+        if isinstance(value, str):
+            return [value]
+        return list(value or [])[:1]
+
+    @field_validator("preferred_vocabulary", mode="before")
+    @classmethod
+    def normalize_preferred_vocabulary(cls, value):
+        return [
+            {"preferred_term": item, "restricted_terms": [], "note": ""}
+            if isinstance(item, str)
+            else item
+            for item in (value or [])
+        ]
+
+    @field_validator("banned_phrases", mode="before")
+    @classmethod
+    def normalize_banned_phrases(cls, value):
+        return [
+            {"phrase": item, "reason": ""}
+            if isinstance(item, str)
+            else item
+            for item in (value or [])
+        ]
 
 
 class DraftGenerationResult(BaseModel):

@@ -523,6 +523,47 @@ Local Ollama Setup:
 Next Step:
 - Connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-01 - T-AI-006 Improve Brand Voice Extraction Quality
+
+Worked On:
+- Improved the backend Brand Voice extraction prompt so selected samples produce a richer reusable Voice DNA profile.
+
+Completed:
+- Created GitHub issue #23 for the Brand Voice extraction quality task.
+- Updated Brand Voice extraction to pass selected `BrandAsset` title, format, and content into provider context and `AIRun.input_data`.
+- Replaced the basic extraction prompt with Voice DNA instructions covering audience clarity, positioning, sentence style, pacing, formality, proof style, claim boundaries, sound-like guidance, avoid guidance, and practical do/don't examples.
+- Kept `POST /api/ai/brand/extract/` request and response shape stable.
+- Kept output compatible with existing `BrandProfile` fields: audience, tone, preferred vocabulary, banned phrases, and positioning notes.
+- Tightened schema handling so provider tone values are constrained to the canonical tone set and simple string vocabulary/phrase arrays can be normalized into the existing frontend-compatible object shape.
+- Updated deterministic `MockProvider` Brand Voice output to include one canonical tone and richer Voice DNA positioning notes.
+- Did not change draft generation logic, frontend UI, backend models, or migrations.
+
+Files Changed:
+- `backend/llm/providers.py`
+- `backend/llm/schemas.py`
+- `backend/llm/services.py`
+- `backend/llm/tests.py`
+- `backend/llm/views.py`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `DATABASE_URL=sqlite:////tmp/theluxe-brand-voice-quality.sqlite3 .venv/bin/python manage.py test llm brand` passed with 39 tests.
+- `make test-be` passed with 99 backend tests after Docker socket approval.
+
+Decision Log Update Needed:
+- No. This improves prompt quality inside the accepted local-first AI strategy without changing provider strategy, data model, or MVP scope.
+
+Local Ollama Setup:
+- Run `ollama list` on the host machine and copy the exact model name.
+- Set `AI_PROVIDER=ollama`.
+- Set `OLLAMA_MODEL=<model-name>`.
+- If the backend runs in Docker and Ollama runs on the host, set `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+
+Next Step:
+- Run a manual local Ollama Brand Voice extraction smoke test, then resume draft generation validation using the improved BrandProfile guidance.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
