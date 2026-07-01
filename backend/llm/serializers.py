@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 
 from brand.models import BrandAsset, BrandProfile
+from content.models import ContentBrief
 from tenancy.models import Workspace
 
 
@@ -45,4 +46,38 @@ class BrandVoiceExtractionRequestSerializer(serializers.Serializer):
             raise PermissionDenied("You do not have permission to use these assets.")
 
         attrs["assets"] = ordered_assets
+        return attrs
+
+
+class DraftGenerationRequestSerializer(serializers.Serializer):
+    workspace = serializers.PrimaryKeyRelatedField(queryset=Workspace.objects.all())
+    brief = serializers.PrimaryKeyRelatedField(queryset=ContentBrief.objects.all())
+    channels = serializers.ListField(
+        child=serializers.ChoiceField(choices=ContentBrief.Channel.choices),
+        allow_empty=False,
+    )
+
+    def validate(self, attrs):
+        request = self.context["request"]
+        workspace = attrs["workspace"]
+        brief = attrs["brief"]
+        channels = attrs["channels"]
+
+        if not workspace.memberships.filter(user=request.user).exists():
+            raise PermissionDenied("You do not have permission to use this workspace.")
+
+        if brief.workspace_id != workspace.id:
+            raise PermissionDenied("You do not have permission to use this brief.")
+
+        invalid_for_brief = sorted(set(channels) - set(brief.target_channels))
+        if invalid_for_brief:
+            raise serializers.ValidationError(
+                {
+                    "channels": (
+                        "Requested channels must be selected on the brief: "
+                        f"{', '.join(invalid_for_brief)}."
+                    )
+                }
+            )
+
         return attrs

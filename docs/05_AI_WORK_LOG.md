@@ -230,6 +230,24 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Verification: `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed outside the sandbox after the known Turbopack internal port-binding restriction.
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy.
 - Next action: Connect Draft Studio reads/saves to the existing content draft APIs.
+### 2026-07-01 - Codex - T-AI-004 AI Draft Generation API
+
+- Tool: Codex
+- Request: Implement backend-only `POST /api/ai/drafts/generate/` using the local-first AI service layer and create the GitHub task first.
+- Files changed:
+  - `backend/llm/serializers.py`
+  - `backend/llm/services.py`
+  - `backend/llm/tests.py`
+  - `backend/llm/urls.py`
+  - `backend/llm/views.py`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Created GitHub issue #12, added an authenticated AI draft generation endpoint, validated workspace membership and brief/channel scope, used the mock-backed local draft generation service, upserted one `ContentDraft` per requested channel, preserved existing draft creator attribution on regeneration, and returned generated draft records with `AIRun` IDs.
+- Human review status: Pending
+- Verification: `DATABASE_URL=sqlite:////tmp/theluxe-ai-draft-test.sqlite3 .venv/bin/python manage.py test llm content` passed with 52 tests. `make test-be` was attempted but blocked by Docker API permissions in the sandbox.
+- Decision log update needed: No. This implements D-0008 without changing AI provider strategy, data model strategy, or MVP scope.
+- Next action: Run `make test-be` in a Docker-enabled shell, then connect Draft Studio to the draft generation endpoint and existing content draft read/save APIs.
 
 ## Entry Template
 

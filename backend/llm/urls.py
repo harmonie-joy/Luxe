@@ -5,4 +5,5 @@ from . import views
 
 urlpatterns = [
     path("ai/brand/extract/", views.extract_brand_voice, name="ai-brand-extract"),
+    path("ai/drafts/generate/", views.generate_drafts, name="ai-drafts-generate"),
 ]

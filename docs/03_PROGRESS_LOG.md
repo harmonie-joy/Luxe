@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and Brand Voice Setup now exposes local-first AI suggestions against selected samples; Draft Studio and Compliance Review still need broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, and local AI endpoints now exist for brand voice extraction and persisted draft generation; Draft Studio and Compliance Review still need broader runtime integration.
 
 ## Progress Entries
 
@@ -258,6 +258,7 @@ Decision Log Update Needed:
 
 Next Step:
 - Wire the local AI services into backend API workflows only after the exact endpoint contract is approved.
+
 - `docker exec infra-frontend-1 npm run typecheck` passed.
 - `docker exec infra-frontend-1 npm run lint` passed.
 - `docker exec infra-frontend-1 npm run build` passed.
@@ -343,20 +344,42 @@ Files Changed:
 - `frontend/features/brand-voice/components/brand-voice-ai-panel.tsx`
 - `frontend/features/brand-voice/data/get-brand-voice-setup.ts`
 - `frontend/lib/api/ai.ts`
+### 2026-07-01 - T-AI-004 AI Draft Generation API
+
+Worked On:
+- Added the backend-only AI draft generation endpoint.
+
+Completed:
+- Created GitHub issue #12 for T-AI-004.
+- Added `POST /api/ai/drafts/generate/`.
+- Validated authentication, workspace membership, brief workspace ownership, canonical channels, and brief-selected channels.
+- Reused `llm.services.generate_draft` through a run-returning wrapper.
+- Persisted generated output as `ContentDraft` records, with regeneration updating existing brief/channel drafts instead of violating uniqueness.
+- Returned generated draft records and related `AIRun` IDs.
+- Kept the task backend-only with no frontend, cloud AI, queue, vector DB, or publishing changes.
+
+Problems Found:
+- `make test-be` could not run in the sandbox because Docker socket access was denied and escalation was unavailable.
+
+Files Changed:
+- `backend/llm/serializers.py`
+- `backend/llm/services.py`
+- `backend/llm/tests.py`
+- `backend/llm/urls.py`
+- `backend/llm/views.py`
 - `docs/03_PROGRESS_LOG.md`
 - `docs/04_NEXT_ACTIONS.md`
 - `docs/05_AI_WORK_LOG.md`
 
 Verification:
-- `cd frontend && npm run typecheck` passed.
-- `cd frontend && npm run lint` passed.
-- `cd frontend && npm run build` passed outside the sandbox after Turbopack hit the known internal port-binding restriction.
+- `DATABASE_URL=sqlite:////tmp/theluxe-ai-draft-test.sqlite3 .venv/bin/python manage.py test llm content` passed with 52 tests.
+- `make test-be` attempted but blocked by Docker API permissions.
 
 Decision Log Update Needed:
-- No. This implements D-0008 and does not change the AI provider strategy.
+- No. This implements the accepted local-first AI strategy in D-0008 without changing provider strategy, data model strategy, or MVP scope.
 
 Next Step:
-- Connect Draft Studio reads and saves to the existing content draft APIs, or add the next API-connected AI workflow after the core draft path is stable.
+- Connect Draft Studio to the new draft generation endpoint, then persist draft edits through the existing content draft APIs.
 
 ### Existing MVP Implementation Snapshot
 
