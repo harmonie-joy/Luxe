@@ -171,6 +171,27 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: Yes, D-0003 wording updated.
 - Next action: Continue with Docker-verified homepage/auth runtime validation and Draft Studio persistence.
 
+### 2026-07-01 - Codex - Local-First AI Orchestration Foundation
+
+- Tool: Codex
+- Request: Add the backend AI orchestration foundation using the existing `llm` app, local-first provider settings, MockProvider tests, optional Ollama support, and GitHub task tracking.
+- Files changed:
+  - `AGENTS.md`
+  - `backend/config/settings.py`
+  - `backend/requirements/base.txt`
+  - `backend/llm/`
+  - `docs/00_PROJECT_BRIEF.md`
+  - `docs/01_ARCHITECTURE.md`
+  - `docs/02_DECISIONS.md`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added `AIRun` tracking, Pydantic result schemas, deterministic mock AI provider support, optional Ollama HTTP provider support through `requests`, service functions for four MVP AI tasks, settings for `AI_PROVIDER`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL`, and backend tests that prove success and failure runs are recorded without calling a real provider.
+- Human review status: Pending
+- Verification: GitHub issue #8 created; `docker exec infra-backend-1 python manage.py check` passed; `docker exec infra-backend-1 python manage.py makemigrations --check --dry-run` passed; `make test-be` passed with 82 tests.
+- Decision log update needed: Yes, D-0008 added.
+- Next action: Approve the backend API contract before wiring these AI services into user-facing workflows.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

@@ -60,6 +60,7 @@ Current backend apps include:
 - `brand/` for brand profile and brand input entities
 - `content/` for briefs, drafts, channel outputs, and scheduling
 - `compliance/` for checks and issues
+- `llm/` for local-first AI orchestration boundaries
 
 ### Frontend
 
@@ -85,7 +86,7 @@ Do not create duplicate domain types inside feature folders when a shared type b
 - Keep backend models, API serializers, frontend shared types, and mock data aligned.
 - Preserve existing naming conventions unless there is a clear reason to change them.
 - Explain migrations before creating them.
-- Do not add real AI integrations, publishing integrations, or authentication unless explicitly requested.
+- Do not add cloud AI integrations, publishing integrations, or authentication unless explicitly requested.
 - Do not import from `temp/`, prototype exports, or other experimental folders unless explicitly instructed.
 - Treat `temp/` as design reference material only, not as production code.
 - If the frontend and backend disagree on a product concept, prefer clarifying the canonical domain model first and then patch the smallest number of files needed.

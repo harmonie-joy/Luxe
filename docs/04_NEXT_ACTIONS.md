@@ -2,7 +2,7 @@
 
 ## Current Sprint Goal
 
-Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping and the existing MVP domain contract. Homepage and auth session bootstrap now exist; the next integration work is runtime verification in Docker and Draft Studio persistence.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist; the next integration work is runtime verification in Docker, local AI service wiring, and Draft Studio persistence.
 
 ## Active Tasks
 
@@ -12,6 +12,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 | P0 | Define the minimal active workspace/bootstrap path for frontend API calls. | Done | `/api/auth/me/` and `/api/auth/bootstrap-workspace/` now return session workspace data. |
 | P0 | T-BOOT-001: Define authenticated workspace/bootstrap prerequisite path. | Done | Implemented as a minimal session/bootstrap API, not a full workspace selector. |
 | P0 | Run auth provider migrations and seed the demo workspace in Docker. | Ready | Run `make migrate`, then `make manage cmd="seed_demo"` after rebuilding with `django-allauth[headless]`. |
+| P0 | Add local-first backend AI orchestration foundation. | Done | GitHub issue #8. Backend-only: `AIRun`, mock provider, optional Ollama provider, schemas, services, and tests passed in Docker. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
@@ -26,11 +27,11 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 
 ## Best Next Task for AI
 
-Rebuild the Docker stack, run migrations and `seed_demo`, then manually verify homepage -> login/signup -> dashboard. After that, connect Draft Studio reads and saves to the existing content draft APIs.
+Run migrations and `seed_demo` in Docker if the local database needs refreshing, manually verify homepage -> login/signup -> dashboard, then connect Draft Studio reads/saves to the existing content draft APIs. Wire local AI services into backend workflows only after the API contract is approved.
 
 ## Do Not Touch Yet
 
-- Real AI provider integrations.
+- Cloud AI provider integrations.
 - Publishing integrations or social network posting.
 - Broad dashboard analytics.
 - Full comments model.

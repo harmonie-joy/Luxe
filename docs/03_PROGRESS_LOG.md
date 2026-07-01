@@ -218,6 +218,46 @@ Verification:
 - `make dev-check` passed.
 - `make dev` rebuilt and started Docker services.
 - `make test-be` passed with 79 backend tests.
+
+### 2026-07-01 - Local-First AI Orchestration Foundation
+
+Worked On:
+- Added the backend foundation for local-first AI task execution.
+
+Completed:
+- Reintroduced the backend `llm` app as an MVP orchestration boundary.
+- Added `AIRun` tracking for workspace-scoped AI task status, provider, model, inputs, outputs, errors, and timings.
+- Added Pydantic result schemas for brand voice extraction, draft generation, voice review, and compliance review.
+- Added a provider abstraction with deterministic `MockProvider` support and optional `OllamaProvider` support through `requests`.
+- Added service functions that record successful and failed runs while returning schema-valid structured results.
+- Added environment-backed settings for `AI_PROVIDER`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL`.
+- Created GitHub issue #8 for the local-first backend AI orchestration task.
+
+Problems Found:
+- Initial manual migration index names did not match Django's autodetector and were corrected before acceptance.
+
+Files Changed:
+- `AGENTS.md`
+- `backend/config/settings.py`
+- `backend/requirements/base.txt`
+- `backend/llm/`
+- `docs/00_PROJECT_BRIEF.md`
+- `docs/01_ARCHITECTURE.md`
+- `docs/02_DECISIONS.md`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `docker exec infra-backend-1 python manage.py check` passed.
+- `docker exec infra-backend-1 python manage.py makemigrations --check --dry-run` passed.
+- `make test-be` passed with 82 backend tests.
+
+Decision Log Update Needed:
+- Yes. Added D-0008 for local-first AI orchestration as MVP scope.
+
+Next Step:
+- Wire the local AI services into backend API workflows only after the exact endpoint contract is approved.
 - `docker exec infra-frontend-1 npm run typecheck` passed.
 - `docker exec infra-frontend-1 npm run lint` passed.
 - `docker exec infra-frontend-1 npm run build` passed.
@@ -227,6 +267,29 @@ Decision Log Update Needed:
 
 Next Step:
 - Continue with Docker-verified homepage/auth runtime validation and Draft Studio persistence.
+
+### 2026-07-01 - Local-First AI Orchestration Foundation
+
+Worked On:
+- Added backend-only local AI orchestration foundation for MVP drafting and review workflows.
+
+Completed:
+- Recreated `backend/llm` as the AI orchestration boundary.
+- Added `AIRun` tracking for successful and failed AI runs.
+- Added `MockProvider` and optional `OllamaProvider` using `requests`.
+- Added Pydantic schemas for brand voice extraction, draft generation, voice review, and compliance review.
+- Added service functions that run through the mock provider in tests.
+- Added `AI_PROVIDER`, `OLLAMA_BASE_URL`, and `OLLAMA_MODEL` settings.
+- Created GitHub issue #8 to track the AI orchestration slice.
+
+Verification:
+- Pending.
+
+Decision Log Update Needed:
+- Yes. D-0008 added and D-0003 superseded.
+
+Next Step:
+- Run Docker migrations/checks/tests after rebuilding backend dependencies.
 
 ### Existing MVP Implementation Snapshot
 

@@ -3,7 +3,7 @@
 ## Tech Stack
 
 - Monorepo with `backend/`, `frontend/`, `infra/`, `docs/`, and `prompts/`.
-- Backend: Django, Django REST Framework, PostgreSQL in local Docker.
+- Backend: Django, Django REST Framework, PostgreSQL in local Docker, local-first AI orchestration with mock and optional Ollama providers.
 - Frontend: Next.js App Router, TypeScript, Tailwind v4 token bridge, CSS custom properties in `frontend/styles/theme.css`.
 - Local workflow: Make targets and Docker Compose under `infra/docker-compose.yml`.
 - Project memory: Markdown-first docs in `docs/`, root `AGENTS.md`, tool-specific instruction files, and reusable prompts.
@@ -26,6 +26,7 @@
 - `content`: Content briefs, content drafts, scheduled content, and approvals.
 - `compliance`: Compliance checks and compliance issues.
 - `audit`: Audit logs.
+- `llm`: Local-first AI orchestration boundary, structured schemas, providers, and AI run tracking.
 
 ### Frontend
 
@@ -69,7 +70,7 @@ This is a compact summary of the current implemented MVP shape from `docs/mvp-pr
 
 - Prefer small, reversible feature slices.
 - Keep backend models, serializers, frontend types, mock data, and UI logic aligned.
-- Do not add real AI, publishing, or authentication integrations unless explicitly requested.
+- Do not add cloud AI, publishing, or authentication integrations unless explicitly requested.
 - Do not duplicate domain types inside feature folders.
 - Do not create migrations without explaining why.
 - Do not introduce new architecture without updating `docs/02_DECISIONS.md`.

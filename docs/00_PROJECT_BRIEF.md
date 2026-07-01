@@ -50,7 +50,7 @@ Connect one persisted MVP workflow slice: Create Brief -> Draft Studio -> Compli
 
 ## Non-Goals
 
-- Do not add real AI provider integrations yet.
+- Do not add cloud AI provider integrations yet.
 - Do not add publishing integrations yet.
 - Do not add authentication unless explicitly requested for a scoped task.
 - Do not build a full agent dashboard, vector database, autonomous planner, or multi-agent orchestration system.
@@ -61,7 +61,7 @@ Connect one persisted MVP workflow slice: Create Brief -> Draft Studio -> Compli
 
 - Bootstrap-first and validation-first.
 - Protect proprietary backend logic and compliance heuristics.
-- Keep the architecture simple and repo-native until the MVP proves it needs more.
+- Keep AI local-first and the architecture repo-native until the MVP proves it needs more.
 - Never store secrets, API keys, credentials, private user data, or production tokens in docs.
 - Treat compliance features as checklist and review support, not legal certification or legal advice.
 - Keep backend models, serializers, frontend shared types, mock data, enums, and UI logic aligned in the same task when a product concept changes.
