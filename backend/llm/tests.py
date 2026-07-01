@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APITestCase
 
 from brand.models import BrandAsset, BrandProfile
+from content.models import ContentBrief, ContentDraft
 from tenancy.models import Membership, Workspace
 
 from .models import AIRun
@@ -22,6 +23,7 @@ from .services import (
 
 User = get_user_model()
 BRAND_EXTRACT_URL = "/api/ai/brand/extract/"
+DRAFT_GENERATE_URL = "/api/ai/drafts/generate/"
 
 
 class MockAIServiceTests(TestCase):
@@ -235,3 +237,176 @@ class BrandVoiceExtractionAPITests(APITestCase):
             self.profile.positioning_notes,
             original_profile["positioning_notes"],
         )
+
+
+@override_settings(AI_PROVIDER="mock")
+class DraftGenerationAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="draft_ai_user", password="pass")
+        self.other_user = User.objects.create_user(
+            username="draft_ai_other",
+            password="pass",
+        )
+        self.workspace = Workspace.objects.create(name="Draft AI Workspace")
+        self.other_workspace = Workspace.objects.create(name="Other Draft AI Workspace")
+        Membership.objects.create(user=self.user, workspace=self.workspace)
+        Membership.objects.create(user=self.other_user, workspace=self.other_workspace)
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Draft Voice",
+            audience="Premium founders",
+            tone=["professional"],
+        )
+        self.other_profile = BrandProfile.objects.create(
+            workspace=self.other_workspace,
+            name="Other Draft Voice",
+            audience="Other audience",
+            tone=["visionary"],
+        )
+        self.brief = ContentBrief.objects.create(
+            workspace=self.workspace,
+            brand_profile=self.profile,
+            content_objective="Announce a private preview.",
+            campaign_goal=ContentBrief.CampaignGoal.ANNOUNCE,
+            audience="Existing clients",
+            angle="Quiet authority",
+            constraints="Avoid discount language.",
+            target_channels=[
+                ContentBrief.Channel.LINKEDIN,
+                ContentBrief.Channel.INSTAGRAM,
+                ContentBrief.Channel.NEWSLETTER,
+            ],
+        )
+        self.other_brief = ContentBrief.objects.create(
+            workspace=self.other_workspace,
+            brand_profile=self.other_profile,
+            content_objective="Foreign brief.",
+            campaign_goal=ContentBrief.CampaignGoal.PROMOTE,
+            audience="Other audience",
+            angle="Other angle",
+            constraints="Other constraints",
+            target_channels=[ContentBrief.Channel.LINKEDIN],
+        )
+
+    def payload(self, **overrides):
+        data = {
+            "workspace": str(self.workspace.id),
+            "brief": str(self.brief.id),
+            "channels": [
+                ContentBrief.Channel.LINKEDIN,
+                ContentBrief.Channel.INSTAGRAM,
+            ],
+        }
+        data.update(overrides)
+        return data
+
+    def test_authenticated_success_creates_drafts_and_ai_runs(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(DRAFT_GENERATE_URL, self.payload(), format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["aiRunIds"]), 2)
+        self.assertEqual(len(response.data["drafts"]), 2)
+        self.assertEqual(ContentDraft.objects.count(), 2)
+        self.assertEqual(AIRun.objects.count(), 2)
+
+        channels = {draft["channel"] for draft in response.data["drafts"]}
+        self.assertEqual(
+            channels,
+            {ContentBrief.Channel.LINKEDIN, ContentBrief.Channel.INSTAGRAM},
+        )
+        for draft in response.data["drafts"]:
+            self.assertEqual(draft["brief"], str(self.brief.id))
+            self.assertEqual(draft["status"], ContentDraft.DraftStatus.DRAFT)
+
+        runs = AIRun.objects.filter(id__in=response.data["aiRunIds"])
+        self.assertEqual(runs.count(), 2)
+        self.assertTrue(
+            all(run.task_type == AIRun.TaskType.DRAFT_GENERATION for run in runs)
+        )
+        self.assertTrue(all(run.provider == "mock" for run in runs))
+        self.assertTrue(all(run.status == AIRun.Status.SUCCEEDED for run in runs))
+
+    def test_unauthenticated_request_is_rejected(self):
+        response = self.client.post(DRAFT_GENERATE_URL, self.payload(), format="json")
+        self.assertIn(response.status_code, [401, 403])
+
+    def test_foreign_workspace_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(workspace=str(self.other_workspace.id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_foreign_brief_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(brief=str(self.other_brief.id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_invalid_channel_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(channels=["podcast"]),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("channels", response.data)
+
+    def test_channel_not_selected_on_brief_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(channels=[ContentBrief.Channel.BLOG]),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("channels", response.data)
+
+    def test_one_draft_created_per_requested_channel(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(
+                channels=[
+                    ContentBrief.Channel.LINKEDIN,
+                    ContentBrief.Channel.NEWSLETTER,
+                ],
+            ),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ContentDraft.objects.count(), 2)
+        self.assertEqual(
+            set(ContentDraft.objects.values_list("channel", flat=True)),
+            {ContentBrief.Channel.LINKEDIN, ContentBrief.Channel.NEWSLETTER},
+        )
+
+    def test_repeated_generation_updates_existing_draft(self):
+        existing = ContentDraft.objects.create(
+            brief=self.brief,
+            created_by=self.user,
+            title="Old title",
+            content="Old content",
+            channel=ContentBrief.Channel.LINKEDIN,
+            status=ContentDraft.DraftStatus.IN_REVIEW,
+        )
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            DRAFT_GENERATE_URL,
+            self.payload(channels=[ContentBrief.Channel.LINKEDIN]),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(ContentDraft.objects.count(), 1)
+        existing.refresh_from_db()
+        self.assertEqual(existing.title, response.data["drafts"][0]["title"])
+        self.assertEqual(existing.content, response.data["drafts"][0]["content"])
+        self.assertEqual(existing.status, ContentDraft.DraftStatus.DRAFT)
+        self.assertEqual(str(existing.id), response.data["drafts"][0]["id"])

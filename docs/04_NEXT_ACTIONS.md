@@ -2,7 +2,7 @@
 
 ## Current Sprint Goal
 
-Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, and Brand Voice Setup now exposes local-first AI suggestions; the next integration work is Draft Studio persistence and Compliance Review persistence.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, and backend local AI endpoints exist for brand voice extraction and draft generation; the next integration work is Draft Studio UI wiring and Compliance Review persistence.
 
 ## Active Tasks
 
@@ -14,8 +14,11 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 | P0 | Run auth provider migrations and seed the demo workspace in Docker. | Ready | Run `make migrate`, then `make manage cmd="seed_demo"` after rebuilding with `django-allauth[headless]`. |
 | P0 | Add local-first backend AI orchestration foundation. | Done | GitHub issue #8. Backend-only: `AIRun`, mock provider, optional Ollama provider, schemas, services, and tests passed in Docker. |
 | P0 | T-AI-002: Add Brand Voice Extraction API contract. | Done | GitHub issue #9. `POST /api/ai/brand/extract/` validates workspace/profile/assets, calls the mock-backed local AI service, returns `aiRunId` and schema-valid suggestions, and does not mutate `BrandProfile`. |
+| P0 | T-AI-004: Add AI Draft Generation API. | Done | GitHub issue #12. `POST /api/ai/drafts/generate/` validates workspace/brief/channel access, calls local draft generation, upserts `ContentDraft` records, and returns draft records plus `AIRun` IDs. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
 | P1 | T-AI-003: Connect Brand Voice Setup to extraction endpoint. | Done | GitHub issue #10. The page can analyze selected samples, render suggestions, preserve mock fallback, and accept suggestions through the existing profile update API in API mode. |
+| P1 | Connect Brand Voice Setup to extraction endpoint. | Ready | Call `POST /api/ai/brand/extract/`, show suggestions for review, and save profile changes only after explicit user confirmation. |
+| P1 | Connect Draft Studio to AI draft generation endpoint. | Ready | Call `POST /api/ai/drafts/generate/` for selected brief channels, then render returned drafts. |
 | P1 | Connect Draft Studio reads and saves to content draft APIs. | Ready | Fetch drafts by brief and persist edits with existing client helpers. |
 | P1 | Connect Compliance Review to compliance check and issue APIs. | Ready | Load checks by draft ID before adding richer issue workflows. |
 | P2 | Add typed mock AI flow fixtures for UX validation. | Done | `frontend/data/mock-ai-flow.ts` added and QA-accepted with scope-control remediation. |
@@ -29,7 +32,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 
 ## Best Next Task for AI
 
-Run migrations and `seed_demo` in Docker if the local database needs refreshing, manually verify homepage -> login/signup -> dashboard, then connect Draft Studio reads/saves to the existing content draft APIs.
+Run `make test-be` in a Docker-enabled shell to complete T-AI-004 verification, then connect Draft Studio to `POST /api/ai/drafts/generate/` and the existing content draft read/save APIs.
 
 ## Do Not Touch Yet
 

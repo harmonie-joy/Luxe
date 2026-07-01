@@ -45,6 +45,19 @@ def generate_draft(workspace, brief, channel, user=None, provider=None):
     )
 
 
+def generate_draft_with_run(workspace, brief, channel, user=None, provider=None):
+    return _run_ai_task(
+        workspace=workspace,
+        user=user,
+        provider=provider,
+        task_type=AIRun.TaskType.DRAFT_GENERATION,
+        schema=DraftGenerationResult,
+        prompt=f"Generate a {channel} draft for this brief:\n{brief}",
+        input_data={"brief": brief, "channel": channel},
+        return_run=True,
+    )
+
+
 def review_voice(workspace, draft, brand_voice, user=None, provider=None):
     return _run_ai_task(
         workspace=workspace,
