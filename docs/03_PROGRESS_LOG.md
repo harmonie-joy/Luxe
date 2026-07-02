@@ -608,6 +608,46 @@ Decision Log Update Needed:
 Next Step:
 - Run the manual local Ollama smoke test with a multimodal model if image analysis is required, then accept generated Voice DNA suggestions into the BrandProfile.
 
+### 2026-07-02 - T-AI-007 Manual Local Ollama Brand Voice Smoke Test
+
+Worked On:
+- Ran GitHub issue #25 manual local Ollama smoke test for Brand Voice analysis/extraction.
+
+Completed:
+- Confirmed host Ollama is reachable and has `gemma4:12b` available with vision capability.
+- Found and fixed a blocking Ollama provider issue where real local responses could truncate structured JSON or include extra text.
+- Kept the endpoint contracts unchanged: `POST /api/ai/brand/analyze-assets/` still returns `aiRunIds`, `assets`, and `warnings`; `POST /api/ai/brand/extract/` still returns `aiRunId` and `suggestions`.
+- Verified the existing API flow on a throwaway SQLite database: seeded demo workspace, created one text BrandAsset and one image BrandAsset through the BrandAsset API, ran analysis, ran extraction, and accepted suggestions into the BrandProfile through `PATCH /api/brand-profiles/{id}/`.
+
+Problems Found:
+- Docker commands could not run in this WSL distro because `docker` is not installed, so `make dev-check`, `make dev`, and `make ps` were skipped after failure.
+- First local Ollama attempt failed because the provider used generic JSON mode without a generation budget; Ollama returned truncated JSON.
+- Second attempt showed Ollama could return the JSON schema rather than an instance; provider now uses Ollama structured output with the Pydantic schema.
+- A later retry showed extra text after a valid JSON object; provider now parses the first JSON object before Pydantic validation.
+
+Files Changed:
+- `backend/config/settings.py`
+- `backend/llm/providers.py`
+- `backend/llm/tests.py`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `ollama list` passed; model used: `gemma4:12b`.
+- `curl -sS http://localhost:11434/api/tags` passed and reported `gemma4:12b`.
+- `DATABASE_URL=sqlite:////tmp/theluxe-ollama-smoke-final.sqlite3 AI_PROVIDER=ollama OLLAMA_MODEL=gemma4:12b OLLAMA_BASE_URL=http://localhost:11434 .venv/bin/python manage.py migrate --noinput` passed.
+- `DATABASE_URL=sqlite:////tmp/theluxe-ollama-smoke-final.sqlite3 AI_PROVIDER=ollama OLLAMA_MODEL=gemma4:12b OLLAMA_BASE_URL=http://localhost:11434 .venv/bin/python manage.py seed_demo` passed.
+- `DATABASE_URL=sqlite:////tmp/theluxe-ollama-smoke-final.sqlite3 AI_PROVIDER=ollama OLLAMA_MODEL=gemma4:12b OLLAMA_BASE_URL=http://localhost:11434 .venv/bin/python /tmp/theluxe_ollama_brand_voice_smoke.py` passed: two `brand_asset_analysis` runs and one `brand_voice_extraction` run succeeded with provider `ollama`, model `gemma4:12b`, no warnings, and accepted profile fields matched suggestions.
+- `DATABASE_URL=sqlite:////tmp/theluxe-llm-test.sqlite3 .venv/bin/python manage.py test llm` passed with 26 tests.
+- `cd frontend && npm run typecheck` passed.
+
+Decision Log Update Needed:
+- No. This keeps the local-first Ollama provider strategy and endpoint contracts stable.
+
+Next Step:
+- Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

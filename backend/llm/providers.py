@@ -35,12 +35,10 @@ class OllamaProvider:
     def generate(self, prompt, schema, images=None):
         payload = {
             "model": self.model,
-            "prompt": (
-                f"{prompt}\n\nReturn only JSON matching this schema: "
-                f"{schema.model_json_schema()}"
-            ),
+            "prompt": f"{prompt}\n\nReturn only the JSON data object.",
             "stream": False,
-            "format": "json",
+            "format": schema.model_json_schema(),
+            "options": {"num_predict": settings.OLLAMA_NUM_PREDICT},
         }
         if images:
             payload["images"] = images
@@ -53,7 +51,11 @@ class OllamaProvider:
         response.raise_for_status()
         try:
             raw = response.json()["response"]
-            data = json.loads(raw) if isinstance(raw, str) else raw
+            data = (
+                json.JSONDecoder().raw_decode(raw.strip())[0]
+                if isinstance(raw, str)
+                else raw
+            )
         except (KeyError, TypeError, json.JSONDecodeError) as error:
             raise AIProviderError("Ollama returned an invalid JSON response.") from error
         return schema.model_validate(data)

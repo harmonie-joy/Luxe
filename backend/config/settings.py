@@ -164,3 +164,4 @@ HEADLESS_FRONTEND_URLS = {
 AI_PROVIDER = env("AI_PROVIDER", default="mock")
 OLLAMA_BASE_URL = env("OLLAMA_BASE_URL", default="http://localhost:11434")
 OLLAMA_MODEL = env("OLLAMA_MODEL", default="")
+OLLAMA_NUM_PREDICT = env.int("OLLAMA_NUM_PREDICT", default=8192)

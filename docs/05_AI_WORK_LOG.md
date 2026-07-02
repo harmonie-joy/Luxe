@@ -363,6 +363,34 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This improves prompt quality inside D-0008 without changing provider strategy, data model, or MVP scope.
 - Next action: Run a manual local Ollama Brand Voice extraction smoke test with real samples, then validate draft generation using the improved BrandProfile guidance.
 
+### 2026-07-02 - Codex - T-AI-007 Manual Local Ollama Brand Voice Smoke Test
+
+- Tool: Codex with GitHub connector and ponytail workflow
+- Request: Work on GitHub issue #25 / T-AI-007 only. Run the manual local Ollama Brand Voice smoke test using the existing endpoint and UI/API flow, avoid code changes unless a blocker is found, and document results, skipped commands, logs, and next action.
+- Files changed:
+  - `backend/config/settings.py`
+  - `backend/llm/providers.py`
+  - `backend/llm/tests.py`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Confirmed local Ollama model `gemma4:12b`, found a blocking provider issue during the real Brand Voice smoke, fixed Ollama structured-output handling without changing endpoint contracts, then passed the smoke with saved text and image BrandAssets, asset analysis, Brand Voice extraction, and BrandProfile suggestion acceptance.
+- Manual smoke log:
+  - `ollama list` passed and showed `gemma4:12b`.
+  - `curl -sS http://localhost:11434/api/tags` passed and showed `gemma4:12b` with vision capability.
+  - Initial smoke failed in `POST /api/ai/brand/analyze-assets/` because Ollama returned truncated JSON.
+  - Retry after adding a generation budget failed because Ollama returned the JSON schema instead of an instance.
+  - Retry after switching to structured output passed text and image asset analysis, then failed extraction on malformed JSON with extra/truncated text.
+  - Final provider fix parses the first JSON object and validates with Pydantic; final smoke passed with `analysisStatus: 200`, `analysisWarnings: []`, `extractionStatus: 200`, and three succeeded `AIRun` rows.
+  - Final smoke run IDs: `24b13da5-3208-4184-9900-b151df3f8ff8`, `14e0cd3f-ed58-4b93-a2e5-1daed952057c`, `70152fef-5f7e-4be5-ae7f-bd1ff3e94d6b`.
+- Skipped commands:
+  - `make dev-check`, `make dev`, and `make ps` could not run because Docker is not installed in this WSL distro.
+  - Browser UI automation was not run because the Docker/Next stack was unavailable; the smoke used the existing DRF endpoints and the same API sequence as the Brand Voice UI: create assets, analyze assets, extract suggestions, patch BrandProfile.
+- Human review status: Pending
+- Verification: `DATABASE_URL=sqlite:////tmp/theluxe-llm-test.sqlite3 .venv/bin/python manage.py test llm` passed with 26 tests; final real-Ollama smoke passed on `/tmp/theluxe-ollama-smoke-final.sqlite3`; `cd frontend && npm run typecheck` passed.
+- Decision log update needed: No. This keeps the local-first Ollama provider strategy and the Brand Voice endpoint contracts stable.
+- Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

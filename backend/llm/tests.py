@@ -1,3 +1,6 @@
+import json
+from unittest.mock import Mock, patch
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -10,6 +13,7 @@ from tenancy.models import Membership, Workspace
 from .models import AIRun
 from .providers import AIProviderError, MockProvider, OllamaProvider
 from .schemas import (
+    BrandAssetAnalysisResult,
     BrandVoiceExtractionResult,
     ComplianceReviewResult,
     DraftGenerationResult,
@@ -288,6 +292,47 @@ class MockAIServiceTests(TestCase):
             "OLLAMA_MODEL must be set when AI_PROVIDER=ollama.",
         ):
             OllamaProvider(base_url="http://localhost:11434")
+
+    @override_settings(OLLAMA_MODEL="gemma4:12b", OLLAMA_NUM_PREDICT=8192)
+    def test_ollama_provider_sends_generation_budget(self):
+        response = Mock()
+        response.json.return_value = {
+            "response": json.dumps(
+                {
+                    "summary": "Clear brand reference.",
+                    "audience_clues": [],
+                    "tone_clues": [],
+                }
+            )
+        }
+
+        with patch("llm.providers.requests.post", return_value=response) as post:
+            OllamaProvider(base_url="http://localhost:11434").generate(
+                "Analyze this sample.",
+                BrandAssetAnalysisResult,
+            )
+
+        payload = post.call_args.kwargs["json"]
+        self.assertEqual(payload["options"]["num_predict"], 8192)
+        self.assertEqual(payload["format"]["title"], "BrandAssetAnalysisResult")
+
+    @override_settings(OLLAMA_MODEL="gemma4:12b", OLLAMA_NUM_PREDICT=4096)
+    def test_ollama_provider_accepts_first_json_object(self):
+        response = Mock()
+        response.json.return_value = {
+            "response": (
+                '{"summary": "Clear brand reference.", "audience_clues": [], '
+                '"tone_clues": []}\n\nDone.'
+            )
+        }
+
+        with patch("llm.providers.requests.post", return_value=response):
+            result = OllamaProvider(base_url="http://localhost:11434").generate(
+                "Analyze this sample.",
+                BrandAssetAnalysisResult,
+            )
+
+        self.assertEqual(result.summary, "Clear brand reference.")
 
 
 @override_settings(AI_PROVIDER="mock", MEDIA_ROOT="/tmp/theluxe-test-media")
