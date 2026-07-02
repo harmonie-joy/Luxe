@@ -18,6 +18,10 @@ class AuthLoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
+class AuthProfileUpdateSerializer(serializers.Serializer):
+    display_name = serializers.CharField(max_length=150)
+
+
 def serialize_session(user):
     memberships = (
         Membership.objects.select_related("workspace")

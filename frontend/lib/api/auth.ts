@@ -30,6 +30,16 @@ export function getSession(): Promise<AuthSession> {
   return httpClient.get("/api/auth/me/");
 }
 
+export interface UpdateCurrentUserPayload {
+  display_name: string;
+}
+
+export function updateCurrentUser(
+  payload: UpdateCurrentUserPayload,
+): Promise<AuthSession> {
+  return httpClient.patch("/api/auth/me/", payload);
+}
+
 export function logout(): Promise<void> {
   return httpClient.post("/api/auth/logout/", {});
 }

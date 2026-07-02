@@ -406,6 +406,27 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
 
+### 2026-07-02 - Claude Code - Account Page and Display Name Update
+
+- Tool: Claude Code with ponytail workflow
+- Request: Add a small authenticated `/account` page for the current user and active workspace, extend `/api/auth/me/` with PATCH for display name, keep the diff narrow, and do not build a Settings module.
+- Files changed:
+  - `backend/tenancy/serializers.py`
+  - `backend/tenancy/views.py`
+  - `backend/tenancy/tests.py`
+  - `frontend/lib/routes.ts`
+  - `frontend/lib/api/auth.ts`
+  - `frontend/components/layout/app-topbar.tsx`
+  - `frontend/app/(app)/account/page.tsx`
+  - `frontend/features/account/components/account-shell.tsx`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added `APP_ROUTES.account`, linked the topbar profile icon to `/account`, added a thin account route rendering a single `AccountShell` client component with SurfaceCard cards for signed-in user (editable display name), active workspace, MVP runtime context, and quick actions plus logout to `/login`. Added `updateCurrentUser`/`UpdateCurrentUserPayload` to the auth API client. Extended `/api/auth/me/` with PATCH via `AuthProfileUpdateSerializer` (required, trimmed, max 150, blank rejected), reusing the signup first/last-name split, with no new model or migration. Added four focused backend tests.
+- Human review status: Pending
+- Verification: Targeted tenancy tests passed with SQLite (7 tests); `make test-be` passed with 110 tests; frontend typecheck, lint, and build passed with `/account` in the route list; live Docker smoke covered demo login, PATCH persistence, blank/unauthenticated rejection, logout, and topbar link rendering.
+- Decision log update needed: No
+- Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

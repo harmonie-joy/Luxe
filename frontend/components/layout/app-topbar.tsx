@@ -67,17 +67,17 @@ function UserIcon() {
   );
 }
 
+const topbarActionClassName =
+  "luxe-icon-action luxe-focus-ring grid h-10 w-10 place-items-center rounded-full";
+
 interface TopbarActionProps {
   children: ReactNode;
   label: string;
 }
 
 function TopbarAction({ children, label }: TopbarActionProps) {
-  const className =
-    "luxe-icon-action luxe-focus-ring grid h-10 w-10 place-items-center rounded-full";
-
   return (
-    <button aria-label={label} className={className} type="button">
+    <button aria-label={label} className={topbarActionClassName} type="button">
       {children}
     </button>
   );
@@ -136,9 +136,13 @@ export function AppTopbar() {
         <TopbarAction label="Notifications">
           <BellIcon />
         </TopbarAction>
-        <TopbarAction label="Profile menu">
+        <Link
+          aria-label="Open account page"
+          className={topbarActionClassName}
+          href={APP_ROUTES.account}
+        >
           <UserIcon />
-        </TopbarAction>
+        </Link>
       </div>
     </header>
   );

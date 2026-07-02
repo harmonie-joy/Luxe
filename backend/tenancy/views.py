@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from tenancy.models import Membership, Workspace
 from tenancy.serializers import (
     AuthLoginSerializer,
+    AuthProfileUpdateSerializer,
     AuthSignupSerializer,
     serialize_session,
 )
@@ -105,9 +106,16 @@ def logout_view(request):
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def me(request):
+    if request.method == "PATCH":
+        serializer = AuthProfileUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        parts = serializer.validated_data["display_name"].split(" ", 1)
+        request.user.first_name = parts[0]
+        request.user.last_name = parts[1] if len(parts) > 1 else ""
+        request.user.save(update_fields=["first_name", "last_name"])
     return Response(serialize_session(request.user))
 
 

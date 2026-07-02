@@ -9,6 +9,7 @@ export const APP_ROUTES = {
   drafts: "/drafts",
   compliance: "/compliance",
   calendar: "/calendar",
+  account: "/account",
 } as const;
 
 /** Dynamic route for a single brand asset sample detail page. */

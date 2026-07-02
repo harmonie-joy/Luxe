@@ -682,6 +682,48 @@ Decision Log Update Needed:
 Next Step:
 - Validate local Ollama draft generation using the improved BrandProfile guidance, then connect Compliance Review to persisted compliance checks and issues.
 
+### 2026-07-02 - Account Page and Display Name Update
+
+Worked On:
+- Added a minimal authenticated `/account` page and a display-name update path on the existing session endpoint.
+
+Completed:
+- Added `APP_ROUTES.account` and turned the topbar profile icon into a link to `/account` with the label "Open account page"; the notification control stays a button and the sidebar is unchanged.
+- Added `frontend/app/(app)/account/page.tsx` as a thin route rendering `AccountShell` from `frontend/features/account/components/`.
+- The account shell loads the session through the existing `getSession()` and shows four `SurfaceCard` cards: signed-in user (editable display name, read-only email/username, user ID), active workspace (name, ID, role, workspace count), MVP runtime context (API base, Brand Voice mode from `NEXT_PUBLIC_USE_MOCK_BRAND_VOICE`, Django session auth, session bootstrap), and quick actions (Dashboard, Onboarding, Brand Voice, Create Brief) plus logout that routes to `/login`.
+- Added `updateCurrentUser(payload)` with `UpdateCurrentUserPayload` in `frontend/lib/api/auth.ts` calling `PATCH /api/auth/me/`.
+- Extended `/api/auth/me/` to accept `PATCH` with a new `AuthProfileUpdateSerializer` (`display_name`, required, max 150, trimmed, blank rejected); the view splits the display name into `first_name`/`last_name` exactly like signup, saves only those fields, and returns `serialize_session`. No new model, no migration; email, username, password, workspace, and role stay read-only.
+- Added four backend tests: unauthenticated PATCH rejected, authenticated PATCH updates and returns `displayName`, blank display name rejected, and email/username ignored by the endpoint.
+
+Problems Found:
+- None blocking. The demo account display name was temporarily changed during the live API smoke and restored to "THE LUXE Demo" afterwards.
+
+Files Changed:
+- `backend/tenancy/serializers.py`
+- `backend/tenancy/views.py`
+- `backend/tenancy/tests.py`
+- `frontend/lib/routes.ts`
+- `frontend/lib/api/auth.ts`
+- `frontend/components/layout/app-topbar.tsx`
+- `frontend/app/(app)/account/page.tsx`
+- `frontend/features/account/components/account-shell.tsx`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `DATABASE_URL=sqlite:////tmp/theluxe-account-test.sqlite3 .venv/bin/python manage.py test tenancy` passed with 7 tests.
+- `make test-be` passed with 110 backend tests.
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed and lists `/account`.
+- Live smoke against the running Docker stack: demo login, `GET /api/auth/me/`, `PATCH` display name, fresh `GET` confirming persistence, blank payload rejected with 400, unauthenticated PATCH rejected with 403, logout 204, `/account` served with 200, and the topbar link renders `href="/account"`.
+
+Decision Log Update Needed:
+- No. This extends an existing session endpoint without new models, migrations, or auth-strategy changes.
+
+Next Step:
+- Validate local Ollama draft generation using the improved BrandProfile guidance, then connect Compliance Review to persisted compliance checks and issues.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

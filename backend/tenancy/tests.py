@@ -70,6 +70,66 @@ class AuthApiTests(TestCase):
         self.assertEqual(self.client.get("/api/auth/me/").status_code, 403)
 
 
+class AuthMePatchTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="editor",
+            email="editor@example.com",
+            password="strong-pass-123",
+            first_name="Old",
+            last_name="Name",
+        )
+
+    def test_unauthenticated_patch_is_rejected(self):
+        response = self.client.patch(
+            "/api/auth/me/", {"display_name": "New Name"}, format="json"
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_patch_updates_display_name(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.patch(
+            "/api/auth/me/", {"display_name": "  Ada Lovelace  "}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["user"]["displayName"], "Ada Lovelace")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "Ada")
+        self.assertEqual(self.user.last_name, "Lovelace")
+
+    def test_patch_rejects_blank_display_name(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.patch(
+            "/api/auth/me/", {"display_name": "   "}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_patch_cannot_change_email_or_username(self):
+        self.client.force_authenticate(self.user)
+
+        response = self.client.patch(
+            "/api/auth/me/",
+            {
+                "display_name": "Ada Lovelace",
+                "email": "hacker@example.com",
+                "username": "hacker",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["user"]["email"], "editor@example.com")
+        self.assertEqual(response.data["user"]["username"], "editor")
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "editor@example.com")
+        self.assertEqual(self.user.get_username(), "editor")
+
+
 class SeedDemoCommandTests(TestCase):
     def test_seed_demo_is_idempotent(self):
         out = StringIO()
