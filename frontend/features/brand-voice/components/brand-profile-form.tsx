@@ -82,6 +82,14 @@ function slugify(value: string) {
   );
 }
 
+// Split on the first " - " only, keeping any later dashes inside the detail.
+function splitOnFirstDash(line: string): [string, string] {
+  const match = /\s+-\s+/.exec(line);
+  return match
+    ? [line.slice(0, match.index), line.slice(match.index + match[0].length)]
+    : [line, ""];
+}
+
 function parseVocabularyRules(
   value: string,
 ): readonly BrandVocabularyRuleWritePayload[] {
@@ -90,7 +98,7 @@ function parseVocabularyRules(
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      const [preferredTerm, detail = ""] = line.split(/\s+-\s+/, 2);
+      const [preferredTerm, detail] = splitOnFirstDash(line);
       const avoidPrefix = /^avoid:\s*/i;
       const isAvoidRule = avoidPrefix.test(detail);
       const restrictedTerms = isAvoidRule
@@ -116,7 +124,7 @@ function parseBannedPhrases(value: string): readonly BannedPhraseWritePayload[] 
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      const [phrase, reason = ""] = line.split(/\s+-\s+/, 2);
+      const [phrase, reason] = splitOnFirstDash(line);
       return {
         id: `${slugify(phrase)}-${index + 1}`,
         phrase,

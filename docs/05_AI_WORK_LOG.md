@@ -391,6 +391,21 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This keeps the local-first Ollama provider strategy and the Brand Voice endpoint contracts stable.
 - Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
 
+### 2026-07-02 - Claude Code - Finish Brand Voice Profile Persistence
+
+- Tool: Claude Code with ponytail workflow
+- Request: Make the Brand Voice profile form persist manual edits to the existing backend BrandProfile API, frontend-only, no backend or architecture changes.
+- Files changed:
+  - `frontend/features/brand-voice/components/brand-profile-form.tsx`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Audited the requirements against the repo and found the persistence slice already implemented and committed (client component, controlled state, `source` prop, API save via `updateBrandProfile` plus `router.refresh()`, mock-mode local message, validation, loading/error states, canonical tone filtering). The only code defect was a parser bug where `split(/\s+-\s+/, 2)` dropped text after a second ` - `, truncating vocabulary notes and banned-phrase reasons on save; both parsers now split on the first separator only. Verified frontend typecheck/lint/build and the backend test suite.
+- Human review status: Pending
+- Verification: `npm run typecheck`, `npm run lint`, and `npm run build` passed in `frontend/`; `make test-be` passed with 106 tests; standalone node assertions covered the split helper.
+- Decision log update needed: No
+- Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

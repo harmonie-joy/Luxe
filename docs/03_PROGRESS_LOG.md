@@ -648,6 +648,40 @@ Decision Log Update Needed:
 Next Step:
 - Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
 
+### 2026-07-02 - Brand Voice Profile Persistence Verified and Parser Fix
+
+Worked On:
+- Finished the Brand Voice manual profile persistence slice: audited the existing implementation against the task requirements, fixed one parser bug, and verified the full flow.
+
+Completed:
+- Confirmed `BrandProfileForm` is already a client component with controlled state initialized from the passed `BrandProfile`, a `source: "api" | "mock"` prop, validation for name and audience, loading/success/error states, a disabled save button while saving, and canonical-tone filtering.
+- Confirmed the save flow calls `updateBrandProfile(profile.id, payload)` with snake_case fields and `router.refresh()` on success, and that mock mode skips the API with a clear local-only message.
+- Confirmed `BrandVoiceShell` passes the runtime `source` from `getBrandVoiceSetup()` into the form, the AI suggestions panel, and the sample uploader.
+- Fixed a round-trip data-loss bug in the form parsers: `line.split(/\s+-\s+/, 2)` dropped everything after a second ` - `, so a vocabulary note or banned-phrase reason containing ` - ` was silently truncated on save. Both parsers now split on the first separator only via a shared `splitOnFirstDash` helper.
+
+Problems Found:
+- The task brief assumed the form was still mock-only; the persistence work was already implemented and committed before this session. Only the parser bug and the documentation trail were outstanding.
+- The frontend has no test runner, so the parser fix was verified with a standalone node assertion script instead of a committed test.
+
+Files Changed:
+- `frontend/features/brand-voice/components/brand-profile-form.tsx`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed with no warnings.
+- `cd frontend && npm run build` passed.
+- `make test-be` passed with 106 backend tests.
+- Standalone node assertions confirmed `splitOnFirstDash` preserves multi-dash notes and handles avoid/plain lines.
+
+Decision Log Update Needed:
+- No. No architecture, data model, enum, auth, or AI provider change.
+
+Next Step:
+- Validate local Ollama draft generation using the improved BrandProfile guidance, then connect Compliance Review to persisted compliance checks and issues.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
