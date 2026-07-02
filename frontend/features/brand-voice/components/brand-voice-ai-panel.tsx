@@ -81,7 +81,7 @@ function slugify(value: string) {
   );
 }
 
-function toCanonicalTones(
+export function toCanonicalTones(
   tones: readonly string[],
   fallback: readonly BrandVoiceTone[],
 ): readonly BrandVoiceTone[] {
@@ -91,7 +91,7 @@ function toCanonicalTones(
   return valid.length > 0 ? Array.from(new Set(valid)) : fallback;
 }
 
-function toVocabularyPayload(
+export function toVocabularyPayload(
   suggestions: readonly BrandVoiceExtractionSuggestions["preferred_vocabulary"][number][],
 ): readonly BrandVocabularyRuleWritePayload[] {
   return suggestions.map((rule, index) => ({
@@ -102,7 +102,7 @@ function toVocabularyPayload(
   }));
 }
 
-function toBannedPhrasePayload(
+export function toBannedPhrasePayload(
   suggestions: readonly BrandVoiceExtractionSuggestions["banned_phrases"][number][],
 ): readonly BannedPhraseWritePayload[] {
   return suggestions.map((phrase, index) => ({

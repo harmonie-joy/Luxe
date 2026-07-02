@@ -45,7 +45,7 @@ export function AuthShell({ mode }: AuthShellProps) {
         await login({ email, password });
       }
       await bootstrapWorkspace();
-      router.push(APP_ROUTES.dashboard);
+      router.push(isSignup ? APP_ROUTES.onboarding : APP_ROUTES.dashboard);
     } catch (error) {
       setMessage(getErrorMessage(error));
     } finally {

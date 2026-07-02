@@ -2,6 +2,7 @@ export const APP_ROUTES = {
   home: "/",
   login: "/login",
   signup: "/signup",
+  onboarding: "/onboarding",
   dashboard: "/dashboard",
   brandVoice: "/brand-voice",
   create: "/create",
