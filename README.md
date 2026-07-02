@@ -78,7 +78,7 @@ make manage cmd="seed_demo"
 Homepage -> Signup/Login -> Dashboard -> Brand Voice -> Create Brief -> Draft Studio
 ```
 
-5. For live API-backed Brand Voice data, set this in the frontend environment before starting the frontend:
+5. For live API-backed Brand Voice data, `infra/docker-compose.yml` sets this under `frontend.environment`:
 
 ```bash
 NEXT_PUBLIC_USE_MOCK_BRAND_VOICE=false

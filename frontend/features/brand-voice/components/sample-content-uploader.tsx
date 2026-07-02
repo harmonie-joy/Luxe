@@ -27,12 +27,20 @@ export function SampleContentUploader({
 }: SampleContentUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [pasteTitle, setPasteTitle] = useState("");
   const [pasteContent, setPasteContent] = useState(sampleContent.pasteDefaultValue);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const samples = sampleContent.samples;
+  const latestSamples = Array.from(samples)
+    .sort(
+      (a, b) =>
+        new Date(b.updatedAt || b.createdAt).getTime() -
+        new Date(a.updatedAt || a.createdAt).getTime(),
+    )
+    .slice(0, 3);
 
   function getErrorMessage(err: unknown) {
     if (err instanceof ApiError) return `API error ${err.status}: ${err.message}`;
@@ -104,7 +112,7 @@ export function SampleContentUploader({
     try {
       await createBrandAsset({
         brand_profile: profile.id,
-        title: getPasteTitle(pasteContent),
+        title: pasteTitle.trim() || getPasteTitle(pasteContent),
         content: pasteContent,
         media_type: "text",
         source_type: "pasted",
@@ -112,6 +120,7 @@ export function SampleContentUploader({
         word_count: getWordCount(pasteContent),
         status: "needs_review",
       });
+      setPasteTitle("");
       setPasteContent("");
       setMessage("Text asset saved for analysis.");
       router.refresh();
@@ -134,7 +143,20 @@ export function SampleContentUploader({
       </div>
 
       <div>
-        <div className="flex items-center justify-between gap-4">
+        <label className="luxe-form-label" htmlFor="sample-content-title">
+          Sample title
+        </label>
+        <input
+          className="luxe-field mt-2 w-full px-4 py-3"
+          id="sample-content-title"
+          name="sampleContentTitle"
+          onChange={(e) => setPasteTitle(e.target.value)}
+          placeholder="Example: Spring campaign manifesto"
+          type="text"
+          value={pasteTitle}
+        />
+
+        <div className="mt-4 flex items-center justify-between gap-4">
           <label className="luxe-form-label" htmlFor="sample-content-paste">
             Sample content paste area
             <span className="luxe-item-meta ml-2 font-normal">Markdown supported</span>
@@ -223,17 +245,17 @@ export function SampleContentUploader({
         <div className="mb-3 flex items-center justify-between gap-4">
           <h3 className="luxe-section-title text-base">Current samples</h3>
           <span className="luxe-count-pill px-3 py-1 text-xs font-medium uppercase tracking-[0.14em]">
-            {samples.length} Items
+            {latestSamples.length} of {samples.length} Items
           </span>
         </div>
 
         <div className="luxe-list-divider luxe-scroll-panel max-h-56">
-          {samples.length === 0 ? (
+          {latestSamples.length === 0 ? (
             <p className="luxe-form-help py-6 text-center">
               No samples yet. Paste or upload content above.
             </p>
           ) : (
-            samples.map((sample) => (
+            latestSamples.map((sample) => (
               /* Entire row is a link to the sample detail page */
               <Link
                 className="luxe-list-row flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"

@@ -47,6 +47,7 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
       INTERNAL_API_BASE_URL: http://backend:8000
+      NEXT_PUBLIC_USE_MOCK_BRAND_VOICE: "false"
     ports:
       - "3000:3000"
     volumes:
