@@ -1,4 +1,5 @@
 import { httpClient } from "./http-client";
+import type { BrandAsset } from "@/types/brand-profile";
 import type { ContentChannel, DraftStatus } from "@/types/content";
 
 export interface BrandVoiceExtractionRequest {
@@ -29,6 +30,21 @@ export interface BrandVoiceExtractionSuggestions {
 export interface BrandVoiceExtractionResponse {
   aiRunId: string;
   suggestions: BrandVoiceExtractionSuggestions;
+}
+
+export interface BrandAssetAnalysisResponse {
+  aiRunIds: readonly string[];
+  assets: readonly BrandAsset[];
+  warnings: readonly { assetId: string; message: string }[];
+}
+
+export function analyzeBrandAssets(
+  payload: BrandVoiceExtractionRequest,
+): Promise<BrandAssetAnalysisResponse> {
+  return httpClient.post<BrandAssetAnalysisResponse>(
+    "/api/ai/brand/analyze-assets/",
+    payload,
+  );
 }
 
 export function extractBrandVoice(

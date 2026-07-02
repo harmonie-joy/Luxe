@@ -11,6 +11,7 @@
 
 import type {
   BrandAsset,
+  BrandAssetMediaType,
   BrandProfile,
   BrandVoiceTone,
 } from "@/types/brand-profile";
@@ -42,6 +43,10 @@ export interface CreateBrandAssetPayload {
   brand_profile: string;
   title: string;
   content?: string;
+  media_type?: BrandAssetMediaType;
+  file?: File;
+  mime_type?: string;
+  analysis_summary?: string;
   source_type?: "pasted" | "uploaded";
   format?: string;
   word_count?: number;
@@ -117,6 +122,30 @@ export function createBrandAsset(
   payload: CreateBrandAssetPayload,
 ): Promise<BrandAsset> {
   return httpClient.post<BrandAsset>("/api/brand-assets/", payload);
+}
+
+/** Creates a BrandAsset with an uploaded file. */
+export function createBrandAssetUpload(
+  payload: CreateBrandAssetPayload,
+): Promise<BrandAsset> {
+  const form = new FormData();
+  form.append("brand_profile", payload.brand_profile);
+  form.append("title", payload.title);
+  if (payload.content) form.append("content", payload.content);
+  if (payload.media_type) form.append("media_type", payload.media_type);
+  if (payload.file) form.append("file", payload.file);
+  if (payload.mime_type) form.append("mime_type", payload.mime_type);
+  if (payload.analysis_summary) {
+    form.append("analysis_summary", payload.analysis_summary);
+  }
+  if (payload.source_type) form.append("source_type", payload.source_type);
+  if (payload.format) form.append("format", payload.format);
+  if (payload.word_count !== undefined) {
+    form.append("word_count", String(payload.word_count));
+  }
+  if (payload.status) form.append("status", payload.status);
+
+  return httpClient.postForm<BrandAsset>("/api/brand-assets/", form);
 }
 
 /** Partially updates a BrandAsset. Returns the updated resource. */

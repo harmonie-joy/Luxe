@@ -53,6 +53,11 @@ class BrandAsset(models.Model):
         PASTED = "pasted", "Pasted sample"
         UPLOADED = "uploaded", "Uploaded file"
 
+    class MediaType(models.TextChoices):
+        TEXT = "text", "Text"
+        IMAGE = "image", "Image"
+        AUDIO_TRANSCRIPT = "audio_transcript", "Audio transcript"
+
     class AssetStatus(models.TextChoices):
         READY = "ready", "Ready"
         NEEDS_REVIEW = "needs_review", "Needs review"
@@ -65,6 +70,14 @@ class BrandAsset(models.Model):
     )
     title = models.CharField(max_length=200)
     content = models.TextField(blank=True, default="")
+    media_type = models.CharField(
+        max_length=24,
+        choices=MediaType.choices,
+        default=MediaType.TEXT,
+    )
+    file = models.FileField(upload_to="brand_assets/%Y/%m/", blank=True, default="")
+    mime_type = models.CharField(max_length=120, blank=True, default="")
+    analysis_summary = models.TextField(blank=True, default="")
     source_type = models.CharField(
         max_length=20,
         choices=SourceType.choices,
@@ -84,6 +97,7 @@ class BrandAsset(models.Model):
         ordering = ("-updated_at",)
         indexes = [
             models.Index(fields=["brand_profile", "status"]),
+            models.Index(fields=["brand_profile", "media_type"]),
             models.Index(fields=["updated_at"]),
         ]
 

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APITestCase
 
@@ -15,6 +16,7 @@ from .schemas import (
     VoiceReviewResult,
 )
 from .services import (
+    analyze_brand_asset_with_run,
     extract_brand_voice,
     generate_draft,
     review_compliance,
@@ -23,6 +25,7 @@ from .services import (
 
 User = get_user_model()
 BRAND_EXTRACT_URL = "/api/ai/brand/extract/"
+BRAND_ANALYZE_ASSETS_URL = "/api/ai/brand/analyze-assets/"
 DRAFT_GENERATE_URL = "/api/ai/drafts/generate/"
 
 
@@ -31,11 +34,13 @@ class RecordingProvider(MockProvider):
         super().__init__()
         self.prompt = ""
 
-    def generate(self, prompt, schema):
+    def generate(self, prompt, schema, images=None):
         self.prompt = prompt
-        return super().generate(prompt, schema)
+        self.images = images
+        return super().generate(prompt, schema, images=images)
 
 
+@override_settings(MEDIA_ROOT="/tmp/theluxe-test-media")
 class MockAIServiceTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="ai_user", password="pass")
@@ -140,9 +145,11 @@ class MockAIServiceTests(TestCase):
             [asset],
             user=self.user,
             provider=provider,
+            brand_profile=profile,
         )
 
         self.assertIsInstance(result, BrandVoiceExtractionResult)
+        self.assertIn("Service business owners", provider.prompt)
         self.assertIn("Homepage sample", provider.prompt)
         self.assertIn("landing_page", provider.prompt)
         self.assertIn("consultants explain their offer", provider.prompt)
@@ -151,6 +158,69 @@ class MockAIServiceTests(TestCase):
         self.assertEqual(run.input_data["assets"][0]["title"], "Homepage sample")
         self.assertEqual(run.input_data["assets"][0]["format"], "landing_page")
         self.assertIn("without hype", run.input_data["assets"][0]["content"])
+        self.assertEqual(
+            run.input_data["brand_profile"]["audience"],
+            "Service business owners",
+        )
+
+    def test_asset_analysis_records_summary_and_run(self):
+        profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Analysis Voice",
+            audience="Premium operators",
+            tone=["professional"],
+        )
+        asset = BrandAsset.objects.create(
+            brand_profile=profile,
+            title="Transcript sample",
+            media_type=BrandAsset.MediaType.AUDIO_TRANSCRIPT,
+            content="We help operators speak clearly without promising results.",
+        )
+        provider = RecordingProvider()
+
+        result, run = analyze_brand_asset_with_run(
+            self.workspace,
+            profile,
+            asset,
+            user=self.user,
+            provider=provider,
+        )
+
+        asset.refresh_from_db()
+        self.assertEqual(run.task_type, AIRun.TaskType.BRAND_ASSET_ANALYSIS)
+        self.assertEqual(asset.status, BrandAsset.AssetStatus.READY)
+        self.assertEqual(asset.analysis_summary, result.summary)
+        self.assertIn("AUDIO_TRANSCRIPT".lower(), provider.prompt.lower())
+
+    def test_image_asset_analysis_sends_base64_images_to_provider(self):
+        profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Image Voice",
+            audience="Premium operators",
+            tone=["professional"],
+        )
+        asset = BrandAsset.objects.create(
+            brand_profile=profile,
+            title="Moodboard",
+            media_type=BrandAsset.MediaType.IMAGE,
+            file=SimpleUploadedFile(
+                "moodboard.png",
+                b"fake-image-bytes",
+                content_type="image/png",
+            ),
+            mime_type="image/png",
+        )
+        provider = RecordingProvider()
+
+        analyze_brand_asset_with_run(
+            self.workspace,
+            profile,
+            asset,
+            user=self.user,
+            provider=provider,
+        )
+
+        self.assertEqual(provider.images, ["ZmFrZS1pbWFnZS1ieXRlcw=="])
 
     def test_draft_generation_prompt_includes_brief_and_brand_voice_context(self):
         profile = BrandProfile.objects.create(
@@ -220,7 +290,7 @@ class MockAIServiceTests(TestCase):
             OllamaProvider(base_url="http://localhost:11434")
 
 
-@override_settings(AI_PROVIDER="mock")
+@override_settings(AI_PROVIDER="mock", MEDIA_ROOT="/tmp/theluxe-test-media")
 class BrandVoiceExtractionAPITests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="api_ai_user", password="pass")
@@ -363,6 +433,84 @@ class BrandVoiceExtractionAPITests(APITestCase):
             self.profile.positioning_notes,
             original_profile["positioning_notes"],
         )
+
+
+@override_settings(AI_PROVIDER="mock", MEDIA_ROOT="/tmp/theluxe-test-media")
+class BrandAssetAnalysisAPITests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="asset_ai_user", password="pass")
+        self.other_user = User.objects.create_user(username="asset_ai_other", password="pass")
+        self.workspace = Workspace.objects.create(name="Asset AI Workspace")
+        self.other_workspace = Workspace.objects.create(name="Other Asset AI Workspace")
+        Membership.objects.create(user=self.user, workspace=self.workspace)
+        Membership.objects.create(user=self.other_user, workspace=self.other_workspace)
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Asset Voice",
+            audience="Premium teams",
+            tone=["professional"],
+        )
+        self.other_profile = BrandProfile.objects.create(
+            workspace=self.other_workspace,
+            name="Other Asset Voice",
+            audience="Other teams",
+            tone=["visionary"],
+        )
+        self.text_asset = BrandAsset.objects.create(
+            brand_profile=self.profile,
+            title="Text Sample",
+            media_type=BrandAsset.MediaType.TEXT,
+            content="Specific, calm brand copy for premium teams.",
+        )
+        self.image_asset = BrandAsset.objects.create(
+            brand_profile=self.profile,
+            title="Image Sample",
+            media_type=BrandAsset.MediaType.IMAGE,
+            file=SimpleUploadedFile("sample.png", b"image", content_type="image/png"),
+            mime_type="image/png",
+        )
+        self.other_asset = BrandAsset.objects.create(
+            brand_profile=self.other_profile,
+            title="Foreign Sample",
+            content="Foreign workspace content.",
+        )
+
+    def payload(self, **overrides):
+        data = {
+            "workspace": str(self.workspace.id),
+            "brand_profile": str(self.profile.id),
+            "asset_ids": [str(self.text_asset.id), str(self.image_asset.id)],
+        }
+        data.update(overrides)
+        return data
+
+    def test_authenticated_success_updates_asset_summaries_and_returns_runs(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            BRAND_ANALYZE_ASSETS_URL,
+            self.payload(),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["aiRunIds"]), 2)
+        self.assertEqual(response.data["warnings"], [])
+        self.assertEqual(len(response.data["assets"]), 2)
+        self.assertEqual(AIRun.objects.count(), 2)
+        self.text_asset.refresh_from_db()
+        self.image_asset.refresh_from_db()
+        self.assertTrue(self.text_asset.analysis_summary)
+        self.assertTrue(self.image_asset.analysis_summary)
+        self.assertEqual(self.text_asset.status, BrandAsset.AssetStatus.READY)
+        self.assertEqual(self.image_asset.status, BrandAsset.AssetStatus.READY)
+
+    def test_foreign_asset_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            BRAND_ANALYZE_ASSETS_URL,
+            self.payload(asset_ids=[str(self.text_asset.id), str(self.other_asset.id)]),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
 
 
 @override_settings(AI_PROVIDER="mock")

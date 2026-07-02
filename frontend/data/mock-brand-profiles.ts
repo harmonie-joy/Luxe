@@ -113,7 +113,7 @@ export const mockBrandVoiceSetup = {
       "A considered edit of sculptural silhouettes, tactile finishes, and quiet statement pieces designed for clients who value presence over spectacle.",
     uploadHelpText:
       "Add existing campaign copy, product notes, or editorial samples to guide future voice analysis.",
-    acceptedFormats: [".txt", ".md", ".docx", ".pdf"],
+    acceptedFormats: [".txt", ".md", ".docx", ".pdf", ".png", ".jpg", ".jpeg", ".webp"],
     samples: [
       {
         id: "editorial-launch-note",
@@ -121,6 +121,11 @@ export const mockBrandVoiceSetup = {
         brandProfileId: "the-luxe-signature",
         title: "Editorial launch note",
         content: "",
+        mediaType: "text",
+        file: "",
+        mimeType: "",
+        analysisSummary:
+          "Calm editorial copy with premium audience cues and restrained vocabulary.",
         sourceType: "pasted",
         format: "Text",
         wordCount: 42,
@@ -134,6 +139,11 @@ export const mockBrandVoiceSetup = {
         brandProfileId: "the-luxe-signature",
         title: "Atelier collection brief",
         content: "",
+        mediaType: "text",
+        file: "",
+        mimeType: "application/pdf",
+        analysisSummary:
+          "Collection guidance favors quiet authority, craftsmanship language, and no urgency-led claims.",
         sourceType: "uploaded",
         format: "PDF",
         wordCount: 680,

@@ -49,6 +49,7 @@ export interface SampleContentConfig {
 // Canonical API-aligned type matching backend BrandAsset model.
 export type BrandAssetSourceType = "pasted" | "uploaded";
 export type BrandAssetStatus = "ready" | "needs_review";
+export type BrandAssetMediaType = "text" | "image" | "audio_transcript";
 
 export interface BrandAsset {
   id: string;
@@ -56,6 +57,10 @@ export interface BrandAsset {
   brandProfileId: string;
   title: string;
   content: string;
+  mediaType: BrandAssetMediaType;
+  file: string;
+  mimeType: string;
+  analysisSummary: string;
   sourceType: BrandAssetSourceType;
   format: string;
   wordCount: number;

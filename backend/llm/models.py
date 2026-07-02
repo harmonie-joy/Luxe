@@ -9,6 +9,7 @@ from tenancy.models import Workspace
 
 class AIRun(models.Model):
     class TaskType(models.TextChoices):
+        BRAND_ASSET_ANALYSIS = "brand_asset_analysis", "Brand asset analysis"
         BRAND_VOICE_EXTRACTION = "brand_voice_extraction", "Brand voice extraction"
         DRAFT_GENERATION = "draft_generation", "Draft generation"
         VOICE_REVIEW = "voice_review", "Voice review"

@@ -249,6 +249,31 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. This implements D-0008 without changing AI provider strategy, data model strategy, or MVP scope.
 - Next action: Run `make test-be` in a Docker-enabled shell, then connect Draft Studio to the draft generation endpoint and existing content draft read/save APIs.
 
+### 2026-07-01 - Codex - T-AI-007 Brand Voice Analysis Engine MVP
+
+- Tool: Codex
+- Request: Add a local-first Brand Voice analysis layer for saved brand assets before extraction, without LangChain, LangGraph, cloud providers, draft generation changes, or publishing integrations.
+- Files changed:
+  - `backend/brand/`
+  - `backend/config/settings.py`
+  - `backend/config/urls.py`
+  - `backend/llm/`
+  - `frontend/app/(app)/brand-voice/page.tsx`
+  - `frontend/features/brand-voice/`
+  - `frontend/lib/api/`
+  - `frontend/types/brand-profile.ts`
+  - `docs/02_DECISIONS.md`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Added minimal media-aware BrandAsset fields, a mock-backed `/api/ai/brand/analyze-assets/` endpoint, persisted `analysis_summary` updates, base64 image forwarding through the existing Ollama provider abstraction, richer extraction context using BrandProfile fields plus asset summaries, and API-mode UI saving for pasted text and image assets.
+- Human review status: Pending
+- Verification: `DATABASE_URL=sqlite:////tmp/theluxe-ai-brand-test.sqlite3 .venv/bin/python manage.py makemigrations --check --dry-run` passed; `DATABASE_URL=sqlite:////tmp/theluxe-ai-brand-test.sqlite3 .venv/bin/python manage.py test llm brand` passed with 44 tests; `cd frontend && npm run typecheck` passed; `cd frontend && npm run lint` passed; `cd frontend && npm run build` passed.
+- Issues introduced: None known.
+- Follow-up needed: Run the manual local Ollama smoke test with the exact installed model; use a multimodal model for image analysis or expect image warnings/skips.
+- Decision log update needed: Yes. Added D-0009 for minimal BrandAsset media support.
+- Next action: Accept improved Voice DNA into BrandProfile during a local smoke test, then validate draft generation with that profile.
+
 ### 2026-07-01 - Codex - T-AI-005 Draft Studio AI Generation UI
 
 - Tool: Codex

@@ -15,7 +15,7 @@ class MockProvider:
     def __init__(self, fail=False):
         self.fail = fail
 
-    def generate(self, prompt, schema):
+    def generate(self, prompt, schema, images=None):
         if self.fail:
             raise AIProviderError("Mock provider failure.")
 
@@ -32,18 +32,22 @@ class OllamaProvider:
         if not self.model:
             raise AIProviderError("OLLAMA_MODEL must be set when AI_PROVIDER=ollama.")
 
-    def generate(self, prompt, schema):
+    def generate(self, prompt, schema, images=None):
+        payload = {
+            "model": self.model,
+            "prompt": (
+                f"{prompt}\n\nReturn only JSON matching this schema: "
+                f"{schema.model_json_schema()}"
+            ),
+            "stream": False,
+            "format": "json",
+        }
+        if images:
+            payload["images"] = images
+
         response = requests.post(
             f"{self.base_url}/api/generate",
-            json={
-                "model": self.model,
-                "prompt": (
-                    f"{prompt}\n\nReturn only JSON matching this schema: "
-                    f"{schema.model_json_schema()}"
-                ),
-                "stream": False,
-                "format": "json",
-            },
+            json=payload,
             timeout=self.timeout,
         )
         response.raise_for_status()
@@ -62,6 +66,26 @@ def get_provider():
 
 
 MOCK_RESULTS: dict[str, dict] = {
+    "BrandAssetAnalysisResult": {
+        "summary": (
+            "Audience: premium operators who value useful, composed guidance. "
+            "Tone: practical, polished, and restrained. Use concrete process "
+            "language and avoid broad growth promises."
+        ),
+        "audience_clues": ["premium operators", "small teams"],
+        "tone_clues": ["practical", "polished", "restrained"],
+        "sentence_style": "Direct medium-length sentences with concrete guidance.",
+        "vocabulary": ["practical clarity", "brand voice", "content decisions"],
+        "banned_generic_phrases": ["go viral", "boost your brand"],
+        "claim_boundaries": ["Do not promise performance outcomes."],
+        "do_examples": ["Explain the value in concrete terms."],
+        "dont_examples": ["This will skyrocket your engagement overnight."],
+        "visual_tone": "Composed and editorial.",
+        "formality_luxury_casual_signals": "Professional with quiet luxury restraint.",
+        "emotional_positioning": "Calm confidence without hype.",
+        "language_implications": ["Use specific nouns and restrained verbs."],
+        "what_not_to_infer": ["Do not infer demographics or outcomes from imagery alone."],
+    },
     "BrandVoiceExtractionResult": {
         "audience": (
             "Creators, solo operators, service businesses, and SME founders "

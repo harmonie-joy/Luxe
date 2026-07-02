@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand voice extraction and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -563,6 +563,50 @@ Local Ollama Setup:
 
 Next Step:
 - Run a manual local Ollama Brand Voice extraction smoke test, then resume draft generation validation using the improved BrandProfile guidance.
+
+### 2026-07-01 - T-AI-007 Brand Voice Analysis Engine MVP
+
+Worked On:
+- Added a basic Brand Voice asset analysis layer before extraction.
+
+Completed:
+- Extended `BrandAsset` with minimal `media_type`, optional uploaded file, `mime_type`, and `analysis_summary` fields.
+- Added `POST /api/ai/brand/analyze-assets/` using the existing workspace/profile/asset validation path.
+- Added sequential asset analysis with `AIRun` tracking, persisted summaries, text/transcript prompts, and basic image analysis support.
+- Extended `OllamaProvider` to pass base64 image data through `/api/generate` `images` when provided.
+- Kept `POST /api/ai/brand/extract/` response shape stable while adding current BrandProfile fields and asset summaries to extraction context.
+- Connected Brand Voice setup in API mode so pasted text saves as a BrandAsset, uploaded images save via multipart, asset analysis runs before extraction, and mock mode remains unchanged.
+
+Problems Found:
+- No GitHub issue was found for `T-AI-007` in `mario-ah-salamanca/theluxe`.
+- `make test-be` could not run in this sandbox because Docker socket escalation was rejected by the environment approval layer.
+
+Files Changed:
+- `backend/brand/`
+- `backend/config/settings.py`
+- `backend/config/urls.py`
+- `backend/llm/`
+- `frontend/app/(app)/brand-voice/page.tsx`
+- `frontend/features/brand-voice/`
+- `frontend/lib/api/`
+- `frontend/types/brand-profile.ts`
+- `docs/02_DECISIONS.md`
+- `docs/03_PROGRESS_LOG.md`
+- `docs/04_NEXT_ACTIONS.md`
+- `docs/05_AI_WORK_LOG.md`
+
+Verification:
+- `DATABASE_URL=sqlite:////tmp/theluxe-ai-brand-test.sqlite3 .venv/bin/python manage.py makemigrations --check --dry-run` passed.
+- `DATABASE_URL=sqlite:////tmp/theluxe-ai-brand-test.sqlite3 .venv/bin/python manage.py test llm brand` passed with 44 tests.
+- `cd frontend && npm run typecheck` passed.
+- `cd frontend && npm run lint` passed.
+- `cd frontend && npm run build` passed.
+
+Decision Log Update Needed:
+- Yes. Added D-0009 for minimal BrandAsset media support.
+
+Next Step:
+- Run the manual local Ollama smoke test with a multimodal model if image analysis is required, then accept generated Voice DNA suggestions into the BrandProfile.
 
 ### Existing MVP Implementation Snapshot
 

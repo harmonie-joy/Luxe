@@ -28,7 +28,11 @@ export default async function BrandVoicePage() {
             samples={sampleContent.samples}
             source={source}
           />
-          <SampleContentUploader sampleContent={sampleContent} />
+          <SampleContentUploader
+            profile={profile}
+            sampleContent={sampleContent}
+            source={source}
+          />
         </div>
 
         <BrandProfilePreview

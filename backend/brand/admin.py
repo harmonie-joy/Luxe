@@ -8,6 +8,7 @@ class BrandAssetInline(admin.TabularInline):
     extra = 0
     fields = (
         "title",
+        "media_type",
         "source_type",
         "format",
         "word_count",
@@ -32,11 +33,12 @@ class BrandAssetAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "brand_profile",
+        "media_type",
         "source_type",
         "status",
         "updated_at",
         "created_at",
     )
-    list_filter = ("source_type", "status", "updated_at", "created_at")
+    list_filter = ("media_type", "source_type", "status", "updated_at", "created_at")
     search_fields = ("title", "brand_profile__name")
     ordering = ("-updated_at",)

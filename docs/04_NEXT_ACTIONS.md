@@ -2,7 +2,7 @@
 
 ## Current Sprint Goal
 
-Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand voice extraction and draft generation, Brand Voice extraction now produces richer Voice DNA context, Draft Studio can generate, save, switch, and delete brief-scoped persisted drafts, and local Ollama draft generation includes BrandProfile voice context; the next validation step is a manual local Ollama Brand Voice extraction smoke test before resuming draft generation validation.
+Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft Studio -> Compliance Review workflow while preserving workspace scoping, local-first AI orchestration, and the existing MVP domain contract. Homepage and auth session bootstrap now exist, Create Brief is API-connected, backend local AI endpoints exist for brand asset analysis, brand voice extraction, and draft generation, Brand Voice extraction now produces richer Voice DNA context, Draft Studio can generate, save, switch, and delete brief-scoped persisted drafts, and local Ollama draft generation includes BrandProfile voice context; the next validation step is a manual local Ollama Brand Voice analysis/extraction smoke test before resuming draft generation validation.
 
 ## Active Tasks
 
@@ -18,6 +18,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 | P0 | T-AI-005: Connect Draft Studio to AI draft generation. | Done | GitHub issue #14. Draft Studio loads persisted brief/draft data, generates drafts for target channels, renders returned drafts, and saves title/content edits through the existing draft API. |
 | P0 | T-AI-006: Real Local Ollama Draft Generation with Brand Voice. | Done | GitHub issue #20. Draft generation now sends ContentBrief plus linked BrandProfile context to the provider, requires `OLLAMA_MODEL` for Ollama, and keeps the existing endpoint contract stable. |
 | P0 | T-AI-006: Improve Brand Voice Extraction Quality. | Done | GitHub issue #23. Brand Voice extraction now passes selected asset title, format, and content to the provider and asks for richer Voice DNA guidance in existing BrandProfile fields. |
+| P0 | T-AI-007: Brand Voice Analysis Engine MVP. | Done | Adds saved text/image/transcript-aware BrandAsset metadata, sequential asset analysis summaries, basic Ollama image payload support, and preserves the extraction response contract. No GitHub issue found. |
 | P0 | T-UX-001: Clarify Brief and Draft workflow. | Done | GitHub issue #16. Create Brief routes to `/drafts?brief=<id>`, Draft Studio shows the selected brief, supports brief switching, and clarifies brief versus draft concepts. |
 | P0 | T-UX-002: Add Delete Brief destructive action. | Done | GitHub issue #18. Draft Studio deletes the current brief through `DELETE /api/content-briefs/{id}/`, warns about cascade deletion, clears local drafts, switches to another brief, or routes to `/create`. |
 | P1 | Connect Create Brief form submission to `createContentBrief`. | Done | Form submits through the existing API client, validates required fields and target channels, filters brand profiles by workspace, and navigates to `/drafts` after create. |
@@ -33,7 +34,7 @@ Persist the core Homepage -> Signup/Login -> Dashboard -> Create Brief -> Draft 
 
 ## Best Next Task for AI
 
-Run a manual local Ollama Brand Voice extraction smoke test with real samples, accept suggestions into a BrandProfile, then validate draft generation using that improved profile. After that, connect Compliance Review to persisted compliance checks and issues.
+Run a manual local Ollama Brand Voice analysis/extraction smoke test with saved text and, if using a multimodal model, one image asset. Accept suggestions into a BrandProfile, then validate draft generation using that improved profile. After that, connect Compliance Review to persisted compliance checks and issues.
 
 ## Local Ollama AI Setup
 

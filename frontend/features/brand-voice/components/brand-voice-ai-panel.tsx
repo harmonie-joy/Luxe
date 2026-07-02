@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
-import { extractBrandVoice, type BrandVoiceExtractionSuggestions } from "@/lib/api/ai";
+import {
+  analyzeBrandAssets,
+  extractBrandVoice,
+  type BrandVoiceExtractionSuggestions,
+} from "@/lib/api/ai";
 import {
   updateBrandProfile,
   type BannedPhraseWritePayload,
@@ -155,6 +159,11 @@ export function BrandVoiceAiPanel({
         setSuggestions(MOCK_SUGGESTIONS);
         setAiRunId("mock-brand-voice-run");
       } else {
+        const analysis = await analyzeBrandAssets({
+          workspace: profile.workspaceId,
+          brand_profile: profile.id,
+          asset_ids: selectedAssetIds,
+        });
         const result = await extractBrandVoice({
           workspace: profile.workspaceId,
           brand_profile: profile.id,
@@ -162,6 +171,14 @@ export function BrandVoiceAiPanel({
         });
         setSuggestions(result.suggestions);
         setAiRunId(result.aiRunId);
+        if (analysis.warnings.length > 0) {
+          setMessage(
+            `Brand voice suggestions are ready. ${analysis.warnings
+              .map((warning) => warning.message)
+              .join(" ")}`,
+          );
+          return;
+        }
       }
       setMessage("Brand voice suggestions are ready for review.");
     } catch (err) {
@@ -245,7 +262,8 @@ export function BrandVoiceAiPanel({
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold">{sample.title}</span>
                   <span className="luxe-chip-description mt-1 block text-xs leading-5">
-                    {sample.format || "Sample"} · {sample.wordCount} words
+                    {sample.mediaType.replace("_", " ")} · {sample.format || "Sample"}
+                    {sample.wordCount > 0 ? ` · ${sample.wordCount} words` : ""}
                   </span>
                 </span>
               </label>

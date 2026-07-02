@@ -61,6 +61,23 @@ class BrandVoiceExtractionResult(BaseModel):
         ]
 
 
+class BrandAssetAnalysisResult(BaseModel):
+    summary: str
+    audience_clues: list[str] = Field(default_factory=list)
+    tone_clues: list[str] = Field(default_factory=list)
+    sentence_style: str = ""
+    vocabulary: list[str] = Field(default_factory=list)
+    banned_generic_phrases: list[str] = Field(default_factory=list)
+    claim_boundaries: list[str] = Field(default_factory=list)
+    do_examples: list[str] = Field(default_factory=list)
+    dont_examples: list[str] = Field(default_factory=list)
+    visual_tone: str = ""
+    formality_luxury_casual_signals: str = ""
+    emotional_positioning: str = ""
+    language_implications: list[str] = Field(default_factory=list)
+    what_not_to_infer: list[str] = Field(default_factory=list)
+
+
 class DraftGenerationResult(BaseModel):
     title: str
     content: str

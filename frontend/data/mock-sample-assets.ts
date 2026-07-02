@@ -33,6 +33,11 @@ const MOCK_SAMPLE_ASSETS: Record<string, SampleAssetPageData> = {
       content: `A considered edit of sculptural silhouettes, tactile finishes, and quiet statement pieces designed for clients who value presence over spectacle.
 
 The collection arrives without announcement—precisely the point. Each piece is selected to earn its place in a considered wardrobe, not to compete for attention in a saturated market. Craftsmanship speaks through restraint; provenance is understood, not advertised.`,
+      mediaType: "text",
+      file: "",
+      mimeType: "",
+      analysisSummary:
+        "Calm editorial copy with premium audience cues and restrained vocabulary.",
       sourceType: "pasted",
       format: "Text",
       wordCount: 42,
@@ -62,6 +67,11 @@ Channel notes:
 - Email: 150–200 words, serif opener, no discount codes
 - LinkedIn: 80–120 words, thought leadership framing
 - Print insert: 40–60 words, editorial tone`,
+      mediaType: "text",
+      file: "",
+      mimeType: "application/pdf",
+      analysisSummary:
+        "Collection guidance favors quiet authority, craftsmanship language, and no urgency-led claims.",
       sourceType: "uploaded",
       format: "PDF",
       wordCount: 680,

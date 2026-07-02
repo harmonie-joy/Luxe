@@ -1,8 +1,12 @@
+import base64
 import json
+
+from brand.models import BrandAsset
 
 from .models import AIRun
 from .providers import get_provider
 from .schemas import (
+    BrandAssetAnalysisResult,
     BrandVoiceExtractionResult,
     ComplianceReviewResult,
     DraftGenerationResult,
@@ -10,8 +14,27 @@ from .schemas import (
 )
 
 
-def extract_brand_voice(workspace, samples, user=None, provider=None):
-    context = _brand_voice_extraction_context(samples)
+def analyze_brand_asset_with_run(workspace, brand_profile, asset, user=None, provider=None):
+    context = _brand_asset_analysis_context(brand_profile, asset)
+    result, run = _run_ai_task(
+        workspace=workspace,
+        user=user,
+        provider=provider,
+        task_type=AIRun.TaskType.BRAND_ASSET_ANALYSIS,
+        schema=BrandAssetAnalysisResult,
+        prompt=_brand_asset_analysis_prompt(context),
+        input_data=context,
+        images=_brand_asset_images(asset),
+        return_run=True,
+    )
+    asset.analysis_summary = result.summary
+    asset.status = BrandAsset.AssetStatus.READY
+    asset.save(update_fields=["analysis_summary", "status", "updated_at"])
+    return result, run
+
+
+def extract_brand_voice(workspace, samples, user=None, provider=None, brand_profile=None):
+    context = _brand_voice_extraction_context(samples, brand_profile)
     return _run_ai_task(
         workspace=workspace,
         user=user,
@@ -23,8 +46,8 @@ def extract_brand_voice(workspace, samples, user=None, provider=None):
     )
 
 
-def extract_brand_voice_with_run(workspace, samples, user=None, provider=None):
-    context = _brand_voice_extraction_context(samples)
+def extract_brand_voice_with_run(workspace, samples, user=None, provider=None, brand_profile=None):
+    context = _brand_voice_extraction_context(samples, brand_profile)
     return _run_ai_task(
         workspace=workspace,
         user=user,
@@ -96,6 +119,7 @@ def _run_ai_task(
     schema,
     prompt,
     input_data,
+    images=None,
     return_run=False,
 ):
     provider = provider or get_provider()
@@ -109,7 +133,7 @@ def _run_ai_task(
     )
 
     try:
-        result = provider.generate(prompt, schema)
+        result = provider.generate(prompt, schema, images=images)
     except Exception as error:
         run.mark_failed(error)
         raise
@@ -120,42 +144,107 @@ def _run_ai_task(
     return result
 
 
-def _brand_voice_extraction_context(samples):
+def _brand_asset_analysis_context(brand_profile, asset):
+    return {
+        "brand_profile": _brand_profile_context(brand_profile),
+        "asset": {
+            "title": asset.title,
+            "format": asset.format,
+            "media_type": asset.media_type,
+            "mime_type": asset.mime_type,
+            "content": asset.content,
+            "has_file": bool(asset.file),
+        },
+    }
+
+
+def _brand_asset_analysis_prompt(context):
+    media_type = context["asset"]["media_type"]
+    if media_type == BrandAsset.MediaType.IMAGE:
+        instruction = (
+            "Analyze the image as brand reference material. Extract visual tone, "
+            "audience clues, formality/luxury/casual signals, emotional "
+            "positioning, language implications, and what not to infer."
+        )
+    else:
+        instruction = (
+            "Analyze the text or transcript as brand reference material. Extract "
+            "audience clues, tone clues, sentence style, vocabulary, banned or "
+            "generic phrases, claim boundaries, and do/don't examples."
+        )
+    return (
+        f"{instruction} Return valid JSON only.\n\n"
+        "Keep the summary concise and reusable for later Brand Voice DNA extraction. "
+        "Do not invent demographics, metrics, guarantees, or legal claims.\n\n"
+        f"Context:\n{json.dumps(context, indent=2)}"
+    )
+
+
+def _brand_asset_images(asset):
+    if asset.media_type != BrandAsset.MediaType.IMAGE or not asset.file:
+        return None
+
+    with asset.file.open("rb") as image_file:
+        return [base64.b64encode(image_file.read()).decode("ascii")]
+
+
+def _brand_voice_extraction_context(samples, brand_profile=None):
     if isinstance(samples, str):
         return {
+            "brand_profile": {},
             "assets": [
                 {
                     "title": "Sample",
                     "format": "",
+                    "media_type": "text",
                     "content": samples,
+                    "analysis_summary": "",
                 }
             ]
         }
 
     return {
+        "brand_profile": _brand_profile_context(brand_profile),
         "assets": [
             {
                 "title": asset.title,
                 "format": asset.format,
-                "content": asset.content,
+                "media_type": asset.media_type,
+                "content": "" if asset.media_type == BrandAsset.MediaType.IMAGE else asset.content,
+                "analysis_summary": asset.analysis_summary,
             }
             for asset in samples
         ]
     }
 
 
+def _brand_profile_context(brand_profile):
+    if not brand_profile:
+        return {}
+
+    return {
+        "audience": brand_profile.audience,
+        "tone": brand_profile.tone,
+        "preferred_vocabulary": brand_profile.preferred_vocabulary,
+        "banned_phrases": brand_profile.banned_phrases,
+        "positioning_notes": brand_profile.positioning_notes,
+    }
+
+
 def _brand_voice_extraction_prompt(context):
     return (
         "Extract a reusable THE LUXE Brand Voice DNA profile from the selected "
-        "brand assets. Return valid JSON only.\n\n"
+        "brand profile fields and selected brand assets. Return valid JSON only.\n\n"
         "Output fields must be: audience, tone, preferred_vocabulary, "
         "banned_phrases, positioning_notes. Use exactly one tone value from: "
         "professional, authoritative, sophisticated, approachable, visionary. "
         "preferred_vocabulary may be an array of specific strings. "
         "banned_phrases may be an array of specific strings.\n\n"
         "Prioritize specificity over broad adjectives. Infer voice from the "
-        "asset content, titles, and formats. Distinguish audience, tone, "
-        "vocabulary, and positioning. Avoid generic phrases like engaging "
+        "current audience, tone, preferred vocabulary, banned phrases, "
+        "positioning notes, asset content, image summaries, transcript content, "
+        "titles, and formats. Distinguish audience, tone, vocabulary, and "
+        "positioning. Avoid generic phrases like engaging "
         "content, high quality, boost your brand, or stand out online unless "
         "the assets clearly justify them. Do not invent metrics, case studies, "
         "testimonials, guarantees, or unsupported claims. Favor practical "
@@ -182,7 +271,7 @@ def _brand_voice_extraction_prompt(context):
         "Don't examples:\n"
         "1. ...\n"
         "2. ...\n\n"
-        f"Selected assets:\n{json.dumps(context, indent=2)}"
+        f"Extraction context:\n{json.dumps(context, indent=2)}"
     )
 
 

@@ -1,4 +1,6 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from rest_framework.test import APITestCase
 
 from brand.models import BrandAsset, BrandProfile
@@ -178,6 +180,7 @@ class BrandProfileAPITest(APITestCase):
         )
 
 
+@override_settings(MEDIA_ROOT="/tmp/theluxe-test-media")
 class BrandAssetAPITest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="asset_user", password="pass")
@@ -238,6 +241,7 @@ class BrandAssetAPITest(APITestCase):
             "brand_profile": str(self.profile.id),
             "title": "New Asset",
             "content": "Content text here.",
+            "media_type": "text",
             "source_type": "pasted",
         }
         response = self.client.post(ASSETS_URL, payload, format="json")
@@ -245,9 +249,31 @@ class BrandAssetAPITest(APITestCase):
         self.assertEqual(response.data["workspaceId"], str(self.workspace.id))
         self.assertIn("brandProfileId", response.data)
         self.assertIn("sourceType", response.data)
+        self.assertEqual(response.data["mediaType"], "text")
         self.assertIn("wordCount", response.data)
         self.assertIn("createdAt", response.data)
         self.assertIn("updatedAt", response.data)
+
+    def test_create_image_brand_asset(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            "brand_profile": str(self.profile.id),
+            "title": "Moodboard",
+            "media_type": "image",
+            "source_type": "uploaded",
+            "format": "PNG",
+            "mime_type": "image/png",
+            "file": SimpleUploadedFile(
+                "moodboard.png",
+                b"fake-image",
+                content_type="image/png",
+            ),
+        }
+        response = self.client.post(ASSETS_URL, payload, format="multipart")
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["mediaType"], "image")
+        self.assertEqual(response.data["mimeType"], "image/png")
+        self.assertTrue(response.data["file"])
 
     def test_create_asset_on_foreign_profile_is_denied(self):
         self.client.force_authenticate(user=self.user)
@@ -289,6 +315,10 @@ class BrandAssetAPITest(APITestCase):
             "brandProfileId",
             "title",
             "content",
+            "mediaType",
+            "file",
+            "mimeType",
+            "analysisSummary",
             "sourceType",
             "format",
             "wordCount",

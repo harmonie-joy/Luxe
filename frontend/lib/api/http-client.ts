@@ -50,12 +50,15 @@ function getCsrfHeaders(method: string): HeadersInit {
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   const method = init.method ?? "GET";
+  const isFormData = init.body instanceof FormData;
 
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
     ...getCsrfHeaders(method),
     ...(init.headers ?? {}),
   };
+  if (!isFormData) {
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
+  }
 
   const response = await fetch(url, { ...init, credentials: "include", headers });
 
@@ -94,6 +97,18 @@ export const httpClient = {
       ...init,
       method: "POST",
       body: JSON.stringify(body),
+    });
+  },
+
+  postForm<T>(
+    path: string,
+    body: FormData,
+    init?: Omit<RequestInit, "method" | "body">,
+  ): Promise<T> {
+    return request<T>(path, {
+      ...init,
+      method: "POST",
+      body,
     });
   },
 

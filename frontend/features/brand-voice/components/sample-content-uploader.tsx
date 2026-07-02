@@ -3,40 +3,123 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { SampleContentConfig } from "@/types/brand-profile";
+import type { BrandProfile, SampleContentConfig } from "@/types/brand-profile";
 import { BRAND_ASSET_SOURCE_LABELS, BRAND_ASSET_STATUS_LABELS } from "@/lib/formatters";
+import {
+  createBrandAsset,
+  createBrandAssetUpload,
+} from "@/lib/api/brand-voice";
+import { ApiError } from "@/lib/api/http-client";
 import { brandVoiceSampleRoute } from "@/lib/routes";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 
 interface SampleContentUploaderProps {
+  profile: BrandProfile;
   sampleContent: SampleContentConfig;
+  source: "api" | "mock";
 }
 
 export function SampleContentUploader({
+  profile,
   sampleContent,
+  source,
 }: SampleContentUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [pasteContent, setPasteContent] = useState(sampleContent.pasteDefaultValue);
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const samples = sampleContent.samples;
 
+  function getErrorMessage(err: unknown) {
+    if (err instanceof ApiError) return `API error ${err.status}: ${err.message}`;
+    if (err instanceof Error) return err.message;
+    return "Could not save this brand asset.";
+  }
+
+  function getPasteTitle(value: string) {
+    return value.trim().split("\n")[0].slice(0, 80) || "Pasted brand sample";
+  }
+
+  function getWordCount(value: string) {
+    return value.trim().split(/\s+/).filter(Boolean).length;
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSelectedFile(e.target.files?.[0] ?? null);
+    setMessage(null);
+    setError(null);
   }
 
-  function handleUpload() {
+  async function handleUpload() {
     if (!selectedFile) return;
-    // MVP: generate a stable slug from the filename and timestamp.
-    const slug = `${Date.now()}-${selectedFile.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
-    router.push(brandVoiceSampleRoute(slug));
+    if (source === "mock") {
+      const slug = `${Date.now()}-${selectedFile.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
+      router.push(brandVoiceSampleRoute(slug));
+      return;
+    }
+    if (!selectedFile.type.startsWith("image/")) {
+      setError("Only image uploads are saved in this MVP. Paste text or transcripts instead.");
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await createBrandAssetUpload({
+        brand_profile: profile.id,
+        title: selectedFile.name,
+        media_type: "image",
+        file: selectedFile,
+        mime_type: selectedFile.type,
+        source_type: "uploaded",
+        format: selectedFile.name.split(".").pop()?.toUpperCase() ?? "Image",
+        status: "needs_review",
+      });
+      setSelectedFile(null);
+      setMessage("Image asset saved for analysis.");
+      router.refresh();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
-  function handleAnalysePaste() {
+  async function handleAnalysePaste() {
     if (!pasteContent.trim()) return;
-    const slug = `paste-${Date.now()}`;
-    router.push(brandVoiceSampleRoute(slug));
+    if (source === "mock") {
+      const slug = `paste-${Date.now()}`;
+      router.push(brandVoiceSampleRoute(slug));
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage(null);
+    setError(null);
+    try {
+      await createBrandAsset({
+        brand_profile: profile.id,
+        title: getPasteTitle(pasteContent),
+        content: pasteContent,
+        media_type: "text",
+        source_type: "pasted",
+        format: "Text",
+        word_count: getWordCount(pasteContent),
+        status: "needs_review",
+      });
+      setPasteContent("");
+      setMessage("Text asset saved for analysis.");
+      router.refresh();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
@@ -70,9 +153,10 @@ export function SampleContentUploader({
             <button
               className="luxe-primary-action luxe-focus-ring rounded px-5 py-2.5 text-sm font-medium"
               type="button"
+              disabled={isSaving}
               onClick={handleAnalysePaste}
             >
-              Analyse Paste
+              {source === "api" ? "Save Paste" : "Analyse Paste"}
             </button>
           </div>
         )}
@@ -109,9 +193,10 @@ export function SampleContentUploader({
               <button
                 className="luxe-primary-action luxe-focus-ring rounded px-5 py-2.5 text-sm font-medium sm:ml-auto"
                 type="button"
+                disabled={isSaving}
                 onClick={handleUpload}
               >
-                Upload &amp; Analyse
+                {source === "api" ? "Save Image" : "Upload &amp; Analyse"}
               </button>
             </>
           ) : (
@@ -121,6 +206,17 @@ export function SampleContentUploader({
             </p>
           )}
         </div>
+      </div>
+
+      <div aria-live="polite" className="space-y-3">
+        {message ? (
+          <p className="luxe-preview-stat p-4 text-sm font-medium">{message}</p>
+        ) : null}
+        {error ? (
+          <p className="luxe-preview-stat p-4 text-sm font-medium text-luxe-danger">
+            {error}
+          </p>
+        ) : null}
       </div>
 
       <div className="min-h-0">
@@ -150,7 +246,8 @@ export function SampleContentUploader({
                   </p>
                   <p className="luxe-item-meta mt-1 text-sm">
                     {BRAND_ASSET_SOURCE_LABELS[sample.sourceType]} ·{" "}
-                    {sample.format} · {sample.wordCount} words
+                    {sample.mediaType.replace("_", " ")} · {sample.format}
+                    {sample.wordCount > 0 ? ` · ${sample.wordCount} words` : ""}
                   </p>
                 </div>
 

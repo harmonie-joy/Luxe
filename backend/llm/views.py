@@ -2,13 +2,19 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from brand.models import BrandAsset
+from brand.serializers import BrandAssetSerializer
 from content.models import ContentDraft
 
 from .serializers import (
     BrandVoiceExtractionRequestSerializer,
     DraftGenerationRequestSerializer,
 )
-from .services import extract_brand_voice_with_run, generate_draft_with_run
+from .services import (
+    analyze_brand_asset_with_run,
+    extract_brand_voice_with_run,
+    generate_draft_with_run,
+)
 
 
 @api_view(["POST"])
@@ -25,12 +31,56 @@ def extract_brand_voice(request):
         serializer.validated_data["workspace"],
         assets,
         user=request.user,
+        brand_profile=serializer.validated_data["brand_profile"],
     )
 
     return Response(
         {
             "aiRunId": str(run.id),
             "suggestions": suggestions.model_dump(mode="json"),
+        }
+    )
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def analyze_brand_assets(request):
+    serializer = BrandVoiceExtractionRequestSerializer(
+        data=request.data,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    workspace = serializer.validated_data["workspace"]
+    brand_profile = serializer.validated_data["brand_profile"]
+    assets = serializer.validated_data["assets"]
+    ai_run_ids = []
+    warnings = []
+
+    for asset in assets:
+        try:
+            _result, run = analyze_brand_asset_with_run(
+                workspace,
+                brand_profile,
+                asset,
+                user=request.user,
+            )
+            ai_run_ids.append(str(run.id))
+        except Exception as error:
+            if asset.media_type != BrandAsset.MediaType.IMAGE:
+                raise
+            warnings.append(
+                {
+                    "assetId": str(asset.id),
+                    "message": f"Image analysis skipped: {error}",
+                }
+            )
+
+    return Response(
+        {
+            "aiRunIds": ai_run_ids,
+            "assets": BrandAssetSerializer(assets, many=True).data,
+            "warnings": warnings,
         }
     )
 
