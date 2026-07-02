@@ -112,6 +112,13 @@ const USE_MOCK =
   !process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE ||
   process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE === "true";
 
+function mockFallback(loadError: string): BrandVoiceSetupData {
+  return {
+    ...mockBrandVoiceSetup,
+    loadError,
+  };
+}
+
 export async function getBrandVoiceSetup(): Promise<BrandVoiceSetupData> {
   if (USE_MOCK) {
     return mockBrandVoiceSetup;
@@ -121,7 +128,7 @@ export async function getBrandVoiceSetup(): Promise<BrandVoiceSetupData> {
     const profiles = await getBrandProfiles();
 
     if (profiles.length === 0) {
-      return mockBrandVoiceSetup;
+      return mockFallback("No live BrandProfile is available for this session.");
     }
 
     const profile = profiles[0];
@@ -135,15 +142,15 @@ export async function getBrandVoiceSetup(): Promise<BrandVoiceSetupData> {
       },
     };
   } catch (err) {
+    const reason =
+      err instanceof ApiError
+        ? `ApiError ${err.status}: ${err.message}`
+        : String(err);
     if (process.env.NODE_ENV === "development") {
-      const reason =
-        err instanceof ApiError
-          ? `ApiError ${err.status}: ${err.message}`
-          : String(err);
       console.warn(
         `[getBrandVoiceSetup] API unavailable, using mock data. Reason: ${reason}`,
       );
     }
-    return mockBrandVoiceSetup;
+    return mockFallback(reason);
   }
 }

@@ -3,7 +3,11 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { BrandProfile, SampleContentConfig } from "@/types/brand-profile";
+import type {
+  BrandAsset,
+  BrandProfile,
+  SampleContentConfig,
+} from "@/types/brand-profile";
 import { BRAND_ASSET_SOURCE_LABELS, BRAND_ASSET_STATUS_LABELS } from "@/lib/formatters";
 import {
   createBrandAsset,
@@ -15,12 +19,14 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 
 interface SampleContentUploaderProps {
+  onAssetSaved?: (asset: BrandAsset) => void;
   profile: BrandProfile;
   sampleContent: SampleContentConfig;
   source: "api" | "mock";
 }
 
 export function SampleContentUploader({
+  onAssetSaved,
   profile,
   sampleContent,
   source,
@@ -65,8 +71,8 @@ export function SampleContentUploader({
   async function handleUpload() {
     if (!selectedFile) return;
     if (source === "mock") {
-      const slug = `${Date.now()}-${selectedFile.name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
-      router.push(brandVoiceSampleRoute(slug));
+      setMessage("Demo mode only. No backend asset was saved.");
+      setError(null);
       return;
     }
     if (!selectedFile.type.startsWith("image/")) {
@@ -78,7 +84,7 @@ export function SampleContentUploader({
     setMessage(null);
     setError(null);
     try {
-      await createBrandAssetUpload({
+      const savedAsset = await createBrandAssetUpload({
         brand_profile: profile.id,
         title: selectedFile.name,
         media_type: "image",
@@ -89,6 +95,7 @@ export function SampleContentUploader({
         status: "needs_review",
       });
       setSelectedFile(null);
+      onAssetSaved?.(savedAsset);
       setMessage("Image asset saved for analysis.");
       router.refresh();
     } catch (err) {
@@ -101,8 +108,8 @@ export function SampleContentUploader({
   async function handleAnalysePaste() {
     if (!pasteContent.trim()) return;
     if (source === "mock") {
-      const slug = `paste-${Date.now()}`;
-      router.push(brandVoiceSampleRoute(slug));
+      setMessage("Demo mode only. No backend asset was saved.");
+      setError(null);
       return;
     }
 
@@ -110,7 +117,7 @@ export function SampleContentUploader({
     setMessage(null);
     setError(null);
     try {
-      await createBrandAsset({
+      const savedAsset = await createBrandAsset({
         brand_profile: profile.id,
         title: pasteTitle.trim() || getPasteTitle(pasteContent),
         content: pasteContent,
@@ -122,6 +129,7 @@ export function SampleContentUploader({
       });
       setPasteTitle("");
       setPasteContent("");
+      onAssetSaved?.(savedAsset);
       setMessage("Text asset saved for analysis.");
       router.refresh();
     } catch (err) {
@@ -178,7 +186,7 @@ export function SampleContentUploader({
               disabled={isSaving}
               onClick={handleAnalysePaste}
             >
-              {source === "api" ? "Save Paste" : "Analyse Paste"}
+              Save Paste
             </button>
           </div>
         )}
@@ -218,13 +226,13 @@ export function SampleContentUploader({
                 disabled={isSaving}
                 onClick={handleUpload}
               >
-                {source === "api" ? "Save Image" : "Upload &amp; Analyse"}
+                Save Image
               </button>
             </>
           ) : (
             <p className="luxe-form-help" id="sample-content-upload-help">
-              Accepted: {sampleContent.acceptedFormats.join(", ")}. Local-only
-              in this MVP.
+              Accepted: {sampleContent.acceptedFormats.join(", ")}. Images save
+              only in Live mode.
             </p>
           )}
         </div>

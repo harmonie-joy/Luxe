@@ -114,6 +114,31 @@ describe("BrandVoiceAiPanel", () => {
     expect(screen.getByText("Suggested audience.")).toBeTruthy();
   });
 
+  it("drops stale mock asset ids when live samples replace them", async () => {
+    mockAnalysis();
+    const liveSamples = samples.map((sample, index) => ({
+      ...sample,
+      id: `live-asset-${index + 1}`,
+      title: `Live sample ${index + 1}`,
+    }));
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <BrandVoiceAiPanel profile={profile} samples={samples} source="mock" />,
+    );
+
+    rerender(
+      <BrandVoiceAiPanel profile={profile} samples={liveSamples} source="api" />,
+    );
+    await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
+
+    await screen.findByText("Suggested audience.");
+    expect(aiApi.analyzeBrandAssets).toHaveBeenCalledWith({
+      workspace: profile.workspaceId,
+      brand_profile: profile.id,
+      asset_ids: liveSamples.map((sample) => sample.id),
+    });
+  });
+
   it("accepts suggestions by patching the brand profile", async () => {
     mockAnalysis();
     vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(profile);
@@ -137,20 +162,21 @@ describe("BrandVoiceAiPanel", () => {
     expect(router.refresh).toHaveBeenCalled();
   });
 
-  it("keeps mock mode fully local", async () => {
+  it("blocks demo analysis instead of creating mock suggestions", async () => {
     const user = userEvent.setup();
     render(<BrandVoiceAiPanel profile={profile} samples={samples} source="mock" />);
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
-    await screen.findByText("Brand voice suggestions are ready for review.");
-    await user.click(screen.getByRole("button", { name: "Accept Suggestions" }));
 
     expect(
-      await screen.findByText("Mock suggestions accepted locally."),
+      await screen.findByText(
+        "Demo mode only. Load live data before running brand voice analysis.",
+      ),
     ).toBeTruthy();
     await waitFor(() => {
       expect(aiApi.analyzeBrandAssets).not.toHaveBeenCalled();
       expect(brandVoiceApi.updateBrandProfile).not.toHaveBeenCalled();
     });
+    expect(screen.queryByRole("button", { name: "Accept Suggestions" })).toBeNull();
   });
 });

@@ -548,6 +548,15 @@ class BrandAssetAnalysisAPITests(APITestCase):
         self.assertEqual(self.text_asset.status, BrandAsset.AssetStatus.READY)
         self.assertEqual(self.image_asset.status, BrandAsset.AssetStatus.READY)
 
+    def test_foreign_workspace_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            BRAND_ANALYZE_ASSETS_URL,
+            self.payload(workspace=str(self.other_workspace.id)),
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_foreign_asset_is_rejected(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(

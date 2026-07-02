@@ -17,6 +17,7 @@ export interface BrandVoiceSetupData {
   toneOptions: readonly BrandToneOption[];
   sampleContent: SampleContentConfig;
   source: "api" | "mock";
+  loadError?: string;
 }
 
 export const mockBrandVoiceSetup = {

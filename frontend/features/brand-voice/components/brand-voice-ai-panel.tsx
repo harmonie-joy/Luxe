@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
@@ -35,36 +35,6 @@ const CANONICAL_TONES: readonly BrandVoiceTone[] = [
   "approachable",
   "visionary",
 ];
-
-const MOCK_SUGGESTIONS: BrandVoiceExtractionSuggestions = {
-  audience:
-    "Affluent fashion and lifestyle clients seeking considered editorial guidance with a discreet, practical tone.",
-  tone: ["sophisticated", "authoritative", "approachable"],
-  preferred_vocabulary: [
-    {
-      preferred_term: "clientele",
-      restricted_terms: ["customers", "buyers"],
-      note: "Use for premium audience references.",
-    },
-    {
-      preferred_term: "curated edit",
-      restricted_terms: ["drop", "haul"],
-      note: "Use for seasonal selections and editorial collections.",
-    },
-  ],
-  banned_phrases: [
-    {
-      phrase: "go viral",
-      reason: "Too trend-led for the brand voice.",
-    },
-    {
-      phrase: "affordable luxury",
-      reason: "Dilutes premium positioning.",
-    },
-  ],
-  positioning_notes:
-    "Maintain quiet authority, practical clarity, and invitation-led phrasing. Avoid urgency-led language and exaggerated claims.",
-};
 
 function getErrorMessage(error: unknown) {
   if (error instanceof ApiError) return `API error ${error.status}: ${error.message}`;
@@ -129,6 +99,21 @@ export function BrandVoiceAiPanel({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const previousSampleIdsRef = useRef(new Set(samples.map((sample) => sample.id)));
+
+  useEffect(() => {
+    // Reconcile selections with the current samples: drop IDs that no longer
+    // exist (e.g. mock IDs after live API hydration), keep the user's choices
+    // for surviving IDs, and select newly added samples by default.
+    const previousIds = previousSampleIdsRef.current;
+    setSelectedAssetIds((current) =>
+      samples
+        .map((sample) => sample.id)
+        .filter((id) => current.includes(id) || !previousIds.has(id)),
+    );
+    previousSampleIdsRef.current = new Set(samples.map((sample) => sample.id));
+  }, [samples]);
+
   const selectedSamples = useMemo(
     () => samples.filter((sample) => selectedAssetIds.includes(sample.id)),
     [samples, selectedAssetIds],
@@ -145,6 +130,14 @@ export function BrandVoiceAiPanel({
   }
 
   async function handleAnalyze() {
+    if (source === "mock") {
+      setMessage("Demo mode only. Load live data before running brand voice analysis.");
+      setError(null);
+      setSuggestions(null);
+      setAiRunId(null);
+      return;
+    }
+
     if (selectedAssetIds.length === 0) {
       setError("Select at least one sample before analysis.");
       return;
@@ -155,30 +148,25 @@ export function BrandVoiceAiPanel({
     setError(null);
 
     try {
-      if (source === "mock") {
-        setSuggestions(MOCK_SUGGESTIONS);
-        setAiRunId("mock-brand-voice-run");
-      } else {
-        const analysis = await analyzeBrandAssets({
-          workspace: profile.workspaceId,
-          brand_profile: profile.id,
-          asset_ids: selectedAssetIds,
-        });
-        const result = await extractBrandVoice({
-          workspace: profile.workspaceId,
-          brand_profile: profile.id,
-          asset_ids: selectedAssetIds,
-        });
-        setSuggestions(result.suggestions);
-        setAiRunId(result.aiRunId);
-        if (analysis.warnings.length > 0) {
-          setMessage(
-            `Brand voice suggestions are ready. ${analysis.warnings
-              .map((warning) => warning.message)
-              .join(" ")}`,
-          );
-          return;
-        }
+      const analysis = await analyzeBrandAssets({
+        workspace: profile.workspaceId,
+        brand_profile: profile.id,
+        asset_ids: selectedAssetIds,
+      });
+      const result = await extractBrandVoice({
+        workspace: profile.workspaceId,
+        brand_profile: profile.id,
+        asset_ids: selectedAssetIds,
+      });
+      setSuggestions(result.suggestions);
+      setAiRunId(result.aiRunId);
+      if (analysis.warnings.length > 0) {
+        setMessage(
+          `Brand voice suggestions are ready. ${analysis.warnings
+            .map((warning) => warning.message)
+            .join(" ")}`,
+        );
+        return;
       }
       setMessage("Brand voice suggestions are ready for review.");
     } catch (err) {
@@ -189,28 +177,23 @@ export function BrandVoiceAiPanel({
   }
 
   async function handleAccept() {
-    if (!suggestions) return;
+    // Suggestions only exist in api mode; handleAnalyze blocks demo mode.
+    if (!suggestions || source !== "api") return;
 
     setIsAccepting(true);
     setMessage(null);
     setError(null);
 
     try {
-      if (source === "api") {
-        await updateBrandProfile(profile.id, {
-          audience: suggestions.audience,
-          tone: toCanonicalTones(suggestions.tone, profile.tone),
-          preferred_vocabulary: toVocabularyPayload(suggestions.preferred_vocabulary),
-          banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
-          positioning_notes: suggestions.positioning_notes,
-        });
-        router.refresh();
-      }
-      setMessage(
-        source === "mock"
-          ? "Mock suggestions accepted locally."
-          : "Suggestions accepted and profile updated.",
-      );
+      await updateBrandProfile(profile.id, {
+        audience: suggestions.audience,
+        tone: toCanonicalTones(suggestions.tone, profile.tone),
+        preferred_vocabulary: toVocabularyPayload(suggestions.preferred_vocabulary),
+        banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
+        positioning_notes: suggestions.positioning_notes,
+      });
+      router.refresh();
+      setMessage("Suggestions accepted and profile updated.");
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -229,7 +212,7 @@ export function BrandVoiceAiPanel({
           </p>
         </div>
         <StatusIndicator
-          label={source === "mock" ? "Mock mode" : "API mode"}
+          label={source === "mock" ? "Demo" : "Live"}
           tone={source === "mock" ? "neutral" : "info"}
         />
       </div>

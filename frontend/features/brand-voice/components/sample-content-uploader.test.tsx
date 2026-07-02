@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -12,9 +12,10 @@ vi.mock("@/lib/api/brand-voice");
 const { profile, sampleContent } = mockBrandVoiceSetup;
 const savedAsset = sampleContent.samples[0];
 
-function renderUploader(source: "api" | "mock") {
+function renderUploader(source: "api" | "mock", onAssetSaved = vi.fn()) {
   return render(
     <SampleContentUploader
+      onAssetSaved={onAssetSaved}
       profile={profile}
       sampleContent={sampleContent}
       source={source}
@@ -31,8 +32,9 @@ function selectFile(file: File) {
 describe("SampleContentUploader", () => {
   it("saves pasted text with title fallback and word count", async () => {
     vi.mocked(brandVoiceApi.createBrandAsset).mockResolvedValue(savedAsset);
+    const onAssetSaved = vi.fn();
     const user = userEvent.setup();
-    renderUploader("api");
+    renderUploader("api", onAssetSaved);
 
     fireEvent.change(screen.getByLabelText(/Sample content paste area/), {
       target: { value: "First line title\nMore considered copy here." },
@@ -50,13 +52,15 @@ describe("SampleContentUploader", () => {
       word_count: 7,
       status: "needs_review",
     });
+    expect(onAssetSaved).toHaveBeenCalledWith(savedAsset);
     expect(router.refresh).toHaveBeenCalled();
   });
 
   it("uploads image files through the FormData path", async () => {
     vi.mocked(brandVoiceApi.createBrandAssetUpload).mockResolvedValue(savedAsset);
+    const onAssetSaved = vi.fn();
     const user = userEvent.setup();
-    renderUploader("api");
+    renderUploader("api", onAssetSaved);
 
     const file = new File(["img"], "campaign.png", { type: "image/png" });
     selectFile(file);
@@ -75,6 +79,7 @@ describe("SampleContentUploader", () => {
       format: "PNG",
       status: "needs_review",
     });
+    expect(onAssetSaved).toHaveBeenCalledWith(savedAsset);
   });
 
   it("rejects non-image uploads in API mode", async () => {
@@ -92,17 +97,16 @@ describe("SampleContentUploader", () => {
     expect(brandVoiceApi.createBrandAssetUpload).not.toHaveBeenCalled();
   });
 
-  it("navigates to a local sample detail route in mock mode", async () => {
+  it("blocks fake writes in mock mode", async () => {
     const user = userEvent.setup();
     renderUploader("mock");
 
-    await user.click(screen.getByRole("button", { name: "Analyse Paste" }));
+    await user.click(screen.getByRole("button", { name: "Save Paste" }));
 
-    await waitFor(() =>
-      expect(router.push).toHaveBeenCalledWith(
-        expect.stringMatching(/^\/brand-voice\/samples\/paste-\d+$/),
-      ),
-    );
+    expect(
+      await screen.findByText("Demo mode only. No backend asset was saved."),
+    ).toBeTruthy();
     expect(brandVoiceApi.createBrandAsset).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalled();
   });
 });

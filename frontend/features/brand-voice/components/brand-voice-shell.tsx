@@ -9,7 +9,7 @@ import { BrandProfilePreview } from "@/features/brand-voice/components/brand-pro
 import { BrandVoiceAiPanel } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
-import type { BrandProfile } from "@/types/brand-profile";
+import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
 
 interface BrandVoiceShellProps {
   initialData: BrandVoiceSetupData;
@@ -56,7 +56,31 @@ export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
     }));
   }
 
-  const { pageHeader, profile, sampleContent, source, toneOptions } = data;
+  function handleAssetSaved(asset: BrandAsset) {
+    setData((current) => ({
+      ...current,
+      sampleContent: {
+        ...current.sampleContent,
+        samples: [asset, ...current.sampleContent.samples],
+      },
+    }));
+  }
+
+  const { loadError, pageHeader, profile, sampleContent, source, toneOptions } = data;
+  const sourceLabel = isLoading
+    ? "Loading live data"
+    : source === "api"
+      ? "Live"
+      : loadError
+        ? "Error - demo data"
+        : "Demo";
+  const sourceTone = isLoading
+    ? "info"
+    : source === "api"
+      ? "success"
+      : loadError
+        ? "warning"
+        : "neutral";
 
   return (
     <div className="flex min-h-full flex-col gap-8">
@@ -72,10 +96,16 @@ export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
             </p>
           </div>
           <StatusIndicator
-            label={isLoading ? "Loading API mode" : source === "api" ? "API mode" : "Mock fallback"}
-            tone={isLoading ? "info" : source === "api" ? "success" : "neutral"}
+            label={sourceLabel}
+            tone={sourceTone}
           />
         </div>
+        {loadError ? (
+          <p className="luxe-preview-stat mt-4 max-w-2xl p-4 text-sm font-medium">
+            Live Brand Voice data could not load. Showing demo data instead:{" "}
+            {loadError}
+          </p>
+        ) : null}
       </header>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
@@ -92,6 +122,7 @@ export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
             source={source}
           />
           <SampleContentUploader
+            onAssetSaved={handleAssetSaved}
             profile={profile}
             sampleContent={sampleContent}
             source={source}
