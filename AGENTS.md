@@ -34,6 +34,8 @@ Before making implementation or architecture changes, inspect the relevant sourc
 
 Use `prompts/management-agent.md` when the task is about planning, auditing, coordinating AI work, or updating project memory.
 
+When implementing a new feature, follow the vertical slice template in `docs/06_FEATURE_SLICE_GUIDE.md` and verify with `make check` before handing off to QA.
+
 ## Repository Structure
 
 Use the repository layout as the default source of truth.

@@ -1,4 +1,4 @@
-.PHONY: up down logs ps dev dev-down dev-restart dev-check migrate makemigrations manage
+.PHONY: up down logs ps dev dev-down dev-restart dev-check migrate makemigrations manage test-be test-fe test-be-local check
 
 COMPOSE = cd infra && docker compose
 
@@ -48,3 +48,19 @@ manage:
 
 test-be:
 	$(COMPOSE) exec backend python manage.py test $(if $(app),$(app),) $(if $(test),$(test),)
+
+# Local (non-Docker) test commands — same commands CI runs.
+# Backend uses backend/.venv and a throwaway sqlite DB; frontend needs node_modules.
+
+TEST_DATABASE_URL ?= sqlite:////tmp/theluxe-test.sqlite3
+
+test-be-local:
+	cd backend && DATABASE_URL=$(TEST_DATABASE_URL) .venv/bin/python manage.py test $(if $(app),$(app),) $(if $(test),$(test),)
+
+test-fe:
+	cd frontend && npm run test:frontend
+
+# Everything CI blocks on: frontend lint + typecheck + unit tests + backend tests.
+check:
+	cd frontend && npm run lint && npm run typecheck && npm run test
+	$(MAKE) test-be-local
