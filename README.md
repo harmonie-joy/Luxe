@@ -19,6 +19,34 @@ Open:
 - backend health: http://localhost:8000/api/health
 - Django admin: http://localhost:8000/admin
 
+## Non-Technical Mac Test Run
+
+For a cofounder on an Apple Silicon Mac, use Docker Desktop instead of asking
+them to install Python or npm.
+
+1. Install Docker Desktop for Mac: https://www.docker.com/products/docker-desktop/
+2. Open Docker Desktop once and leave it running.
+3. Download or clone this repo.
+4. Double-click `Run THE LUXE.command`.
+
+The runner starts the Docker stack, applies migrations, seeds demo data, and
+opens http://localhost:3000.
+
+Demo login:
+
+```text
+Email: demo@theluxe.local
+Password: theluxe-demo
+```
+
+If macOS blocks the file, right-click `Run THE LUXE.command`, choose Open, then
+confirm. To stop the app later:
+
+```bash
+cd infra
+docker compose down
+```
+
 ## Local Development Commands
 - make dev: Validate compose config, build images, and start services in detached mode.
 - make logs: Follow service logs.
