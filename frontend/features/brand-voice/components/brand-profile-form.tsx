@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { ToneSelector } from "@/features/brand-voice/components/tone-selector";
@@ -153,7 +152,6 @@ export function BrandProfileForm({
   source,
   toneOptions,
 }: BrandProfileFormProps) {
-  const router = useRouter();
   const [formState, setFormState] = useState(() => getInitialState(profile));
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -207,7 +205,6 @@ export function BrandProfileForm({
       });
       onProfileSaved?.(updatedProfile);
       setMessage("Brand profile saved.");
-      router.refresh();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

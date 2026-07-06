@@ -52,8 +52,8 @@ describe("SampleContentUploader", () => {
       word_count: 7,
       status: "needs_review",
     });
+    // Visible state updates through onAssetSaved alone — no router.refresh.
     expect(onAssetSaved).toHaveBeenCalledWith(savedAsset);
-    expect(router.refresh).toHaveBeenCalled();
   });
 
   it("uploads image files through the FormData path", async () => {

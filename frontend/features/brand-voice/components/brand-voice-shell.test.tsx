@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   mockBrandVoiceSetup,
@@ -23,6 +23,15 @@ function renderShell(data: BrandVoiceSetupData) {
   render(<BrandVoiceShell initialData={data} />);
 }
 
+// Intentional mock mode: live is the default, so pin the flag for demo tests.
+beforeEach(() => {
+  vi.stubEnv("NEXT_PUBLIC_USE_MOCK_BRAND_VOICE", "true");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("BrandVoiceShell", () => {
   it("shows live, demo, and error-demo source states", () => {
     renderShell({ ...mockBrandVoiceSetup, source: "api" });
@@ -30,6 +39,8 @@ describe("BrandVoiceShell", () => {
 
     renderShell(mockBrandVoiceSetup);
     expect(screen.getAllByText("Demo").length).toBeGreaterThan(0);
+    // Intentional mock mode never fetches live data behind the scenes.
+    expect(brandVoiceApi.getBrandProfiles).not.toHaveBeenCalled();
 
     renderShell({
       ...mockBrandVoiceSetup,

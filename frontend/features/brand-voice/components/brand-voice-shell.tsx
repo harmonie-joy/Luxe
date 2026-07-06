@@ -9,23 +9,21 @@ import { BrandProfilePreview } from "@/features/brand-voice/components/brand-pro
 import { BrandVoiceAiPanel } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
+import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
 
 interface BrandVoiceShellProps {
   initialData: BrandVoiceSetupData;
 }
 
-const USE_API_BRAND_VOICE =
-  process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE === "false";
-
 export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
   const [data, setData] = useState(initialData);
   const [isLoading, setIsLoading] = useState(
-    USE_API_BRAND_VOICE && initialData.source === "mock",
+    !isBrandVoiceMockMode() && initialData.source === "mock",
   );
 
   useEffect(() => {
-    if (!USE_API_BRAND_VOICE) return;
+    if (isBrandVoiceMockMode()) return;
 
     let isActive = true;
 
@@ -117,6 +115,7 @@ export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
             toneOptions={toneOptions}
           />
           <BrandVoiceAiPanel
+            onProfileSaved={handleProfileSaved}
             profile={profile}
             samples={sampleContent.samples}
             source={source}

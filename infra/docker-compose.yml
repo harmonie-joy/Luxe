@@ -26,6 +26,9 @@ services:
       DEBUG: "1"
       SECRET_KEY: django-insecure-u3w8q(z^m5g^6@2gmb_jcy+7)9i(pwg#rk6@+#c6f@v@muan&l
       ALLOWED_HOSTS: "*"
+      AI_PROVIDER: ollama
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: gemma4:12b
     ports:
       - "8000:8000"
     volumes:

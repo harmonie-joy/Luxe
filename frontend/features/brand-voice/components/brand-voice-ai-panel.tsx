@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { StatusIndicator } from "@/components/ui/status-indicator";
@@ -23,6 +22,8 @@ import type {
 } from "@/types/brand-profile";
 
 interface BrandVoiceAiPanelProps {
+  /** Receives the persisted profile after Accept Suggestions so the shell can update visible state. */
+  onProfileSaved: (profile: BrandProfile) => void;
   profile: BrandProfile;
   samples: readonly BrandAsset[];
   source: "api" | "mock";
@@ -83,11 +84,11 @@ export function toBannedPhrasePayload(
 }
 
 export function BrandVoiceAiPanel({
+  onProfileSaved,
   profile,
   samples,
   source,
 }: BrandVoiceAiPanelProps) {
-  const router = useRouter();
   const [selectedAssetIds, setSelectedAssetIds] = useState(() =>
     samples.map((sample) => sample.id),
   );
@@ -185,14 +186,14 @@ export function BrandVoiceAiPanel({
     setError(null);
 
     try {
-      await updateBrandProfile(profile.id, {
+      const updatedProfile = await updateBrandProfile(profile.id, {
         audience: suggestions.audience,
         tone: toCanonicalTones(suggestions.tone, profile.tone),
         preferred_vocabulary: toVocabularyPayload(suggestions.preferred_vocabulary),
         banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
         positioning_notes: suggestions.positioning_notes,
       });
-      router.refresh();
+      onProfileSaved(updatedProfile);
       setMessage("Suggestions accepted and profile updated.");
     } catch (err) {
       setError(getErrorMessage(err));

@@ -19,6 +19,7 @@ import {
   updateBrandProfile,
 } from "@/lib/api/brand-voice";
 import { ApiError } from "@/lib/api/http-client";
+import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import { APP_ROUTES } from "@/lib/routes";
 import type { BrandVoiceTone } from "@/types/brand-profile";
 import type { OnboardingAnswers } from "@/types/onboarding";
@@ -26,10 +27,6 @@ import type { OnboardingAnswers } from "@/types/onboarding";
 interface OnboardingWizardProps {
   config: OnboardingSetupConfig;
 }
-
-// Same flag the Brand Voice screens use: API mode only when explicitly enabled.
-const USE_API_BRAND_VOICE =
-  process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE === "false";
 
 const EMPTY_ANSWERS: OnboardingAnswers = {
   brandName: "",
@@ -191,7 +188,7 @@ export function OnboardingWizard({ config }: OnboardingWizardProps) {
           status: "ready",
         });
 
-        if (USE_API_BRAND_VOICE) {
+        if (!isBrandVoiceMockMode()) {
           const result = await extractBrandVoice({
             workspace: workspaceId,
             brand_profile: profile.id,

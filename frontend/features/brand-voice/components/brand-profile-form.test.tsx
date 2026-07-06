@@ -5,7 +5,6 @@ import { describe, expect, it, vi } from "vitest";
 import { mockBrandVoiceSetup } from "@/data/mock-brand-profiles";
 import { BrandProfileForm } from "@/features/brand-voice/components/brand-profile-form";
 import * as brandVoiceApi from "@/lib/api/brand-voice";
-import { router } from "@/test/setup";
 
 vi.mock("@/lib/api/brand-voice");
 
@@ -73,8 +72,8 @@ describe("BrandProfileForm", () => {
         ],
       }),
     );
+    // Visible state updates through onProfileSaved alone — no router.refresh.
     expect(onProfileSaved).toHaveBeenCalledWith(profile);
-    expect(router.refresh).toHaveBeenCalled();
   });
 
   it("stays local in mock mode", async () => {

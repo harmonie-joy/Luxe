@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. Compliance Review still needs broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. The Brand Voice slice is hardened and QA-accepted: `/brand-voice` exposes Live/Demo/Error state, demo mode blocks fake asset writes and fake AI analysis, saved live assets update the UI immediately, and stale selected asset IDs are reconciled after mock-to-live hydration with regression test coverage. The next feature slice is the Draft Studio Core Value Loop (epic #34): persist Draft Studio output (#35) and validate generation from saved Brand Voice context (#26). Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -723,6 +723,46 @@ Decision Log Update Needed:
 
 Next Step:
 - Validate local Ollama draft generation using the improved BrandProfile guidance, then connect Compliance Review to persisted compliance checks and issues.
+
+### 2026-07-06 - Brand Voice Hardening Slice Accepted (Management Finalization)
+
+Worked On:
+- Finalized QA acceptance of the Brand Voice hardening slice in project memory (GitHub issue #31).
+
+Completed:
+- Recorded the accepted Brand Voice behavior:
+	- `/brand-voice` exposes Live/Demo/Error data-source state to the user.
+	- Demo mode does not fake asset writes or AI analysis; `handleAccept()` returns unless `source === "api"`, removing the unreachable mock success path.
+	- Saved live assets update the UI immediately.
+	- Brand voice analysis remains backend-only.
+	- `BrandVoiceAiPanel` reconciles selected asset IDs from the current samples list only: stale IDs are dropped after live hydration, surviving selections are preserved, and newly seen samples are auto-selected.
+	- Regression tests cover the mock-to-live hydration path at both component and shell level.
+- The slice landed with the new frontend test infrastructure (Vitest unit tests, API client contract tests, Playwright route smoke, and CI via `.github/workflows/ci.yml` and `make check`).
+
+Files Changed (implementation, commit 279b4ee):
+- `frontend/features/brand-voice/components/brand-voice-ai-panel.tsx`
+- `frontend/features/brand-voice/components/brand-voice-ai-panel.test.tsx`
+- `frontend/features/brand-voice/components/brand-voice-shell.tsx`
+- `frontend/features/brand-voice/components/brand-voice-shell.test.tsx`
+- `frontend/features/brand-voice/components/brand-voice-shell.hydration.test.tsx`
+- `frontend/features/brand-voice/components/sample-content-uploader.tsx`
+- `frontend/features/brand-voice/components/sample-content-uploader.test.tsx`
+- `frontend/features/brand-voice/data/get-brand-voice-setup.ts`
+- `frontend/data/mock-brand-profiles.ts`
+- `backend/llm/tests.py`
+
+QA Status:
+- Accepted with notes (see Known Gaps in `docs/06_FEATURE_SLICE_GUIDE.md`, QA notes 2026-07-02).
+
+Verification:
+- Implementation was verified before acceptance through the new `make check` pipeline (frontend lint + typecheck + unit tests, backend tests).
+- This finalization is docs-only; `git diff --check` passed.
+
+Decision Log Update Needed:
+- No. The hardening reused existing endpoint and data contracts; no architecture, data model, auth, AI provider, or scope decision changed.
+
+Next Step:
+- Start the Draft Studio Core Value Loop (epic #34): persist Draft Studio output through the existing backend path (#35), then validate draft generation from the accepted Voice DNA BrandProfile (#26).
 
 ### Existing MVP Implementation Snapshot
 

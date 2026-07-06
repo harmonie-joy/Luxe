@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { getSession, logout, updateCurrentUser } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/http-client";
+import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import { APP_ROUTES } from "@/lib/routes";
 import type { AuthSession } from "@/types/auth";
 
@@ -15,10 +16,9 @@ const API_BASE_LABEL =
   process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:8000";
 
-const BRAND_VOICE_MODE =
-  process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE === "false"
-    ? "API mode"
-    : "Mock fallback mode";
+const BRAND_VOICE_MODE = isBrandVoiceMockMode()
+  ? "Mock fallback mode"
+  : "API mode";
 
 const QUICK_ACTIONS = [
   { href: APP_ROUTES.dashboard, label: "Dashboard" },

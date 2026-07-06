@@ -9,6 +9,7 @@ import {
 import { BrandVoiceShell } from "@/features/brand-voice/components/brand-voice-shell";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
 import * as aiApi from "@/lib/api/ai";
+import * as brandVoiceApi from "@/lib/api/brand-voice";
 
 vi.mock("@/features/brand-voice/data/get-brand-voice-setup");
 vi.mock("@/lib/api/ai");
@@ -32,8 +33,16 @@ const liveSamples = mockBrandVoiceSetup.sampleContent.samples.map(
   }),
 );
 
+const liveProfile = {
+  ...mockBrandVoiceSetup.profile,
+  id: "live-profile-1",
+  name: "Live Signature Voice",
+  audience: "Live premium clientele.",
+};
+
 const liveSetup: BrandVoiceSetupData = {
   ...mockBrandVoiceSetup,
+  profile: liveProfile,
   sampleContent: {
     ...mockBrandVoiceSetup.sampleContent,
     samples: liveSamples,
@@ -62,7 +71,15 @@ describe("BrandVoiceShell live hydration", () => {
     const user = userEvent.setup();
     render(<BrandVoiceShell initialData={mockBrandVoiceSetup} />);
 
+    // Live profile and assets replace the mock setup after hydration.
     await screen.findAllByText("Live sample 1");
+    expect(
+      await screen.findByDisplayValue("Live Signature Voice"),
+    ).toBeTruthy();
+    expect(
+      screen.getByDisplayValue("Live premium clientele."),
+    ).toBeTruthy();
+
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 
     await screen.findByText("Brand voice suggestions are ready for review.");
@@ -76,5 +93,50 @@ describe("BrandVoiceShell live hydration", () => {
     for (const sample of mockBrandVoiceSetup.sampleContent.samples) {
       expect(postedIds).not.toContain(sample.id);
     }
+  });
+
+  it("updates the visible profile immediately after Accept Suggestions", async () => {
+    vi.mocked(getBrandVoiceSetup).mockResolvedValue(liveSetup);
+    vi.mocked(aiApi.analyzeBrandAssets).mockResolvedValue({
+      aiRunIds: ["analysis-run"],
+      assets: liveSamples,
+      warnings: [],
+    });
+    vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
+      aiRunId: "extract-run",
+      suggestions: {
+        audience: "Suggested audience.",
+        tone: ["sophisticated"],
+        preferred_vocabulary: [],
+        banned_phrases: [],
+        positioning_notes: "Quiet authority.",
+      },
+    });
+    const acceptedProfile = {
+      ...liveProfile,
+      audience: "Suggested audience.",
+      tone: ["sophisticated"] as const,
+      updatedAt: "2026-07-06T12:00:00.000Z",
+    };
+    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(
+      acceptedProfile,
+    );
+    const user = userEvent.setup();
+    render(<BrandVoiceShell initialData={mockBrandVoiceSetup} />);
+
+    await screen.findAllByText("Live sample 1");
+    await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
+    await screen.findByText("Brand voice suggestions are ready for review.");
+    await user.click(screen.getByRole("button", { name: "Accept Suggestions" }));
+
+    await screen.findByText("Suggestions accepted and profile updated.");
+    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(
+      liveProfile.id,
+      expect.objectContaining({ audience: "Suggested audience." }),
+    );
+    // The persisted profile is visible in the form without any refresh.
+    expect(
+      await screen.findByDisplayValue("Suggested audience."),
+    ).toBeTruthy();
   });
 });

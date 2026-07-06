@@ -6,7 +6,7 @@
  * components and pages.
  *
  * Environment flags:
- *   NEXT_PUBLIC_USE_MOCK_BRAND_VOICE=true  → always use mock (default when unset)
+ *   NEXT_PUBLIC_USE_MOCK_BRAND_VOICE=true  → always use mock (live is the default)
  *
  * When API mode is active, the function tries to fetch the first BrandProfile
  * and its assets. If the request fails (e.g. auth not yet wired, backend
@@ -26,6 +26,7 @@ import {
 } from "@/data/mock-brand-profiles";
 import { ApiError } from "@/lib/api/http-client";
 import { getBrandAssets, getBrandProfiles } from "@/lib/api/brand-voice";
+import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import type {
   BrandProfile,
   BrandToneOption,
@@ -108,10 +109,6 @@ function buildFromProfile(profile: BrandProfile): BrandVoiceSetupData {
 // Public entry point
 // ---------------------------------------------------------------------------
 
-const USE_MOCK =
-  !process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE ||
-  process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE === "true";
-
 function mockFallback(loadError: string): BrandVoiceSetupData {
   return {
     ...mockBrandVoiceSetup,
@@ -120,7 +117,7 @@ function mockFallback(loadError: string): BrandVoiceSetupData {
 }
 
 export async function getBrandVoiceSetup(): Promise<BrandVoiceSetupData> {
-  if (USE_MOCK) {
+  if (isBrandVoiceMockMode()) {
     return mockBrandVoiceSetup;
   }
 

@@ -427,6 +427,20 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No
 - Next action: Validate local Ollama draft generation using the improved BrandProfile guidance from the smoke test.
 
+### 2026-07-06 - Claude Code - Brand Voice Hardening Acceptance (Management Finalization)
+
+- Tool: Claude Code (Management Agent, MANAGEMENT FINALIZATION MODE)
+- Request: Finalize the QA-accepted Brand Voice hardening slice in project memory and point next actions at the Draft Studio Core Value Loop (GitHub issue #31).
+- Files changed:
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: Docs-only finalization of the Management -> Coding -> QA flow for the Brand Voice hardening slice. The Coding Agent implemented the hardening in commit 279b4ee (selected-ID reconciliation after mock-to-live hydration, demo mode blocking fake writes and fake AI analysis, `handleAccept()` API-mode-only, component and shell hydration regression tests), on top of the frontend test infrastructure from commit dbc9e4b. QA accepted with notes (recorded in `docs/06_FEATURE_SLICE_GUIDE.md` Known Gaps, 2026-07-02). Progress log records the accepted behavior and verification; next actions now target epic #34 with #35 (persist Draft Studio output) then #26 (validate generation from accepted Voice DNA).
+- Human review status: Accepted (QA acceptance of the implementation slice; this docs update pending QA docs-only review)
+- Verification: `git status --short` shows only the three memory docs changed; `git diff --check` passed. No application code touched.
+- Decision log update needed: No. The hardening reused existing endpoint and data contracts; no architecture or scope decision was introduced.
+- Next action: Hand off T-DRAFT-002 (#35) to the Coding Agent as the first slice of the Draft Studio Core Value Loop (epic #34).
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

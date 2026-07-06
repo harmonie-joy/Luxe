@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { mockOnboardingSetup } from "@/data/mock-onboarding";
 import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
@@ -17,10 +17,27 @@ vi.mock("@/lib/api/brand-voice");
 const createdProfile = { id: "bp-new", tone: [] } as unknown as BrandProfile;
 const createdAsset = { id: "asset-new" } as unknown as BrandAsset;
 
+const extractionSuggestions = {
+  audience: "Extracted audience.",
+  tone: ["sophisticated"],
+  preferred_vocabulary: [],
+  banned_phrases: [],
+  positioning_notes: "Extracted notes.",
+};
+
 beforeEach(() => {
   vi.mocked(authApi.getSession).mockResolvedValue(mockSession);
   vi.mocked(brandVoiceApi.createBrandProfile).mockResolvedValue(createdProfile);
   vi.mocked(brandVoiceApi.createBrandAsset).mockResolvedValue(createdAsset);
+  vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(createdProfile);
+  vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
+    aiRunId: "extract-run",
+    suggestions: extractionSuggestions,
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 async function fillStepOneAndAdvance(user: UserEvent) {
@@ -48,7 +65,7 @@ describe("OnboardingWizard", () => {
     expect(screen.getByText("Step 1 of 3")).toBeTruthy();
   });
 
-  it("creates the profile and foundation asset, then routes to Brand Voice", async () => {
+  it("creates profile, asset, and extraction in live API mode, then routes to Brand Voice", async () => {
     const user = userEvent.setup();
     render(<OnboardingWizard config={mockOnboardingSetup} />);
 
@@ -79,8 +96,37 @@ describe("OnboardingWizard", () => {
         status: "ready",
       }),
     );
-    // Mock brand-voice mode (default env): no AI extraction call.
+    // Live is the default mode: extraction runs and its result is persisted.
+    expect(aiApi.extractBrandVoice).toHaveBeenCalledWith({
+      workspace: "ws-1",
+      brand_profile: "bp-new",
+      asset_ids: ["asset-new"],
+    });
+    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(
+      "bp-new",
+      expect.objectContaining({
+        audience: "Extracted audience.",
+        tone: ["sophisticated"],
+        positioning_notes: "Extracted notes.",
+      }),
+    );
+  });
+
+  it("skips AI extraction when mock mode is intentionally enabled", async () => {
+    vi.stubEnv("NEXT_PUBLIC_USE_MOCK_BRAND_VOICE", "true");
+    const user = userEvent.setup();
+    render(<OnboardingWizard config={mockOnboardingSetup} />);
+
+    await fillStepOneAndAdvance(user);
+    await user.click(
+      screen.getByRole("button", { name: "Create my brand voice" }),
+    );
+
+    await waitFor(() => expect(router.push).toHaveBeenCalledWith("/brand-voice"));
+    expect(brandVoiceApi.createBrandProfile).toHaveBeenCalled();
+    expect(brandVoiceApi.createBrandAsset).toHaveBeenCalled();
     expect(aiApi.extractBrandVoice).not.toHaveBeenCalled();
+    expect(brandVoiceApi.updateBrandProfile).not.toHaveBeenCalled();
   });
 
   it("shows the best-effort notice when the asset step fails after the profile saved", async () => {

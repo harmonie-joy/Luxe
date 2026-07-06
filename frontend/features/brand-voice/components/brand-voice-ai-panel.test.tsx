@@ -11,13 +11,13 @@ import {
 } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import * as aiApi from "@/lib/api/ai";
 import * as brandVoiceApi from "@/lib/api/brand-voice";
-import { router } from "@/test/setup";
 
 vi.mock("@/lib/api/ai");
 vi.mock("@/lib/api/brand-voice");
 
 const { profile } = mockBrandVoiceSetup;
 const samples = mockBrandVoiceSetup.sampleContent.samples;
+const onProfileSaved = vi.fn();
 
 const suggestions = {
   audience: "Suggested audience.",
@@ -71,7 +71,7 @@ describe("helper mappers", () => {
 describe("BrandVoiceAiPanel", () => {
   it("requires at least one selected sample before analysis", async () => {
     const user = userEvent.setup();
-    render(<BrandVoiceAiPanel profile={profile} samples={samples} source="api" />);
+    render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="api" />);
 
     for (const checkbox of screen.getAllByRole("checkbox")) {
       await user.click(checkbox);
@@ -100,7 +100,7 @@ describe("BrandVoiceAiPanel", () => {
       return { aiRunId: "extract-run", suggestions };
     });
     const user = userEvent.setup();
-    render(<BrandVoiceAiPanel profile={profile} samples={samples} source="api" />);
+    render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="api" />);
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 
@@ -123,11 +123,11 @@ describe("BrandVoiceAiPanel", () => {
     }));
     const user = userEvent.setup();
     const { rerender } = render(
-      <BrandVoiceAiPanel profile={profile} samples={samples} source="mock" />,
+      <BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="mock" />,
     );
 
     rerender(
-      <BrandVoiceAiPanel profile={profile} samples={liveSamples} source="api" />,
+      <BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={liveSamples} source="api" />,
     );
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 
@@ -141,9 +141,10 @@ describe("BrandVoiceAiPanel", () => {
 
   it("accepts suggestions by patching the brand profile", async () => {
     mockAnalysis();
-    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(profile);
+    const updatedProfile = { ...profile, audience: "Suggested audience." };
+    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(updatedProfile);
     const user = userEvent.setup();
-    render(<BrandVoiceAiPanel profile={profile} samples={samples} source="api" />);
+    render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="api" />);
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
     await screen.findByText("Suggested audience.");
@@ -159,12 +160,12 @@ describe("BrandVoiceAiPanel", () => {
       banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
       positioning_notes: "Quiet authority.",
     });
-    expect(router.refresh).toHaveBeenCalled();
+    expect(onProfileSaved).toHaveBeenCalledWith(updatedProfile);
   });
 
   it("blocks demo analysis instead of creating mock suggestions", async () => {
     const user = userEvent.setup();
-    render(<BrandVoiceAiPanel profile={profile} samples={samples} source="mock" />);
+    render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="mock" />);
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 

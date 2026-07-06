@@ -2,7 +2,6 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type {
   BrandAsset,
   BrandProfile,
@@ -38,7 +37,6 @@ export function SampleContentUploader({
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const samples = sampleContent.samples;
   const latestSamples = Array.from(samples)
     .sort(
@@ -97,7 +95,6 @@ export function SampleContentUploader({
       setSelectedFile(null);
       onAssetSaved?.(savedAsset);
       setMessage("Image asset saved for analysis.");
-      router.refresh();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -131,7 +128,6 @@ export function SampleContentUploader({
       setPasteContent("");
       onAssetSaved?.(savedAsset);
       setMessage("Text asset saved for analysis.");
-      router.refresh();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
