@@ -8,34 +8,24 @@ import {
   analyzeBrandAssets,
   extractBrandVoice,
   type BrandVoiceExtractionSuggestions,
+  type ExtractedVoiceRef,
 } from "@/lib/api/ai";
 import {
-  updateBrandProfile,
+  activateBrandVoice,
+  getBrandProfile,
   type BannedPhraseWritePayload,
   type BrandVocabularyRuleWritePayload,
 } from "@/lib/api/brand-voice";
 import { ApiError } from "@/lib/api/http-client";
-import type {
-  BrandAsset,
-  BrandProfile,
-  BrandVoiceTone,
-} from "@/types/brand-profile";
+import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
 
 interface BrandVoiceAiPanelProps {
-  /** Receives the persisted profile after Accept Suggestions so the shell can update visible state. */
+  /** Receives the refreshed profile after voice activation so the shell can update visible state. */
   onProfileSaved: (profile: BrandProfile) => void;
   profile: BrandProfile;
   samples: readonly BrandAsset[];
   source: "api" | "mock";
 }
-
-const CANONICAL_TONES: readonly BrandVoiceTone[] = [
-  "professional",
-  "authoritative",
-  "sophisticated",
-  "approachable",
-  "visionary",
-];
 
 function getErrorMessage(error: unknown) {
   if (error instanceof ApiError) return `API error ${error.status}: ${error.message}`;
@@ -52,20 +42,10 @@ function slugify(value: string) {
   );
 }
 
-export function toCanonicalTones(
-  tones: readonly string[],
-  fallback: readonly BrandVoiceTone[],
-): readonly BrandVoiceTone[] {
-  const valid = tones.filter((tone): tone is BrandVoiceTone =>
-    CANONICAL_TONES.includes(tone as BrandVoiceTone),
-  );
-  return valid.length > 0 ? Array.from(new Set(valid)) : fallback;
-}
-
 export function toVocabularyPayload(
-  suggestions: readonly BrandVoiceExtractionSuggestions["preferred_vocabulary"][number][],
+  rules: readonly { preferred_term: string; restricted_terms: readonly string[]; note: string }[],
 ): readonly BrandVocabularyRuleWritePayload[] {
-  return suggestions.map((rule, index) => ({
+  return rules.map((rule, index) => ({
     id: `${slugify(rule.preferred_term)}-${index + 1}`,
     preferred_term: rule.preferred_term,
     restricted_terms: rule.restricted_terms,
@@ -74,14 +54,21 @@ export function toVocabularyPayload(
 }
 
 export function toBannedPhrasePayload(
-  suggestions: readonly BrandVoiceExtractionSuggestions["banned_phrases"][number][],
+  phrases: readonly { phrase: string; reason: string }[],
 ): readonly BannedPhraseWritePayload[] {
-  return suggestions.map((phrase, index) => ({
+  return phrases.map((phrase, index) => ({
     id: `${slugify(phrase.phrase)}-${index + 1}`,
     phrase: phrase.phrase,
     reason: phrase.reason,
   }));
 }
+
+const TONE_DIMENSION_LABELS = [
+  ["funny", "Funny"],
+  ["casual", "Casual"],
+  ["irreverent", "Irreverent"],
+  ["enthusiastic", "Enthusiastic"],
+] as const;
 
 export function BrandVoiceAiPanel({
   onProfileSaved,
@@ -94,6 +81,7 @@ export function BrandVoiceAiPanel({
   );
   const [suggestions, setSuggestions] =
     useState<BrandVoiceExtractionSuggestions | null>(null);
+  const [extractedVoice, setExtractedVoice] = useState<ExtractedVoiceRef | null>(null);
   const [aiRunId, setAiRunId] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -135,6 +123,7 @@ export function BrandVoiceAiPanel({
       setMessage("Demo mode only. Load live data before running brand voice analysis.");
       setError(null);
       setSuggestions(null);
+      setExtractedVoice(null);
       setAiRunId(null);
       return;
     }
@@ -160,6 +149,7 @@ export function BrandVoiceAiPanel({
         asset_ids: selectedAssetIds,
       });
       setSuggestions(result.suggestions);
+      setExtractedVoice(result.voice);
       setAiRunId(result.aiRunId);
       if (analysis.warnings.length > 0) {
         setMessage(
@@ -178,23 +168,19 @@ export function BrandVoiceAiPanel({
   }
 
   async function handleAccept() {
-    // Suggestions only exist in api mode; handleAnalyze blocks demo mode.
-    if (!suggestions || source !== "api") return;
+    // The extracted voice only exists in api mode; handleAnalyze blocks demo mode.
+    if (!extractedVoice || source !== "api") return;
 
     setIsAccepting(true);
     setMessage(null);
     setError(null);
 
     try {
-      const updatedProfile = await updateBrandProfile(profile.id, {
-        audience: suggestions.audience,
-        tone: toCanonicalTones(suggestions.tone, profile.tone),
-        preferred_vocabulary: toVocabularyPayload(suggestions.preferred_vocabulary),
-        banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
-        positioning_notes: suggestions.positioning_notes,
-      });
-      onProfileSaved(updatedProfile);
-      setMessage("Suggestions accepted and profile updated.");
+      const voice = await activateBrandVoice(extractedVoice.id);
+      setExtractedVoice({ id: voice.id, version: voice.version, isActive: true });
+      const refreshedProfile = await getBrandProfile(profile.id);
+      onProfileSaved(refreshedProfile);
+      setMessage(`Voice version ${voice.version} is now active for this profile.`);
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -286,18 +272,26 @@ export function BrandVoiceAiPanel({
       {suggestions ? (
         <div className="space-y-5 border-t border-(--color-border-subtle) pt-6">
           <div>
-            <p className="luxe-form-help">Suggested audience</p>
+            <p className="luxe-form-help">
+              Voice summary
+              {extractedVoice ? ` (version ${extractedVoice.version})` : ""}
+            </p>
             <p className="mt-2 text-sm leading-6 text-luxe-text-secondary">
-              {suggestions.audience}
+              {suggestions.voice_summary}
             </p>
           </div>
 
           <div>
-            <p className="luxe-form-help">Suggested tones</p>
+            <p className="luxe-form-help">Tone dimensions (0-100)</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {suggestions.tone.map((tone) => (
-                <span className="luxe-count-pill px-3 py-1 text-xs font-medium" key={tone}>
-                  {tone}
+              {TONE_DIMENSION_LABELS.map(([key, label]) => (
+                <span className="luxe-count-pill px-3 py-1 text-xs font-medium" key={key}>
+                  {label} {suggestions.tone[key]}
+                </span>
+              ))}
+              {suggestions.tone_tags.map((tag) => (
+                <span className="luxe-count-pill px-3 py-1 text-xs font-medium" key={tag}>
+                  {tag}
                 </span>
               ))}
             </div>
@@ -308,10 +302,10 @@ export function BrandVoiceAiPanel({
               <p className="luxe-form-help">Preferred vocabulary</p>
               <div className="luxe-list-divider mt-3">
                 {suggestions.preferred_vocabulary.map((rule) => (
-                  <article className="py-3" key={rule.preferred_term}>
-                    <h3 className="luxe-item-title text-sm">{rule.preferred_term}</h3>
+                  <article className="py-3" key={rule.term}>
+                    <h3 className="luxe-item-title text-sm">{rule.term}</h3>
                     <p className="luxe-item-meta mt-1 text-sm">
-                      Avoid {rule.restricted_terms.join(", ") || "none"}
+                      Instead of {rule.instead_of || "no direct replacement"}
                     </p>
                     {rule.note ? (
                       <p className="mt-2 text-sm leading-6">{rule.note}</p>
@@ -335,19 +329,25 @@ export function BrandVoiceAiPanel({
           </div>
 
           <div>
-            <p className="luxe-form-help">Positioning notes</p>
+            <p className="luxe-form-help">
+              Extraction notes (confidence {suggestions.confidence}/100)
+            </p>
             <p className="mt-2 text-sm leading-6 text-luxe-text-secondary">
-              {suggestions.positioning_notes}
+              {suggestions.extraction_notes}
             </p>
           </div>
 
           <button
             className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isAccepting}
+            disabled={isAccepting || extractedVoice?.isActive}
             onClick={handleAccept}
             type="button"
           >
-            {isAccepting ? "Accepting..." : "Accept Suggestions"}
+            {extractedVoice?.isActive
+              ? "Voice Active"
+              : isAccepting
+                ? "Activating..."
+                : "Activate This Voice"}
           </button>
         </div>
       ) : null}

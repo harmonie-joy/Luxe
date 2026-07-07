@@ -8,27 +8,91 @@ export interface BrandVoiceExtractionRequest {
   asset_ids: readonly string[];
 }
 
-export interface BrandVoiceVocabularySuggestion {
-  preferred_term: string;
-  restricted_terms: readonly string[];
+// Extraction suggestions mirror the backend BrandVoiceExtractionResult
+// pydantic schema verbatim (snake_case model_dump).
+
+export interface ToneDimensionsSuggestion {
+  funny: number;
+  casual: number;
+  irreverent: number;
+  enthusiastic: number;
+  justification: string;
+}
+
+export interface VocabularyRuleSuggestion {
+  term: string;
+  instead_of: string | null;
   note: string;
 }
 
-export interface BrandVoiceBannedPhraseSuggestion {
+export interface BannedPhraseSuggestion {
   phrase: string;
+  reason: string;
+  severity: "hard" | "soft";
+}
+
+export interface ClaimBoundarySuggestion {
+  rule: string;
   reason: string;
 }
 
+export interface VoiceExampleSuggestion {
+  kind: "do" | "dont";
+  text: string;
+  annotation: string;
+  channel: string;
+}
+
+export interface AudienceSegmentSuggestion {
+  name: string;
+  buyer_type: string;
+  maturity_level:
+    | "unaware"
+    | "problem_aware"
+    | "solution_aware"
+    | "product_aware"
+    | "expert";
+  pains: readonly string[];
+  desired_outcomes: readonly string[];
+  jargon_tolerance: number;
+}
+
+export interface PositioningSuggestion {
+  category: string;
+  key_benefit: string;
+  differentiators: readonly string[];
+  reasons_to_believe: readonly string[];
+  known_for: string;
+}
+
 export interface BrandVoiceExtractionSuggestions {
-  audience: string;
-  tone: readonly string[];
-  preferred_vocabulary: readonly BrandVoiceVocabularySuggestion[];
-  banned_phrases: readonly BrandVoiceBannedPhraseSuggestion[];
-  positioning_notes: string;
+  voice_summary: string;
+  tone: ToneDimensionsSuggestion;
+  tone_tags: readonly string[];
+  point_of_view: string;
+  sentence_style: string;
+  pacing: string;
+  proof_style: string;
+  claim_boundaries: readonly ClaimBoundarySuggestion[];
+  preferred_vocabulary: readonly VocabularyRuleSuggestion[];
+  banned_phrases: readonly BannedPhraseSuggestion[];
+  examples: readonly VoiceExampleSuggestion[];
+  audience_segments: readonly AudienceSegmentSuggestion[];
+  positioning: PositioningSuggestion;
+  confidence: number;
+  extraction_notes: string;
+}
+
+export interface ExtractedVoiceRef {
+  id: string;
+  version: number;
+  isActive: boolean;
 }
 
 export interface BrandVoiceExtractionResponse {
   aiRunId: string;
+  /** The persisted BrandVoice version this extraction created. */
+  voice: ExtractedVoiceRef;
   suggestions: BrandVoiceExtractionSuggestions;
 }
 

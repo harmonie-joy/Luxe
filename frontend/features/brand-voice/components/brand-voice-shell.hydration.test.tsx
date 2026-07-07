@@ -40,6 +40,32 @@ const liveProfile = {
   audience: "Live premium clientele.",
 };
 
+const extractionSuggestions = {
+  voice_summary: "Composed editorial authority.",
+  tone: { funny: 10, casual: 20, irreverent: 10, enthusiastic: 35, justification: "" },
+  tone_tags: ["quietly confident"],
+  point_of_view: "we-to-you",
+  sentence_style: "Open with the answer.",
+  pacing: "",
+  proof_style: "",
+  claim_boundaries: [],
+  preferred_vocabulary: [],
+  banned_phrases: [],
+  examples: [],
+  audience_segments: [],
+  positioning: {
+    category: "",
+    key_benefit: "",
+    differentiators: [],
+    reasons_to_believe: [],
+    known_for: "",
+  },
+  confidence: 74,
+  extraction_notes: "",
+};
+
+const extractedVoice = { id: "voice-live-2", version: 2, isActive: false };
+
 const liveSetup: BrandVoiceSetupData = {
   ...mockBrandVoiceSetup,
   profile: liveProfile,
@@ -60,13 +86,8 @@ describe("BrandVoiceAnalysisShell live hydration", () => {
     });
     vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
       aiRunId: "extract-run",
-      suggestions: {
-        audience: "Suggested audience.",
-        tone: ["sophisticated"],
-        preferred_vocabulary: [],
-        banned_phrases: [],
-        positioning_notes: "Quiet authority.",
-      },
+      voice: extractedVoice,
+      suggestions: extractionSuggestions,
     });
     const user = userEvent.setup();
     render(<BrandVoiceAnalysisShell initialData={mockBrandVoiceSetup} />);
@@ -102,36 +123,31 @@ describe("BrandVoiceAnalysisShell live hydration", () => {
     });
     vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
       aiRunId: "extract-run",
-      suggestions: {
-        audience: "Suggested audience.",
-        tone: ["sophisticated"],
-        preferred_vocabulary: [],
-        banned_phrases: [],
-        positioning_notes: "Quiet authority.",
-      },
+      voice: extractedVoice,
+      suggestions: extractionSuggestions,
     });
     const acceptedProfile = {
       ...liveProfile,
       name: "Accepted Signature Voice",
-      audience: "Suggested audience.",
-      tone: ["sophisticated"] as const,
+      activeVoiceId: extractedVoice.id,
       updatedAt: "2026-07-06T12:00:00.000Z",
     };
-    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(
-      acceptedProfile,
-    );
+    vi.mocked(brandVoiceApi.activateBrandVoice).mockResolvedValue({
+      ...extractedVoice,
+      isActive: true,
+    } as never);
+    vi.mocked(brandVoiceApi.getBrandProfile).mockResolvedValue(acceptedProfile);
     const user = userEvent.setup();
     render(<BrandVoiceAnalysisShell initialData={mockBrandVoiceSetup} />);
 
     await screen.findAllByText("Live sample 1");
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
     await screen.findByText("Brand voice suggestions are ready for review.");
-    await user.click(screen.getByRole("button", { name: "Accept Suggestions" }));
+    await user.click(screen.getByRole("button", { name: "Activate This Voice" }));
 
-    await screen.findByText("Suggestions accepted and profile updated.");
-    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(
-      liveProfile.id,
-      expect.objectContaining({ audience: "Suggested audience." }),
+    await screen.findByText("Voice version 2 is now active for this profile.");
+    expect(brandVoiceApi.activateBrandVoice).toHaveBeenCalledWith(
+      extractedVoice.id,
     );
     // The persisted profile is visible in the preview without any refresh.
     expect(

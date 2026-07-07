@@ -18,20 +18,36 @@ const createdProfile = { id: "bp-new", tone: [] } as unknown as BrandProfile;
 const createdAsset = { id: "asset-new" } as unknown as BrandAsset;
 
 const extractionSuggestions = {
-  audience: "Extracted audience.",
-  tone: ["sophisticated"],
+  voice_summary: "Extracted voice summary.",
+  tone: { funny: 10, casual: 30, irreverent: 10, enthusiastic: 45, justification: "" },
+  tone_tags: [],
+  point_of_view: "",
+  sentence_style: "",
+  pacing: "",
+  proof_style: "",
+  claim_boundaries: [],
   preferred_vocabulary: [],
   banned_phrases: [],
-  positioning_notes: "Extracted notes.",
+  examples: [],
+  audience_segments: [],
+  positioning: {
+    category: "",
+    key_benefit: "",
+    differentiators: [],
+    reasons_to_believe: [],
+    known_for: "",
+  },
+  confidence: 50,
+  extraction_notes: "",
 };
 
 beforeEach(() => {
   vi.mocked(authApi.getSession).mockResolvedValue(mockSession);
   vi.mocked(brandVoiceApi.createBrandProfile).mockResolvedValue(createdProfile);
   vi.mocked(brandVoiceApi.createBrandAsset).mockResolvedValue(createdAsset);
-  vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(createdProfile);
   vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
     aiRunId: "extract-run",
+    voice: { id: "voice-new-1", version: 1, isActive: true },
     suggestions: extractionSuggestions,
   });
 });
@@ -96,20 +112,14 @@ describe("OnboardingWizard", () => {
         status: "ready",
       }),
     );
-    // Live is the default mode: extraction runs and its result is persisted.
+    // Live is the default mode: extraction runs and persists a versioned
+    // BrandVoice server-side; no profile write-back is needed.
     expect(aiApi.extractBrandVoice).toHaveBeenCalledWith({
       workspace: "ws-1",
       brand_profile: "bp-new",
       asset_ids: ["asset-new"],
     });
-    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(
-      "bp-new",
-      expect.objectContaining({
-        audience: "Extracted audience.",
-        tone: ["sophisticated"],
-        positioning_notes: "Extracted notes.",
-      }),
-    );
+    expect(brandVoiceApi.updateBrandProfile).not.toHaveBeenCalled();
   });
 
   it("skips AI extraction when mock mode is intentionally enabled", async () => {
@@ -126,7 +136,6 @@ describe("OnboardingWizard", () => {
     expect(brandVoiceApi.createBrandProfile).toHaveBeenCalled();
     expect(brandVoiceApi.createBrandAsset).toHaveBeenCalled();
     expect(aiApi.extractBrandVoice).not.toHaveBeenCalled();
-    expect(brandVoiceApi.updateBrandProfile).not.toHaveBeenCalled();
   });
 
   it("shows the best-effort notice when the asset step fails after the profile saved", async () => {

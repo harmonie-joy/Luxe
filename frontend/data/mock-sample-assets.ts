@@ -39,6 +39,11 @@ The collection arrives without announcement—precisely the point. Each piece is
       analysisSummary:
         "Calm editorial copy with premium audience cues and restrained vocabulary.",
       sourceType: "pasted",
+      sourceUrl: "",
+      channel: "newsletter",
+      language: "en",
+      performanceSignal: "top",
+      contentDate: "2026-05-12",
       format: "Text",
       wordCount: 42,
       status: "ready",
@@ -73,6 +78,11 @@ Channel notes:
       analysisSummary:
         "Collection guidance favors quiet authority, craftsmanship language, and no urgency-led claims.",
       sourceType: "uploaded",
+      sourceUrl: "",
+      channel: "",
+      language: "en",
+      performanceSignal: "unknown",
+      contentDate: null,
       format: "PDF",
       wordCount: 680,
       status: "needs_review",

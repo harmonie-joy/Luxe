@@ -13,6 +13,7 @@ import type {
   BrandAsset,
   BrandAssetMediaType,
   BrandProfile,
+  BrandVoice,
   BrandVoiceTone,
 } from "@/types/brand-profile";
 
@@ -159,4 +160,19 @@ export function updateBrandAsset(
 /** Deletes a BrandAsset by UUID. */
 export function deleteBrandAsset(id: string): Promise<void> {
   return httpClient.delete<void>(`/api/brand-assets/${id}/`);
+}
+
+// ---------------------------------------------------------------------------
+// BrandVoice endpoints (read-only versions; extraction creates them)
+// ---------------------------------------------------------------------------
+
+/** Returns BrandVoice versions, optionally scoped to one BrandProfile. */
+export function getBrandVoices(brandProfileId?: string): Promise<BrandVoice[]> {
+  const query = brandProfileId ? `?brand_profile=${brandProfileId}` : "";
+  return httpClient.get<BrandVoice[]>(`/api/brand-voices/${query}`);
+}
+
+/** Makes the given voice version the active one for its profile. */
+export function activateBrandVoice(id: string): Promise<BrandVoice> {
+  return httpClient.post<BrandVoice>(`/api/brand-voices/${id}/activate/`, {});
 }

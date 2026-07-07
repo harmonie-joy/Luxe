@@ -8,16 +8,11 @@ import { SurfaceCard } from "@/components/ui/surface-card";
 import type { OnboardingSetupConfig } from "@/data/mock-onboarding";
 import {
   toBannedPhrasePayload,
-  toCanonicalTones,
   toVocabularyPayload,
 } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import { extractBrandVoice } from "@/lib/api/ai";
 import { getSession } from "@/lib/api/auth";
-import {
-  createBrandAsset,
-  createBrandProfile,
-  updateBrandProfile,
-} from "@/lib/api/brand-voice";
+import { createBrandAsset, createBrandProfile } from "@/lib/api/brand-voice";
 import { ApiError } from "@/lib/api/http-client";
 import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import { APP_ROUTES } from "@/lib/routes";
@@ -189,21 +184,12 @@ export function OnboardingWizard({ config }: OnboardingWizardProps) {
         });
 
         if (!isBrandVoiceMockMode()) {
-          const result = await extractBrandVoice({
+          // Extraction persists a versioned BrandVoice server-side; a first
+          // extraction auto-activates, so there is nothing to write back.
+          await extractBrandVoice({
             workspace: workspaceId,
             brand_profile: profile.id,
             asset_ids: [asset.id],
-          });
-          await updateBrandProfile(profile.id, {
-            audience: result.suggestions.audience,
-            tone: toCanonicalTones(result.suggestions.tone, profile.tone),
-            preferred_vocabulary: toVocabularyPayload(
-              result.suggestions.preferred_vocabulary,
-            ),
-            banned_phrases: toBannedPhrasePayload(
-              result.suggestions.banned_phrases,
-            ),
-            positioning_notes: result.suggestions.positioning_notes,
           });
         }
 

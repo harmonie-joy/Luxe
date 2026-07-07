@@ -6,11 +6,11 @@ import { mockBrandVoiceSetup } from "@/data/mock-brand-profiles";
 import {
   BrandVoiceAiPanel,
   toBannedPhrasePayload,
-  toCanonicalTones,
   toVocabularyPayload,
 } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import * as aiApi from "@/lib/api/ai";
 import * as brandVoiceApi from "@/lib/api/brand-voice";
+import type { BrandVoiceExtractionSuggestions } from "@/lib/api/ai";
 
 vi.mock("@/lib/api/ai");
 vi.mock("@/lib/api/brand-voice");
@@ -19,19 +19,39 @@ const { profile } = mockBrandVoiceSetup;
 const samples = mockBrandVoiceSetup.sampleContent.samples;
 const onProfileSaved = vi.fn();
 
-const suggestions = {
-  audience: "Suggested audience.",
-  tone: ["sophisticated", "visionary"],
+const suggestions: BrandVoiceExtractionSuggestions = {
+  voice_summary: "Composed editorial authority with concrete craft language.",
+  tone: {
+    funny: 10,
+    casual: 20,
+    irreverent: 10,
+    enthusiastic: 35,
+    justification: "Declarative openings, no exclamation marks.",
+  },
+  tone_tags: ["quietly confident"],
+  point_of_view: "we-to-you",
+  sentence_style: "Open with the answer. One idea per sentence.",
+  pacing: "Measured.",
+  proof_style: "Craft specifics over superlatives.",
+  claim_boundaries: [{ rule: "Never guarantee availability.", reason: "" }],
   preferred_vocabulary: [
-    {
-      preferred_term: "clientele",
-      restricted_terms: ["customers"],
-      note: "Premium references.",
-    },
+    { term: "clientele", instead_of: "customers", note: "Premium references." },
   ],
-  banned_phrases: [{ phrase: "go viral", reason: "Trend-led." }],
-  positioning_notes: "Quiet authority.",
+  banned_phrases: [{ phrase: "go viral", reason: "Trend-led.", severity: "soft" }],
+  examples: [],
+  audience_segments: [],
+  positioning: {
+    category: "",
+    key_benefit: "",
+    differentiators: [],
+    reasons_to_believe: [],
+    known_for: "",
+  },
+  confidence: 74,
+  extraction_notes: "No social captions in the sample set.",
 };
+
+const extractedVoice = { id: "voice-new-3", version: 3, isActive: false };
 
 function mockAnalysis(warnings: { assetId: string; message: string }[] = []) {
   vi.mocked(aiApi.analyzeBrandAssets).mockResolvedValue({
@@ -41,20 +61,18 @@ function mockAnalysis(warnings: { assetId: string; message: string }[] = []) {
   });
   vi.mocked(aiApi.extractBrandVoice).mockResolvedValue({
     aiRunId: "extract-run",
+    voice: extractedVoice,
     suggestions,
   });
 }
 
 describe("helper mappers", () => {
-  it("filters tones to canonical values, dedupes, and falls back", () => {
-    expect(toCanonicalTones(["sophisticated", "bogus", "sophisticated"], ["professional"])).toEqual(
-      ["sophisticated"],
-    );
-    expect(toCanonicalTones(["bogus"], ["professional"])).toEqual(["professional"]);
-  });
-
-  it("maps vocabulary and banned phrase suggestions to write payloads", () => {
-    expect(toVocabularyPayload(suggestions.preferred_vocabulary)).toEqual([
+  it("maps vocabulary and banned phrase entries to write payloads", () => {
+    expect(
+      toVocabularyPayload([
+        { preferred_term: "clientele", restricted_terms: ["customers"], note: "Premium references." },
+      ]),
+    ).toEqual([
       {
         id: "clientele-1",
         preferred_term: "clientele",
@@ -62,7 +80,7 @@ describe("helper mappers", () => {
         note: "Premium references.",
       },
     ]);
-    expect(toBannedPhrasePayload(suggestions.banned_phrases)).toEqual([
+    expect(toBannedPhrasePayload([{ phrase: "go viral", reason: "Trend-led." }])).toEqual([
       { id: "go-viral-1", phrase: "go viral", reason: "Trend-led." },
     ]);
   });
@@ -97,7 +115,7 @@ describe("BrandVoiceAiPanel", () => {
     });
     vi.mocked(aiApi.extractBrandVoice).mockImplementationOnce(async () => {
       order.push("extract");
-      return { aiRunId: "extract-run", suggestions };
+      return { aiRunId: "extract-run", voice: extractedVoice, suggestions };
     });
     const user = userEvent.setup();
     render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="api" />);
@@ -111,7 +129,10 @@ describe("BrandVoiceAiPanel", () => {
       brand_profile: profile.id,
       asset_ids: samples.map((sample) => sample.id),
     });
-    expect(screen.getByText("Suggested audience.")).toBeTruthy();
+    expect(
+      screen.getByText("Composed editorial authority with concrete craft language."),
+    ).toBeTruthy();
+    expect(screen.getByText("Casual 20")).toBeTruthy();
   });
 
   it("drops stale mock asset ids when live samples replace them", async () => {
@@ -131,7 +152,7 @@ describe("BrandVoiceAiPanel", () => {
     );
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 
-    await screen.findByText("Suggested audience.");
+    await screen.findByText("Composed editorial authority with concrete craft language.");
     expect(aiApi.analyzeBrandAssets).toHaveBeenCalledWith({
       workspace: profile.workspaceId,
       brand_profile: profile.id,
@@ -139,28 +160,29 @@ describe("BrandVoiceAiPanel", () => {
     });
   });
 
-  it("accepts suggestions by patching the brand profile", async () => {
+  it("activates the extracted voice version and refreshes the profile", async () => {
     mockAnalysis();
-    const updatedProfile = { ...profile, audience: "Suggested audience." };
-    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue(updatedProfile);
+    const activatedVoice = {
+      ...extractedVoice,
+      isActive: true,
+    };
+    const refreshedProfile = { ...profile, activeVoiceId: extractedVoice.id };
+    vi.mocked(brandVoiceApi.activateBrandVoice).mockResolvedValue(
+      activatedVoice as never,
+    );
+    vi.mocked(brandVoiceApi.getBrandProfile).mockResolvedValue(refreshedProfile);
     const user = userEvent.setup();
     render(<BrandVoiceAiPanel onProfileSaved={onProfileSaved} profile={profile} samples={samples} source="api" />);
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
-    await screen.findByText("Suggested audience.");
-    await user.click(screen.getByRole("button", { name: "Accept Suggestions" }));
+    await screen.findByText("Composed editorial authority with concrete craft language.");
+    await user.click(screen.getByRole("button", { name: "Activate This Voice" }));
 
     expect(
-      await screen.findByText("Suggestions accepted and profile updated."),
+      await screen.findByText("Voice version 3 is now active for this profile."),
     ).toBeTruthy();
-    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(profile.id, {
-      audience: "Suggested audience.",
-      tone: ["sophisticated", "visionary"],
-      preferred_vocabulary: toVocabularyPayload(suggestions.preferred_vocabulary),
-      banned_phrases: toBannedPhrasePayload(suggestions.banned_phrases),
-      positioning_notes: "Quiet authority.",
-    });
-    expect(onProfileSaved).toHaveBeenCalledWith(updatedProfile);
+    expect(brandVoiceApi.activateBrandVoice).toHaveBeenCalledWith("voice-new-3");
+    expect(onProfileSaved).toHaveBeenCalledWith(refreshedProfile);
   });
 
   it("blocks demo analysis instead of creating mock suggestions", async () => {
@@ -176,8 +198,8 @@ describe("BrandVoiceAiPanel", () => {
     ).toBeTruthy();
     await waitFor(() => {
       expect(aiApi.analyzeBrandAssets).not.toHaveBeenCalled();
-      expect(brandVoiceApi.updateBrandProfile).not.toHaveBeenCalled();
+      expect(brandVoiceApi.activateBrandVoice).not.toHaveBeenCalled();
     });
-    expect(screen.queryByRole("button", { name: "Accept Suggestions" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Activate This Voice" })).toBeNull();
   });
 });

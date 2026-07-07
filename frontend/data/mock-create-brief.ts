@@ -1,4 +1,6 @@
 import type { BrandProfile } from "@/types/brand-profile";
+
+import { baseVoiceDnaProfileFields } from "./mock-brand-profiles";
 import type {
   CampaignGoal,
   ContentBrief,
@@ -41,6 +43,7 @@ const brandProfiles: readonly BrandProfile[] = [
     id: "33333333-3333-4333-8333-333333333333",
     workspaceId: workspaceTheLuxe,
     name: "THE LUXE Signature Voice",
+    ...baseVoiceDnaProfileFields,
     audience:
       "Affluent fashion and lifestyle clients seeking curated, high-touch editorial guidance without inflated language.",
     tone: ["sophisticated", "authoritative", "approachable"],
@@ -69,6 +72,7 @@ const brandProfiles: readonly BrandProfile[] = [
     id: "44444444-4444-4444-8444-444444444444",
     workspaceId: workspaceTheLuxe,
     name: "Private Client Services",
+    ...baseVoiceDnaProfileFields,
     audience:
       "Existing VIP clients who expect personal, invitation-led communication.",
     tone: ["professional", "authoritative"],
@@ -96,6 +100,7 @@ const brandProfiles: readonly BrandProfile[] = [
     id: "55555555-5555-4555-8555-555555555555",
     workspaceId: workspaceEditorial,
     name: "Editorial Partnerships",
+    ...baseVoiceDnaProfileFields,
     audience:
       "External editors and collaborators evaluating premium partnership opportunities.",
     tone: ["visionary", "professional"],

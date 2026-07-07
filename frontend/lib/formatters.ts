@@ -9,11 +9,13 @@ import type { ContentChannel, DraftStatus } from "@/types/content";
 export const BRAND_ASSET_SOURCE_LABELS: Record<BrandAssetSourceType, string> = {
   pasted: "Pasted sample",
   uploaded: "Uploaded file",
+  crawled: "Crawled from URL",
 };
 
 export const BRAND_ASSET_STATUS_LABELS: Record<BrandAssetStatus, string> = {
   ready: "Ready",
   needs_review: "Needs review",
+  excluded: "Excluded",
 };
 
 export const CONTENT_CHANNEL_LABELS: Record<ContentChannel, string> = {
