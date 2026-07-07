@@ -1,10 +1,25 @@
+from importlib import import_module
+
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import IntegrityError
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
-from brand.models import BrandAsset, BrandProfile
+from brand.models import (
+    AudienceSegment,
+    BrandAsset,
+    BrandProfile,
+    BrandVoice,
+    Channel,
+    ChannelStyle,
+    VoiceAuditScore,
+    VoiceExample,
+)
 from tenancy.models import Membership, Workspace
+
+seed_migration = import_module("brand.migrations.0005_seed_voice_from_flat_fields")
 
 User = get_user_model()
 
@@ -333,3 +348,165 @@ class BrandAssetAPITest(APITestCase):
         response = self.client.get(profile_detail_url(self.profile.id))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["sampleCount"], 1)
+
+
+class VoiceDnaModelTest(APITestCase):
+    """Model-level tests for the structured Voice DNA architecture (slice 1)."""
+
+    def setUp(self):
+        self.workspace = Workspace.objects.create(name="Voice DNA Workspace")
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Atelier",
+            category="private styling service",
+            key_benefit="turns wardrobes into working systems",
+            reasons_to_believe=["10 years of atelier work", "named-client references"],
+        )
+
+    def test_model_str_representations(self):
+        voice = BrandVoice.objects.create(brand_profile=self.profile, version=1)
+        segment = AudienceSegment.objects.create(
+            brand_profile=self.profile, name="Collectors", is_primary=True
+        )
+        style = ChannelStyle.objects.create(
+            brand_profile=self.profile, channel=Channel.LINKEDIN
+        )
+        example = VoiceExample.objects.create(
+            voice=voice, kind=VoiceExample.Kind.DO, text="Open with the offer.", annotation="Direct."
+        )
+        score = VoiceAuditScore.objects.create(voice=voice, overall_score=88)
+
+        self.assertEqual(str(voice), "Atelier voice v1")
+        self.assertEqual(str(segment), "Collectors (Atelier)")
+        self.assertEqual(str(style), "Atelier / LinkedIn")
+        self.assertIn("Open with the offer.", str(example))
+        self.assertIn("88/100", str(score))
+
+    def test_unique_voice_version_per_profile(self):
+        BrandVoice.objects.create(brand_profile=self.profile, version=1)
+        with self.assertRaises(IntegrityError):
+            BrandVoice.objects.create(brand_profile=self.profile, version=1)
+
+    def test_single_active_voice_constraint(self):
+        BrandVoice.objects.create(brand_profile=self.profile, version=1, is_active=True)
+        with self.assertRaises(IntegrityError):
+            BrandVoice.objects.create(
+                brand_profile=self.profile, version=2, is_active=True
+            )
+
+    def test_activate_swaps_active_voice(self):
+        v1 = BrandVoice.objects.create(
+            brand_profile=self.profile, version=1, is_active=True
+        )
+        v2 = BrandVoice.objects.create(brand_profile=self.profile, version=2)
+
+        v2.activate()
+
+        v1.refresh_from_db()
+        v2.refresh_from_db()
+        self.assertFalse(v1.is_active)
+        self.assertTrue(v2.is_active)
+        self.assertEqual(self.profile.active_voice, v2)
+
+    def test_unique_channel_style_per_profile(self):
+        ChannelStyle.objects.create(brand_profile=self.profile, channel=Channel.BLOG)
+        with self.assertRaises(IntegrityError):
+            ChannelStyle.objects.create(brand_profile=self.profile, channel=Channel.BLOG)
+
+    def test_positioning_statement_renders_from_structured_fields(self):
+        AudienceSegment.objects.create(
+            brand_profile=self.profile, name="Private clients", is_primary=True
+        )
+        statement = self.profile.positioning_statement()
+        self.assertIn("For Private clients", statement)
+        self.assertIn("private styling service", statement)
+        self.assertIn("because 10 years of atelier work", statement)
+
+
+class VoiceDnaDataMigrationTest(APITestCase):
+    """The 0005 mapping helpers convert flat legacy fields without data loss."""
+
+    def test_vocabulary_mapping(self):
+        entries = [
+            "quiet luxury",
+            {
+                "id": "craftsmanship",
+                "preferred_term": "craftsmanship",
+                "restricted_terms": ["handmade-ish", "artisanal-ish"],
+                "note": "Provenance references.",
+            },
+        ]
+        self.assertEqual(
+            seed_migration.map_vocabulary(entries),
+            [
+                {"term": "quiet luxury", "instead_of": None, "note": ""},
+                {
+                    "term": "craftsmanship",
+                    "instead_of": "handmade-ish, artisanal-ish",
+                    "note": "Provenance references.",
+                },
+            ],
+        )
+
+    def test_banned_phrase_mapping(self):
+        entries = ["cheap", {"id": "x", "phrase": "affordable luxury", "reason": "Dilutes."}]
+        self.assertEqual(
+            seed_migration.map_banned_phrases(entries),
+            [
+                {"phrase": "cheap", "reason": "", "severity": "soft"},
+                {"phrase": "affordable luxury", "reason": "Dilutes.", "severity": "soft"},
+            ],
+        )
+
+    def test_slider_seeding_from_first_tone_tag(self):
+        self.assertEqual(
+            seed_migration.seed_sliders(["approachable", "visionary"]),
+            {"casual": 65, "funny": 40, "irreverent": 20, "enthusiastic": 60},
+        )
+        self.assertEqual(seed_migration.seed_sliders([]), seed_migration.DEFAULT_SLIDERS)
+
+    def test_extraction_notes_preserve_legacy_positioning(self):
+        notes = seed_migration.build_extraction_notes("Voice DNA:\n- Brand personality: calm")
+        self.assertIn("seeded from the legacy tone tags", notes)
+        self.assertIn("Legacy positioning_notes:\nVoice DNA:\n- Brand personality: calm", notes)
+
+    def test_forward_migration_seeds_voice_and_segment(self):
+        workspace = Workspace.objects.create(name="Legacy Workspace")
+        profile = BrandProfile.objects.create(
+            workspace=workspace,
+            name="Legacy Brand",
+            audience="Solo consultants",
+            tone=["sophisticated"],
+            preferred_vocabulary=[
+                {
+                    "id": "clientele",
+                    "preferred_term": "clientele",
+                    "restricted_terms": ["customers"],
+                    "note": "",
+                }
+            ],
+            banned_phrases=[{"id": "cheap", "phrase": "cheap", "reason": "Off-brand."}],
+            positioning_notes="Quiet authority.",
+        )
+
+        seed_migration.seed_voice_dna(apps, None)
+
+        voice = profile.voices.get()
+        self.assertEqual(voice.version, 1)
+        self.assertTrue(voice.is_active)
+        self.assertEqual(voice.tone_tags, ["sophisticated"])
+        self.assertEqual(voice.tone_casual, 20)
+        self.assertEqual(voice.tone_enthusiastic, 35)
+        self.assertEqual(voice.preferred_vocabulary[0]["term"], "clientele")
+        self.assertEqual(voice.banned_phrases[0]["severity"], "soft")
+        self.assertIn("Legacy positioning_notes:\nQuiet authority.", voice.extraction_notes)
+
+        segment = profile.segments.get()
+        self.assertEqual(segment.name, "Primary audience")
+        self.assertTrue(segment.is_primary)
+        self.assertEqual(segment.notes, "Solo consultants")
+
+        # Idempotent: re-running does not duplicate rows.
+        seed_migration.seed_voice_dna(apps, None)
+        self.assertEqual(profile.voices.count(), 1)
+        self.assertEqual(profile.segments.count(), 1)
