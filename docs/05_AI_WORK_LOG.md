@@ -441,6 +441,30 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 - Decision log update needed: No. The hardening reused existing endpoint and data contracts; no architecture or scope decision was introduced.
 - Next action: Hand off T-DRAFT-002 (#35) to the Coding Agent as the first slice of the Draft Studio Core Value Loop (epic #34).
 
+### 2026-07-06 - Claude Code - Brand Voice Nested Navigation Refactor
+
+- Tool: Claude Code with ponytail workflow
+- Request: Refactor Brand Voice into nested routes (`/brand-voice` overview, `/profile`, `/analysis`, `/samples`) with a shared data-loading shell, nested sidebar navigation, and no backend changes.
+- Files changed:
+  - `frontend/lib/routes.ts`
+  - `frontend/components/layout/app-sidebar.tsx`
+  - `frontend/components/layout/app-sidebar.test.tsx`
+  - `frontend/features/brand-voice/components/brand-voice-shell.tsx`
+  - `frontend/features/brand-voice/components/brand-voice-shell.test.tsx`
+  - `frontend/features/brand-voice/components/brand-voice-shell.hydration.test.tsx`
+  - `frontend/features/brand-voice/components/sample-asset-page.tsx`
+  - `frontend/app/(app)/brand-voice/page.tsx`
+  - `frontend/app/(app)/brand-voice/profile/page.tsx`
+  - `frontend/app/(app)/brand-voice/analysis/page.tsx`
+  - `frontend/app/(app)/brand-voice/samples/page.tsx`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/05_AI_WORK_LOG.md`
+- Summary: One shared `BrandVoiceShell` keeps the existing live/mock hydration, header/status states, and profile/asset save propagation; four thin exports select the view body (overview link cards, profile form + preview, AI panel + preview, sample uploader). Sidebar nav config gained optional `children`; parent uses prefix active-matching, children exact-or-prefix, `aria-current` only on the exact current link. Sample detail back-link now targets `/brand-voice/samples`. No API client or backend changes.
+- Human review status: Pending
+- Verification: `npm run test` (73 tests), `npm run typecheck`, `npm run lint` (clean), and `make check` (frontend suite + 111 backend tests) passed. One test assertion was moved off the form's transient "Brand profile saved." message — a pre-existing form effect clears it when the profile prop updates — to the stable preview propagation signal.
+- Decision log update needed: No
+- Next action: Unchanged: Draft Studio Core Value Loop (epic #34), starting with #35.
+
 ## Entry Template
 
 ### YYYY-MM-DD - Tool - Task Title

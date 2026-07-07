@@ -101,17 +101,40 @@ function SidebarLink({ item }: SidebarLinkProps) {
   const active = isActiveRoute(item, pathname);
 
   return (
-    <Link
-      aria-current={active ? "page" : undefined}
-      className={classNames(
-        "luxe-nav-link luxe-focus-ring flex items-center gap-3 rounded-sm border-l-2 px-4 py-3 text-[15px] font-semibold",
-        active && "luxe-nav-link-active",
-      )}
-      href={item.href}
-    >
-      <NavIcon icon={item.icon} />
-      <span>{item.label}</span>
-    </Link>
+    <div>
+      <Link
+        aria-current={pathname === item.href ? "page" : undefined}
+        className={classNames(
+          "luxe-nav-link luxe-focus-ring flex items-center gap-3 rounded-sm border-l-2 px-4 py-3 text-[15px] font-semibold",
+          active && "luxe-nav-link-active",
+        )}
+        href={item.href}
+      >
+        <NavIcon icon={item.icon} />
+        <span>{item.label}</span>
+      </Link>
+      {item.children ? (
+        <div className="mt-1 space-y-1">
+          {item.children.map((child) => {
+            const childActive =
+              pathname === child.href || pathname.startsWith(`${child.href}/`);
+            return (
+              <Link
+                aria-current={pathname === child.href ? "page" : undefined}
+                className={classNames(
+                  "luxe-nav-link luxe-focus-ring flex items-center rounded-sm border-l-2 py-2 pl-12 pr-4 text-sm font-medium",
+                  childActive && "luxe-nav-link-active",
+                )}
+                href={child.href}
+                key={child.href}
+              >
+                {child.label}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

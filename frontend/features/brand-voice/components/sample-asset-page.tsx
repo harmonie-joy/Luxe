@@ -85,10 +85,10 @@ export function SampleAssetPage({ data }: SampleAssetPageProps) {
       <header className="shrink-0">
         <Link
           className="luxe-label-sm luxe-interactive inline-flex items-center gap-2 rounded px-1 py-0.5 text-(--color-text-muted) hover:text-luxe-text-primary"
-          href={APP_ROUTES.brandVoice}
+          href={APP_ROUTES.brandVoiceSamples}
         >
           <BackArrowIcon />
-          Brand Voice
+          Samples
         </Link>
 
         <p className="luxe-eyebrow mt-6">Reference Material</p>

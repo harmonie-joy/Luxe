@@ -5,6 +5,9 @@ export const APP_ROUTES = {
   onboarding: "/onboarding",
   dashboard: "/dashboard",
   brandVoice: "/brand-voice",
+  brandVoiceProfile: "/brand-voice/profile",
+  brandVoiceAnalysis: "/brand-voice/analysis",
+  brandVoiceSamples: "/brand-voice/samples",
   create: "/create",
   drafts: "/drafts",
   compliance: "/compliance",
@@ -14,7 +17,7 @@ export const APP_ROUTES = {
 
 /** Dynamic route for a single brand asset sample detail page. */
 export function brandVoiceSampleRoute(id: string): string {
-  return `/brand-voice/samples/${id}`;
+  return `${APP_ROUTES.brandVoiceSamples}/${id}`;
 }
 
 /** Dynamic route for reviewing compliance results for a single content draft. */
@@ -39,11 +42,17 @@ export type NavigationIcon =
   | "compliance"
   | "calendar";
 
+export type NavigationChildItem = Readonly<{
+  href: AppRoutePath;
+  label: string;
+}>;
+
 export type NavigationItem = Readonly<{
   href: AppRoutePath;
   icon: NavigationIcon;
   label: string;
   exact?: boolean;
+  children?: readonly NavigationChildItem[];
 }>;
 
 export type TopbarLink = Readonly<{
@@ -62,6 +71,11 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
     href: APP_ROUTES.brandVoice,
     icon: "brandVoice",
     label: "Brand Voice",
+    children: [
+      { href: APP_ROUTES.brandVoiceProfile, label: "Profile" },
+      { href: APP_ROUTES.brandVoiceAnalysis, label: "Analysis" },
+      { href: APP_ROUTES.brandVoiceSamples, label: "Samples" },
+    ],
   },
   {
     href: APP_ROUTES.drafts,

@@ -6,7 +6,7 @@ import {
   mockBrandVoiceSetup,
   type BrandVoiceSetupData,
 } from "@/data/mock-brand-profiles";
-import { BrandVoiceShell } from "@/features/brand-voice/components/brand-voice-shell";
+import { BrandVoiceAnalysisShell } from "@/features/brand-voice/components/brand-voice-shell";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
 import * as aiApi from "@/lib/api/ai";
 import * as brandVoiceApi from "@/lib/api/brand-voice";
@@ -15,7 +15,7 @@ vi.mock("@/features/brand-voice/data/get-brand-voice-setup");
 vi.mock("@/lib/api/ai");
 vi.mock("@/lib/api/brand-voice");
 
-// BrandVoiceShell reads this flag at module import, so it must be set before
+// The shell reads this flag at module import, so it must be set before
 // the imports above evaluate — hence hoisted, and scoped to this file only.
 vi.hoisted(() => {
   process.env.NEXT_PUBLIC_USE_MOCK_BRAND_VOICE = "false";
@@ -50,7 +50,7 @@ const liveSetup: BrandVoiceSetupData = {
   source: "api",
 };
 
-describe("BrandVoiceShell live hydration", () => {
+describe("BrandVoiceAnalysisShell live hydration", () => {
   it("analyzes with only live asset ids after mock data is replaced", async () => {
     vi.mocked(getBrandVoiceSetup).mockResolvedValue(liveSetup);
     vi.mocked(aiApi.analyzeBrandAssets).mockResolvedValue({
@@ -69,16 +69,14 @@ describe("BrandVoiceShell live hydration", () => {
       },
     });
     const user = userEvent.setup();
-    render(<BrandVoiceShell initialData={mockBrandVoiceSetup} />);
+    render(<BrandVoiceAnalysisShell initialData={mockBrandVoiceSetup} />);
 
     // Live profile and assets replace the mock setup after hydration.
     await screen.findAllByText("Live sample 1");
     expect(
-      await screen.findByDisplayValue("Live Signature Voice"),
-    ).toBeTruthy();
-    expect(
-      screen.getByDisplayValue("Live premium clientele."),
-    ).toBeTruthy();
+      (await screen.findAllByText("Live Signature Voice")).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("Live premium clientele.")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
 
@@ -114,6 +112,7 @@ describe("BrandVoiceShell live hydration", () => {
     });
     const acceptedProfile = {
       ...liveProfile,
+      name: "Accepted Signature Voice",
       audience: "Suggested audience.",
       tone: ["sophisticated"] as const,
       updatedAt: "2026-07-06T12:00:00.000Z",
@@ -122,7 +121,7 @@ describe("BrandVoiceShell live hydration", () => {
       acceptedProfile,
     );
     const user = userEvent.setup();
-    render(<BrandVoiceShell initialData={mockBrandVoiceSetup} />);
+    render(<BrandVoiceAnalysisShell initialData={mockBrandVoiceSetup} />);
 
     await screen.findAllByText("Live sample 1");
     await user.click(screen.getByRole("button", { name: "Analyze Brand Voice" }));
@@ -134,9 +133,9 @@ describe("BrandVoiceShell live hydration", () => {
       liveProfile.id,
       expect.objectContaining({ audience: "Suggested audience." }),
     );
-    // The persisted profile is visible in the form without any refresh.
+    // The persisted profile is visible in the preview without any refresh.
     expect(
-      await screen.findByDisplayValue("Suggested audience."),
+      await screen.findByText("Accepted Signature Voice"),
     ).toBeTruthy();
   });
 });

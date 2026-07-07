@@ -764,6 +764,27 @@ Decision Log Update Needed:
 Next Step:
 - Start the Draft Studio Core Value Loop (epic #34): persist Draft Studio output through the existing backend path (#35), then validate draft generation from the accepted Voice DNA BrandProfile (#26).
 
+### 2026-07-06 - Brand Voice Nested Navigation Refactor
+
+Worked On:
+- Split `/brand-voice` into a nested route workspace: `/brand-voice` (overview cards), `/brand-voice/profile`, `/brand-voice/analysis`, `/brand-voice/samples`. Frontend-only; no backend changes.
+
+Completed:
+- `APP_ROUTES` gained `brandVoiceProfile`, `brandVoiceAnalysis`, `brandVoiceSamples`; `brandVoiceSampleRoute(id)` now builds from `brandVoiceSamples`.
+- Navigation items support optional `children`; Brand Voice renders Profile/Analysis/Samples child links in `AppSidebar`. Parent stays visually active for `/brand-voice/**`; `aria-current="page"` only on the exact current link.
+- The monolithic `BrandVoiceShell` became one shared data-loading shell with four thin view exports (`BrandVoiceOverviewShell`, `BrandVoiceProfileShell`, `BrandVoiceAnalysisShell`, `BrandVoiceSamplesShell`). Live/mock hydration, profile save propagation, and asset save propagation are unchanged and shared across views.
+- Sample detail back-link returns to `/brand-voice/samples`.
+- Tests: new `app-sidebar.test.tsx` (nested rendering, active parent/child, aria-current); shell tests retargeted per view (overview source states and card links, profile save propagation, samples paste save, analysis live hydration and live-only asset IDs).
+
+Verification:
+- `npm run test` (73 tests), `npm run typecheck`, `npm run lint`, and `make check` (frontend suite + 111 backend tests) all passed.
+
+Decision Log Update Needed:
+- No. Routing/component decomposition only; no architecture, data model, AI provider, or scope decision changed.
+
+Next Step:
+- Unchanged: Draft Studio Core Value Loop (epic #34), starting with #35.
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

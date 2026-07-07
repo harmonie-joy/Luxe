@@ -1,22 +1,73 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type { BrandVoiceSetupData } from "@/data/mock-brand-profiles";
 import { StatusIndicator } from "@/components/ui/status-indicator";
+import { SurfaceCard } from "@/components/ui/surface-card";
 import { BrandProfileForm } from "@/features/brand-voice/components/brand-profile-form";
 import { BrandProfilePreview } from "@/features/brand-voice/components/brand-profile-preview";
 import { BrandVoiceAiPanel } from "@/features/brand-voice/components/brand-voice-ai-panel";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
 import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
+import { APP_ROUTES } from "@/lib/routes";
 import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
+
+type BrandVoiceView = "overview" | "profile" | "analysis" | "samples";
 
 interface BrandVoiceShellProps {
   initialData: BrandVoiceSetupData;
 }
 
-export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
+function OverviewCards({ data }: { data: BrandVoiceSetupData }) {
+  const cards = [
+    {
+      href: APP_ROUTES.brandVoiceProfile,
+      title: "Profile",
+      description: "Tone, audience, and language guardrails.",
+      meta: data.profile.name,
+    },
+    {
+      href: APP_ROUTES.brandVoiceAnalysis,
+      title: "Analysis",
+      description: "AI analysis and brand voice extraction.",
+      meta: `${data.profile.tone.length} tones selected`,
+    },
+    {
+      href: APP_ROUTES.brandVoiceSamples,
+      title: "Samples",
+      description: "Reference content that anchors the voice.",
+      meta: `${data.sampleContent.samples.length} samples`,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {cards.map((card) => (
+        <Link
+          className="luxe-focus-ring block rounded-sm"
+          href={card.href}
+          key={card.href}
+        >
+          <SurfaceCard className="h-full">
+            <p className="luxe-eyebrow">{card.title}</p>
+            <p className="mt-3 text-sm leading-6 text-luxe-text-secondary">
+              {card.description}
+            </p>
+            <p className="luxe-item-meta mt-4 text-sm">{card.meta}</p>
+          </SurfaceCard>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+function BrandVoiceShell({
+  initialData,
+  view,
+}: BrandVoiceShellProps & { view: BrandVoiceView }) {
   const [data, setData] = useState(initialData);
   const [isLoading, setIsLoading] = useState(
     !isBrandVoiceMockMode() && initialData.source === "mock",
@@ -106,34 +157,56 @@ export function BrandVoiceShell({ initialData }: BrandVoiceShellProps) {
         ) : null}
       </header>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-6">
-          <BrandProfileForm
-            onProfileSaved={handleProfileSaved}
-            profile={profile}
-            source={source}
-            toneOptions={toneOptions}
-          />
-          <BrandVoiceAiPanel
-            onProfileSaved={handleProfileSaved}
+      {view === "overview" ? (
+        <OverviewCards data={data} />
+      ) : view === "samples" ? (
+        <SampleContentUploader
+          onAssetSaved={handleAssetSaved}
+          profile={profile}
+          sampleContent={sampleContent}
+          source={source}
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+          {view === "profile" ? (
+            <BrandProfileForm
+              onProfileSaved={handleProfileSaved}
+              profile={profile}
+              source={source}
+              toneOptions={toneOptions}
+            />
+          ) : (
+            <BrandVoiceAiPanel
+              onProfileSaved={handleProfileSaved}
+              profile={profile}
+              samples={sampleContent.samples}
+              source={source}
+            />
+          )}
+
+          <BrandProfilePreview
             profile={profile}
             samples={sampleContent.samples}
-            source={source}
-          />
-          <SampleContentUploader
-            onAssetSaved={handleAssetSaved}
-            profile={profile}
-            sampleContent={sampleContent}
-            source={source}
+            toneOptions={toneOptions}
           />
         </div>
-
-        <BrandProfilePreview
-          profile={profile}
-          samples={sampleContent.samples}
-          toneOptions={toneOptions}
-        />
-      </div>
+      )}
     </div>
   );
+}
+
+export function BrandVoiceOverviewShell(props: BrandVoiceShellProps) {
+  return <BrandVoiceShell {...props} view="overview" />;
+}
+
+export function BrandVoiceProfileShell(props: BrandVoiceShellProps) {
+  return <BrandVoiceShell {...props} view="profile" />;
+}
+
+export function BrandVoiceAnalysisShell(props: BrandVoiceShellProps) {
+  return <BrandVoiceShell {...props} view="analysis" />;
+}
+
+export function BrandVoiceSamplesShell(props: BrandVoiceShellProps) {
+  return <BrandVoiceShell {...props} view="samples" />;
 }
