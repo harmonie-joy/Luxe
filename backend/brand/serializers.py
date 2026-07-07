@@ -1,6 +1,15 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
-from .models import BrandAsset, BrandProfile
+from .models import (
+    AudienceSegment,
+    BrandAsset,
+    BrandProfile,
+    BrandVoice,
+    ChannelStyle,
+    VoiceAuditScore,
+    VoiceExample,
+)
 
 
 class BrandVocabularyRulePayloadSerializer(serializers.Serializer):
@@ -33,6 +42,11 @@ class BrandAssetSerializer(serializers.ModelSerializer):
             "mime_type",
             "analysis_summary",
             "source_type",
+            "source_url",
+            "channel",
+            "language",
+            "performance_signal",
+            "content_date",
             "format",
             "word_count",
             "status",
@@ -54,6 +68,11 @@ class BrandAssetSerializer(serializers.ModelSerializer):
             "mimeType": rep["mime_type"],
             "analysisSummary": rep["analysis_summary"],
             "sourceType": rep["source_type"],
+            "sourceUrl": rep["source_url"],
+            "channel": rep["channel"],
+            "language": rep["language"],
+            "performanceSignal": rep["performance_signal"],
+            "contentDate": rep["content_date"],
             "format": rep["format"],
             "wordCount": rep["word_count"],
             "status": rep["status"],
@@ -71,6 +90,26 @@ class BrandProfileSerializer(serializers.ModelSerializer):
             "id",
             "workspace",
             "name",
+            "maturity_stage",
+            "primary_language",
+            "industry",
+            "category",
+            "key_benefit",
+            "differentiators",
+            "reasons_to_believe",
+            "competitors",
+            "known_for",
+            "mission",
+            "values",
+            "tagline",
+            "archetype",
+            "secondary_archetype",
+            "personality_sincerity",
+            "personality_excitement",
+            "personality_competence",
+            "personality_sophistication",
+            "personality_ruggedness",
+            "distinctive_assets",
             "audience",
             "tone",
             "preferred_vocabulary",
@@ -106,10 +145,32 @@ class BrandProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep = super().to_representation(instance)
+        active_voice = instance.active_voice
         return {
             "id": rep["id"],
             "workspaceId": str(rep["workspace"]),
             "name": rep["name"],
+            "maturityStage": rep["maturity_stage"],
+            "primaryLanguage": rep["primary_language"],
+            "industry": rep["industry"],
+            "category": rep["category"],
+            "keyBenefit": rep["key_benefit"],
+            "differentiators": rep["differentiators"],
+            "reasonsToBelieve": rep["reasons_to_believe"],
+            "competitors": rep["competitors"],
+            "knownFor": rep["known_for"],
+            "mission": rep["mission"],
+            "values": rep["values"],
+            "tagline": rep["tagline"],
+            "archetype": rep["archetype"],
+            "secondaryArchetype": rep["secondary_archetype"],
+            "personalitySincerity": rep["personality_sincerity"],
+            "personalityExcitement": rep["personality_excitement"],
+            "personalityCompetence": rep["personality_competence"],
+            "personalitySophistication": rep["personality_sophistication"],
+            "personalityRuggedness": rep["personality_ruggedness"],
+            "distinctiveAssets": rep["distinctive_assets"],
+            "activeVoiceId": str(active_voice.id) if active_voice else None,
             "audience": rep["audience"],
             "tone": rep["tone"],
             "preferredVocabulary": [
@@ -133,4 +194,209 @@ class BrandProfileSerializer(serializers.ModelSerializer):
             "sampleCount": rep["sample_count"],
             "createdAt": rep["created_at"],
             "updatedAt": rep["updated_at"],
+        }
+
+
+class AudienceSegmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AudienceSegment
+        fields = [
+            "id",
+            "brand_profile",
+            "name",
+            "is_primary",
+            "buyer_type",
+            "maturity_level",
+            "pains",
+            "desired_outcomes",
+            "jargon_tolerance",
+            "objections",
+            "notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "brandProfileId": str(rep["brand_profile"]),
+            "name": rep["name"],
+            "isPrimary": rep["is_primary"],
+            "buyerType": rep["buyer_type"],
+            "maturityLevel": rep["maturity_level"],
+            "pains": rep["pains"],
+            "desiredOutcomes": rep["desired_outcomes"],
+            "jargonTolerance": rep["jargon_tolerance"],
+            "objections": rep["objections"],
+            "notes": rep["notes"],
+            "createdAt": rep["created_at"],
+            "updatedAt": rep["updated_at"],
+        }
+
+
+class BrandVoiceSerializer(serializers.ModelSerializer):
+    """Read-only: voices are created by extraction, never edited via API."""
+
+    class Meta:
+        model = BrandVoice
+        fields = [
+            "id",
+            "brand_profile",
+            "version",
+            "is_active",
+            "extracted_from",
+            "voice_summary",
+            "tone_funny",
+            "tone_casual",
+            "tone_irreverent",
+            "tone_enthusiastic",
+            "tone_tags",
+            "point_of_view",
+            "sentence_style",
+            "pacing",
+            "proof_style",
+            "claim_boundaries",
+            "preferred_vocabulary",
+            "banned_phrases",
+            "extraction_confidence",
+            "extraction_notes",
+            "created_at",
+        ]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "brandProfileId": str(rep["brand_profile"]),
+            "version": rep["version"],
+            "isActive": rep["is_active"],
+            "extractedFrom": [str(asset_id) for asset_id in rep["extracted_from"]],
+            "voiceSummary": rep["voice_summary"],
+            "tone": {
+                "funny": rep["tone_funny"],
+                "casual": rep["tone_casual"],
+                "irreverent": rep["tone_irreverent"],
+                "enthusiastic": rep["tone_enthusiastic"],
+            },
+            "toneTags": rep["tone_tags"],
+            "pointOfView": rep["point_of_view"],
+            "sentenceStyle": rep["sentence_style"],
+            "pacing": rep["pacing"],
+            "proofStyle": rep["proof_style"],
+            "claimBoundaries": rep["claim_boundaries"],
+            "preferredVocabulary": rep["preferred_vocabulary"],
+            "bannedPhrases": rep["banned_phrases"],
+            "extractionConfidence": rep["extraction_confidence"],
+            "extractionNotes": rep["extraction_notes"],
+            "createdAt": rep["created_at"],
+        }
+
+
+class VoiceExampleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoiceExample
+        fields = [
+            "id",
+            "voice",
+            "kind",
+            "text",
+            "annotation",
+            "channel",
+            "source_asset",
+            "created_at",
+        ]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "voiceId": str(rep["voice"]),
+            "kind": rep["kind"],
+            "text": rep["text"],
+            "annotation": rep["annotation"],
+            "channel": rep["channel"],
+            "sourceAssetId": str(rep["source_asset"]) if rep["source_asset"] else None,
+            "createdAt": rep["created_at"],
+        }
+
+
+class ChannelStyleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ChannelStyle
+        fields = [
+            "id",
+            "brand_profile",
+            "channel",
+            "tone_funny_delta",
+            "tone_casual_delta",
+            "tone_irreverent_delta",
+            "tone_enthusiastic_delta",
+            "target_length",
+            "structure_norms",
+            "emoji_policy",
+            "hashtag_policy",
+            "cta_style",
+            "notes",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=ChannelStyle.objects.all(),
+                fields=["brand_profile", "channel"],
+                message="A channel style already exists for this brand profile and channel.",
+            )
+        ]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "brandProfileId": str(rep["brand_profile"]),
+            "channel": rep["channel"],
+            "toneFunnyDelta": rep["tone_funny_delta"],
+            "toneCasualDelta": rep["tone_casual_delta"],
+            "toneIrreverentDelta": rep["tone_irreverent_delta"],
+            "toneEnthusiasticDelta": rep["tone_enthusiastic_delta"],
+            "targetLength": rep["target_length"],
+            "structureNorms": rep["structure_norms"],
+            "emojiPolicy": rep["emoji_policy"],
+            "hashtagPolicy": rep["hashtag_policy"],
+            "ctaStyle": rep["cta_style"],
+            "notes": rep["notes"],
+            "createdAt": rep["created_at"],
+            "updatedAt": rep["updated_at"],
+        }
+
+
+class VoiceAuditScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VoiceAuditScore
+        fields = [
+            "id",
+            "voice",
+            "channel",
+            "draft_excerpt",
+            "overall_score",
+            "dimension_scores",
+            "violations",
+            "ai_run",
+            "created_at",
+        ]
+
+    def to_representation(self, instance):
+        rep = super().to_representation(instance)
+        return {
+            "id": rep["id"],
+            "voiceId": str(rep["voice"]),
+            "channel": rep["channel"],
+            "draftExcerpt": rep["draft_excerpt"],
+            "overallScore": rep["overall_score"],
+            "dimensionScores": rep["dimension_scores"],
+            "violations": rep["violations"],
+            "aiRunId": str(rep["ai_run"]) if rep["ai_run"] else None,
+            "createdAt": rep["created_at"],
         }

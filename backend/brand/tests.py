@@ -175,6 +175,27 @@ class BrandProfileAPITest(APITestCase):
             "id",
             "workspaceId",
             "name",
+            "maturityStage",
+            "primaryLanguage",
+            "industry",
+            "category",
+            "keyBenefit",
+            "differentiators",
+            "reasonsToBelieve",
+            "competitors",
+            "knownFor",
+            "mission",
+            "values",
+            "tagline",
+            "archetype",
+            "secondaryArchetype",
+            "personalitySincerity",
+            "personalityExcitement",
+            "personalityCompetence",
+            "personalitySophistication",
+            "personalityRuggedness",
+            "distinctiveAssets",
+            "activeVoiceId",
             "audience",
             "tone",
             "preferredVocabulary",
@@ -335,6 +356,11 @@ class BrandAssetAPITest(APITestCase):
             "mimeType",
             "analysisSummary",
             "sourceType",
+            "sourceUrl",
+            "channel",
+            "language",
+            "performanceSignal",
+            "contentDate",
             "format",
             "wordCount",
             "status",
@@ -510,3 +536,234 @@ class VoiceDnaDataMigrationTest(APITestCase):
         seed_migration.seed_voice_dna(apps, None)
         self.assertEqual(profile.voices.count(), 1)
         self.assertEqual(profile.segments.count(), 1)
+
+
+class VoiceDnaAPITest(APITestCase):
+    """Slice 4: workspace scoping and shapes for the new Voice DNA endpoints."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="dna_api", password="pass")
+        self.other_user = User.objects.create_user(username="dna_other", password="pass")
+        self.workspace = Workspace.objects.create(name="Mine")
+        self.other_workspace = Workspace.objects.create(name="Theirs")
+        Membership.objects.create(user=self.user, workspace=self.workspace)
+        Membership.objects.create(user=self.other_user, workspace=self.other_workspace)
+
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace, name="Mine Brand"
+        )
+        self.other_profile = BrandProfile.objects.create(
+            workspace=self.other_workspace, name="Theirs Brand"
+        )
+
+        self.voice = BrandVoice.objects.create(
+            brand_profile=self.profile, version=1, is_active=True
+        )
+        self.voice_v2 = BrandVoice.objects.create(brand_profile=self.profile, version=2)
+        self.other_voice = BrandVoice.objects.create(
+            brand_profile=self.other_profile, version=1, is_active=True
+        )
+
+        self.segment = AudienceSegment.objects.create(
+            brand_profile=self.profile, name="Mine Segment", is_primary=True
+        )
+        self.other_segment = AudienceSegment.objects.create(
+            brand_profile=self.other_profile, name="Theirs Segment"
+        )
+
+        self.style = ChannelStyle.objects.create(
+            brand_profile=self.profile, channel=Channel.LINKEDIN, tone_casual_delta=-10
+        )
+        self.other_style = ChannelStyle.objects.create(
+            brand_profile=self.other_profile, channel=Channel.LINKEDIN
+        )
+
+        self.example = VoiceExample.objects.create(
+            voice=self.voice,
+            kind=VoiceExample.Kind.DO,
+            text="Mine example.",
+            annotation="Pattern.",
+        )
+        self.other_example = VoiceExample.objects.create(
+            voice=self.other_voice,
+            kind=VoiceExample.Kind.DO,
+            text="Theirs example.",
+            annotation="Pattern.",
+        )
+
+        self.score = VoiceAuditScore.objects.create(voice=self.voice, overall_score=90)
+        self.other_score = VoiceAuditScore.objects.create(
+            voice=self.other_voice, overall_score=40
+        )
+
+    def test_unauthenticated_requests_are_rejected(self):
+        for url in (
+            "/api/brand-voices/",
+            "/api/audience-segments/",
+            "/api/channel-styles/",
+            "/api/voice-examples/",
+            "/api/voice-audit-scores/",
+        ):
+            response = self.client.get(url)
+            self.assertIn(response.status_code, [401, 403], url)
+
+    def test_lists_are_workspace_scoped(self):
+        self.client.force_authenticate(user=self.user)
+        cases = [
+            ("/api/brand-voices/", 2),
+            ("/api/audience-segments/", 1),
+            ("/api/channel-styles/", 1),
+            ("/api/voice-examples/", 1),
+            ("/api/voice-audit-scores/", 1),
+        ]
+        for url, expected_count in cases:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertEqual(len(response.data), expected_count, url)
+
+    def test_cross_workspace_detail_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        for url in (
+            f"/api/brand-voices/{self.other_voice.id}/",
+            f"/api/audience-segments/{self.other_segment.id}/",
+            f"/api/channel-styles/{self.other_style.id}/",
+            f"/api/voice-examples/{self.other_example.id}/",
+            f"/api/voice-audit-scores/{self.other_score.id}/",
+        ):
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 404, url)
+
+    def test_brand_voice_response_shape(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/brand-voices/{self.voice.id}/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            set(response.data.keys()),
+            {
+                "id",
+                "brandProfileId",
+                "version",
+                "isActive",
+                "extractedFrom",
+                "voiceSummary",
+                "tone",
+                "toneTags",
+                "pointOfView",
+                "sentenceStyle",
+                "pacing",
+                "proofStyle",
+                "claimBoundaries",
+                "preferredVocabulary",
+                "bannedPhrases",
+                "extractionConfidence",
+                "extractionNotes",
+                "createdAt",
+            },
+        )
+        self.assertEqual(
+            set(response.data["tone"].keys()),
+            {"funny", "casual", "irreverent", "enthusiastic"},
+        )
+
+    def test_brand_voice_list_filters_by_profile(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(f"/api/brand-voices/?brand_profile={self.profile.id}")
+        self.assertEqual(len(response.data), 2)
+
+    def test_activate_switches_active_version(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(f"/api/brand-voices/{self.voice_v2.id}/activate/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.data["isActive"])
+        self.voice.refresh_from_db()
+        self.voice_v2.refresh_from_db()
+        self.assertFalse(self.voice.is_active)
+        self.assertTrue(self.voice_v2.is_active)
+
+    def test_activate_foreign_voice_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(f"/api/brand-voices/{self.other_voice.id}/activate/")
+        self.assertEqual(response.status_code, 404)
+        self.other_voice.refresh_from_db()
+        self.assertTrue(self.other_voice.is_active)
+
+    def test_create_segment(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/audience-segments/",
+            {
+                "brand_profile": str(self.profile.id),
+                "name": "Boutique owners",
+                "buyer_type": "B2B decision maker",
+                "pains": ["Generic content"],
+                "desired_outcomes": ["Clear positioning"],
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["name"], "Boutique owners")
+        self.assertEqual(response.data["brandProfileId"], str(self.profile.id))
+        self.assertFalse(response.data["isPrimary"])
+
+    def test_create_segment_on_foreign_profile_is_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/audience-segments/",
+            {"brand_profile": str(self.other_profile.id), "name": "Sneaky"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_create_channel_style(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/channel-styles/",
+            {
+                "brand_profile": str(self.profile.id),
+                "channel": "instagram",
+                "tone_casual_delta": 15,
+                "emoji_policy": "max 1, never in first line",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["channel"], "instagram")
+        self.assertEqual(response.data["toneCasualDelta"], 15)
+
+    def test_duplicate_channel_style_is_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/channel-styles/",
+            {"brand_profile": str(self.profile.id), "channel": Channel.LINKEDIN},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_channel_style_on_foreign_profile_is_denied(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(
+            "/api/channel-styles/",
+            {"brand_profile": str(self.other_profile.id), "channel": "blog"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_voice_examples_and_audit_scores_are_read_only(self):
+        self.client.force_authenticate(user=self.user)
+        example_post = self.client.post(
+            "/api/voice-examples/",
+            {"voice": str(self.voice.id), "kind": "do", "text": "x", "annotation": "y"},
+            format="json",
+        )
+        score_post = self.client.post(
+            "/api/voice-audit-scores/",
+            {"voice": str(self.voice.id), "overall_score": 10},
+            format="json",
+        )
+        self.assertEqual(example_post.status_code, 405)
+        self.assertEqual(score_post.status_code, 405)
+
+    def test_profile_exposes_active_voice_id(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(profile_detail_url(self.profile.id))
+        self.assertEqual(response.data["activeVoiceId"], str(self.voice.id))
