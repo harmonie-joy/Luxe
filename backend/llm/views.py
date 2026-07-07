@@ -6,14 +6,10 @@ from brand.models import BrandAsset
 from brand.serializers import BrandAssetSerializer
 from content.models import ContentDraft
 
+from . import services
 from .serializers import (
     BrandVoiceExtractionRequestSerializer,
     DraftGenerationRequestSerializer,
-)
-from .services import (
-    analyze_brand_asset_with_run,
-    extract_brand_voice_with_run,
-    generate_draft_with_run,
 )
 
 
@@ -26,17 +22,21 @@ def extract_brand_voice(request):
     )
     serializer.is_valid(raise_exception=True)
 
-    assets = serializer.validated_data["assets"]
-    suggestions, run = extract_brand_voice_with_run(
+    suggestions, voice, run = services.extract_brand_voice(
         serializer.validated_data["workspace"],
-        assets,
+        serializer.validated_data["brand_profile"],
+        assets=serializer.validated_data["assets"],
         user=request.user,
-        brand_profile=serializer.validated_data["brand_profile"],
     )
 
     return Response(
         {
             "aiRunId": str(run.id),
+            "voice": {
+                "id": str(voice.id),
+                "version": voice.version,
+                "isActive": voice.is_active,
+            },
             "suggestions": suggestions.model_dump(mode="json"),
         }
     )
@@ -59,7 +59,7 @@ def analyze_brand_assets(request):
 
     for asset in assets:
         try:
-            _result, run = analyze_brand_asset_with_run(
+            _result, run = services.analyze_brand_asset(
                 workspace,
                 brand_profile,
                 asset,
@@ -100,7 +100,7 @@ def generate_drafts(request):
     drafts = []
 
     for channel in serializer.validated_data["channels"]:
-        result, run = generate_draft_with_run(
+        result, run = services.generate_draft(
             workspace,
             brief,
             channel,

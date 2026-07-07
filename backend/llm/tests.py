@@ -6,7 +6,15 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APITestCase
 
-from brand.models import BrandAsset, BrandProfile
+from brand.models import (
+    AudienceSegment,
+    BrandAsset,
+    BrandProfile,
+    BrandVoice,
+    ChannelStyle,
+    VoiceAuditScore,
+    VoiceExample,
+)
 from content.models import ContentBrief, ContentDraft
 from tenancy.models import Membership, Workspace
 
@@ -21,7 +29,9 @@ from .schemas import (
     VoiceReviewResult,
 )
 from .services import (
-    analyze_brand_asset_with_run,
+    _effective_tone,
+    _voice_examples_context,
+    analyze_brand_asset,
     extract_brand_voice,
     generate_draft,
     review_compliance,
@@ -56,48 +66,45 @@ class MockAIServiceTests(TestCase):
         self.provider = MockProvider()
 
     def test_mock_services_return_schema_valid_results(self):
-        self.assertIsInstance(
-            extract_brand_voice(
-                self.workspace,
-                "Precise, editorial copy for a premium audience.",
-                user=self.user,
-                provider=self.provider,
-            ),
-            BrandVoiceExtractionResult,
+        profile = BrandProfile.objects.create(
+            workspace=self.workspace,
+            name="Mock Voice",
         )
-        self.assertIsInstance(
-            generate_draft(
-                self.workspace,
-                "Announce a new collection.",
-                "linkedin",
-                user=self.user,
-                provider=self.provider,
-            ),
-            DraftGenerationResult,
+        extraction, voice, _run = extract_brand_voice(
+            self.workspace,
+            profile,
+            assets=[],
+            user=self.user,
+            provider=self.provider,
         )
-        self.assertIsInstance(
-            review_voice(
-                self.workspace,
-                "A calm launch note.",
-                "Professional and sophisticated.",
-                user=self.user,
-                provider=self.provider,
-            ),
-            VoiceReviewResult,
+        self.assertIsInstance(extraction, BrandVoiceExtractionResult)
+        draft_result, _run = generate_draft(
+            self.workspace,
+            "Announce a new collection.",
+            "linkedin",
+            user=self.user,
+            provider=self.provider,
         )
-        self.assertIsInstance(
-            review_compliance(
-                self.workspace,
-                "This product will double conversion.",
-                user=self.user,
-                provider=self.provider,
-            ),
-            ComplianceReviewResult,
+        self.assertIsInstance(draft_result, DraftGenerationResult)
+        voice_result, _run = review_voice(
+            self.workspace,
+            "A calm launch note.",
+            voice,
+            user=self.user,
+            provider=self.provider,
         )
+        self.assertIsInstance(voice_result, VoiceReviewResult)
+        compliance_result, _run = review_compliance(
+            self.workspace,
+            "This product will double conversion.",
+            user=self.user,
+            provider=self.provider,
+        )
+        self.assertIsInstance(compliance_result, ComplianceReviewResult)
         self.assertEqual(AIRun.objects.filter(status=AIRun.Status.SUCCEEDED).count(), 4)
 
     def test_successful_run_records_output(self):
-        result = generate_draft(
+        result, _run = generate_draft(
             self.workspace,
             "Create a newsletter opener.",
             "newsletter",
@@ -134,8 +141,11 @@ class MockAIServiceTests(TestCase):
         profile = BrandProfile.objects.create(
             workspace=self.workspace,
             name="Extraction Voice",
-            audience="Service business owners",
-            tone=["professional"],
+        )
+        AudienceSegment.objects.create(
+            brand_profile=profile,
+            name="Service business owners",
+            is_primary=True,
         )
         asset = BrandAsset.objects.create(
             brand_profile=profile,
@@ -145,36 +155,36 @@ class MockAIServiceTests(TestCase):
         )
         provider = RecordingProvider()
 
-        result = extract_brand_voice(
+        result, voice, run = extract_brand_voice(
             self.workspace,
-            [asset],
+            profile,
+            assets=[asset],
             user=self.user,
             provider=provider,
-            brand_profile=profile,
         )
 
         self.assertIsInstance(result, BrandVoiceExtractionResult)
+        self.assertIn("Extraction Voice", provider.prompt)
         self.assertIn("Service business owners", provider.prompt)
         self.assertIn("Homepage sample", provider.prompt)
         self.assertIn("landing_page", provider.prompt)
         self.assertIn("consultants explain their offer", provider.prompt)
         self.assertTrue(result.voice_summary)
         self.assertTrue(0 <= result.tone.casual <= 100)
-        run = AIRun.objects.get()
         self.assertEqual(run.input_data["assets"][0]["title"], "Homepage sample")
         self.assertEqual(run.input_data["assets"][0]["format"], "landing_page")
         self.assertIn("without hype", run.input_data["assets"][0]["content"])
+        self.assertEqual(run.input_data["brand_profile"]["name"], "Extraction Voice")
         self.assertEqual(
-            run.input_data["brand_profile"]["audience"],
+            run.input_data["brand_profile"]["segments"][0]["name"],
             "Service business owners",
         )
+        self.assertEqual(list(voice.extracted_from.all()), [asset])
 
     def test_asset_analysis_records_summary_and_run(self):
         profile = BrandProfile.objects.create(
             workspace=self.workspace,
             name="Analysis Voice",
-            audience="Premium operators",
-            tone=["professional"],
         )
         asset = BrandAsset.objects.create(
             brand_profile=profile,
@@ -184,7 +194,7 @@ class MockAIServiceTests(TestCase):
         )
         provider = RecordingProvider()
 
-        result, run = analyze_brand_asset_with_run(
+        result, run = analyze_brand_asset(
             self.workspace,
             profile,
             asset,
@@ -196,6 +206,7 @@ class MockAIServiceTests(TestCase):
         self.assertEqual(run.task_type, AIRun.TaskType.BRAND_ASSET_ANALYSIS)
         self.assertEqual(asset.status, BrandAsset.AssetStatus.READY)
         self.assertEqual(asset.analysis_summary, result.summary)
+        self.assertEqual(asset.language, "en")
         self.assertIn("AUDIO_TRANSCRIPT".lower(), provider.prompt.lower())
 
     def test_image_asset_analysis_sends_base64_images_to_provider(self):
@@ -218,7 +229,7 @@ class MockAIServiceTests(TestCase):
         )
         provider = RecordingProvider()
 
-        analyze_brand_asset_with_run(
+        analyze_brand_asset(
             self.workspace,
             profile,
             asset,
@@ -232,22 +243,28 @@ class MockAIServiceTests(TestCase):
         profile = BrandProfile.objects.create(
             workspace=self.workspace,
             name="Prompt Voice",
-            audience="Premium founders",
-            tone=["professional", "sophisticated"],
+        )
+        AudienceSegment.objects.create(
+            brand_profile=profile,
+            name="Premium founders",
+            is_primary=True,
+        )
+        voice = BrandVoice.objects.create(
+            brand_profile=profile,
+            version=1,
+            is_active=True,
             preferred_vocabulary=[
-                {
-                    "preferred_term": "clientele",
-                    "restricted_terms": ["customers"],
-                    "note": "Use elevated language.",
-                }
+                {"term": "clientele", "instead_of": "customers", "note": "Elevated."}
             ],
             banned_phrases=[
-                {
-                    "phrase": "cheap",
-                    "reason": "Conflicts with premium positioning.",
-                }
+                {"phrase": "cheap", "reason": "Off-brand.", "severity": "hard"}
             ],
-            positioning_notes="Quiet authority.",
+        )
+        VoiceExample.objects.create(
+            voice=voice,
+            kind=VoiceExample.Kind.DO,
+            text="We prepared three considered options.",
+            annotation="Specific and calm.",
         )
         brief = ContentBrief.objects.create(
             workspace=self.workspace,
@@ -271,9 +288,11 @@ class MockAIServiceTests(TestCase):
 
         self.assertIn("Announce a private preview.", provider.prompt)
         self.assertIn("linkedin", provider.prompt)
+        self.assertIn("Prompt Voice", provider.prompt)
         self.assertIn("Premium founders", provider.prompt)
         self.assertIn("clientele", provider.prompt)
         self.assertIn("cheap", provider.prompt)
+        self.assertIn("We prepared three considered options.", provider.prompt)
         run = AIRun.objects.get()
         self.assertEqual(
             run.input_data["brief"]["content_objective"],
@@ -281,10 +300,16 @@ class MockAIServiceTests(TestCase):
         )
         self.assertEqual(run.input_data["channel"], ContentBrief.Channel.LINKEDIN)
         self.assertEqual(
-            run.input_data["brand_profile"]["preferred_vocabulary"][0][
-                "preferred_term"
-            ],
+            run.input_data["voice"]["preferred_vocabulary"][0]["term"],
             "clientele",
+        )
+        self.assertEqual(
+            run.input_data["effective_tone"],
+            {"funny": 50, "casual": 50, "irreverent": 50, "enthusiastic": 50},
+        )
+        self.assertEqual(
+            run.input_data["audience_segment"]["name"],
+            "Premium founders",
         )
 
     @override_settings(OLLAMA_MODEL="")
@@ -397,6 +422,13 @@ class BrandVoiceExtractionAPITests(APITestCase):
         self.assertTrue(suggestions.voice_summary)
         self.assertTrue(0 <= suggestions.tone.funny <= 100)
         self.assertGreaterEqual(len(suggestions.examples), 6)
+
+        voice = BrandVoice.objects.get(id=response.data["voice"]["id"])
+        self.assertEqual(voice.brand_profile, self.profile)
+        self.assertEqual(response.data["voice"]["version"], voice.version)
+        # First extraction for a profile with no active voice auto-activates.
+        self.assertTrue(response.data["voice"]["isActive"])
+        self.assertEqual(voice.examples.count(), len(suggestions.examples))
 
     def test_unauthenticated_request_is_rejected(self):
         response = self.client.post(BRAND_EXTRACT_URL, self.payload(), format="json")
@@ -683,19 +715,11 @@ class DraftGenerationAPITests(APITestCase):
             )
             self.assertIn(run.input_data["channel"], channels)
             self.assertEqual(
-                run.input_data["brand_profile"]["audience"],
-                "Premium founders",
+                run.input_data["brand_profile"]["name"],
+                "Draft Voice",
             )
-            self.assertEqual(
-                run.input_data["brand_profile"]["preferred_vocabulary"][0][
-                    "preferred_term"
-                ],
-                "clientele",
-            )
-            self.assertEqual(
-                run.input_data["brand_profile"]["banned_phrases"][0]["phrase"],
-                "cheap",
-            )
+            # No extracted voice exists yet, so voice context is empty.
+            self.assertEqual(run.input_data["voice"], {})
 
     def test_unauthenticated_request_is_rejected(self):
         response = self.client.post(DRAFT_GENERATE_URL, self.payload(), format="json")
@@ -825,3 +849,172 @@ class SchemaAndPromptTests(TestCase):
     def test_prompts_fall_back_without_a_brand_name(self):
         prompt = prompts.brand_voice_extraction_prompt({"brand_profile": {}})
         self.assertIn("this brand", prompt)
+
+
+class VoiceDnaServiceTests(TestCase):
+    """Slice 3: versioned extraction, persisted enforcement, effective tone."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(username="dna_user", password="pass")
+        self.workspace = Workspace.objects.create(name="DNA Workspace")
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace, name="Maison Calme"
+        )
+        self.provider = MockProvider()
+
+    def extract(self, **kwargs):
+        return extract_brand_voice(
+            self.workspace,
+            self.profile,
+            assets=[],
+            user=self.user,
+            provider=self.provider,
+            **kwargs,
+        )
+
+    def test_extraction_creates_next_version_with_examples(self):
+        _result, v1, _run = self.extract()
+        result, v2, _run = self.extract()
+
+        self.assertEqual((v1.version, v2.version), (1, 2))
+        v1.refresh_from_db()
+        # v1 auto-activated (no active voice existed); v2 stays inactive.
+        self.assertTrue(v1.is_active)
+        self.assertFalse(v2.is_active)
+        self.assertEqual(v2.examples.count(), len(result.examples))
+        self.assertEqual(
+            v2.examples.filter(kind=VoiceExample.Kind.DO).count(),
+            sum(1 for e in result.examples if e.kind == "do"),
+        )
+        self.assertEqual(v2.tone_casual, result.tone.casual)
+        self.assertEqual(v2.preferred_vocabulary[0]["term"], "practical clarity")
+        self.assertEqual(v2.banned_phrases[0]["severity"], "soft")
+        self.assertEqual(v2.extraction_confidence, result.confidence)
+
+    def test_extraction_with_activate_swaps_active_voice(self):
+        _result, v1, _run = self.extract()
+        _result, v2, _run = self.extract(activate=True)
+
+        v1.refresh_from_db()
+        v2.refresh_from_db()
+        self.assertFalse(v1.is_active)
+        self.assertTrue(v2.is_active)
+        self.assertEqual(self.profile.active_voice, v2)
+
+    def test_extraction_defaults_to_ready_assets(self):
+        ready = BrandAsset.objects.create(
+            brand_profile=self.profile,
+            title="Ready sample",
+            content="Calm, specific copy.",
+            status=BrandAsset.AssetStatus.READY,
+        )
+        BrandAsset.objects.create(
+            brand_profile=self.profile,
+            title="Excluded sample",
+            content="Stale copy.",
+            status=BrandAsset.AssetStatus.EXCLUDED,
+        )
+
+        _result, voice, run = extract_brand_voice(
+            self.workspace,
+            self.profile,
+            user=self.user,
+            provider=self.provider,
+        )
+
+        self.assertEqual(list(voice.extracted_from.all()), [ready])
+        self.assertEqual(len(run.input_data["assets"]), 1)
+
+    def test_review_voice_persists_audit_score(self):
+        _result, voice, _run = self.extract()
+        draft_text = "A considered launch note for existing clients." * 20
+
+        result, run = review_voice(
+            self.workspace,
+            draft_text,
+            voice,
+            channel="linkedin",
+            user=self.user,
+            provider=self.provider,
+        )
+
+        score = VoiceAuditScore.objects.get()
+        self.assertEqual(score.voice, voice)
+        self.assertEqual(score.channel, "linkedin")
+        self.assertEqual(score.overall_score, result.overall_score)
+        self.assertEqual(
+            set(score.dimension_scores),
+            {"tone_alignment", "vocabulary", "sentence_style", "claims", "channel_fit"},
+        )
+        self.assertEqual(len(score.violations), len(result.violations))
+        self.assertEqual(score.violations[0]["severity"], "soft")
+        self.assertEqual(score.ai_run, run)
+        self.assertEqual(len(score.draft_excerpt), 500)
+
+    def test_effective_tone_applies_and_clamps_channel_deltas(self):
+        voice = BrandVoice.objects.create(
+            brand_profile=self.profile,
+            version=1,
+            tone_funny=95,
+            tone_casual=10,
+            tone_irreverent=40,
+            tone_enthusiastic=60,
+        )
+        ChannelStyle.objects.create(
+            brand_profile=self.profile,
+            channel="instagram",
+            tone_funny_delta=20,
+            tone_casual_delta=-30,
+            tone_irreverent_delta=5,
+            tone_enthusiastic_delta=0,
+        )
+
+        self.assertEqual(
+            _effective_tone(voice, "instagram"),
+            {"funny": 100, "casual": 0, "irreverent": 45, "enthusiastic": 60},
+        )
+        # No style for the channel: base sliders pass through.
+        self.assertEqual(
+            _effective_tone(voice, "blog"),
+            {"funny": 95, "casual": 10, "irreverent": 40, "enthusiastic": 60},
+        )
+
+    def test_voice_examples_context_prefers_channel_matches(self):
+        voice = BrandVoice.objects.create(brand_profile=self.profile, version=1)
+        linkedin_do = VoiceExample.objects.create(
+            voice=voice,
+            kind=VoiceExample.Kind.DO,
+            text="LinkedIn-specific opener.",
+            annotation="Channel match.",
+            channel="linkedin",
+        )
+        VoiceExample.objects.create(
+            voice=voice,
+            kind=VoiceExample.Kind.DO,
+            text="General opener.",
+            annotation="Fallback.",
+        )
+
+        examples = _voice_examples_context(voice, "linkedin", limit_per_kind=1)
+        self.assertEqual(examples[0]["text"], linkedin_do.text)
+
+        general = _voice_examples_context(voice, "", limit_per_kind=1)
+        self.assertEqual(general[0]["text"], "General opener.")
+
+    def test_review_compliance_includes_claim_boundaries_from_voice(self):
+        _result, voice, _run = self.extract()
+        provider = RecordingProvider()
+
+        _result, run = review_compliance(
+            self.workspace,
+            "This will double your revenue.",
+            user=self.user,
+            provider=provider,
+            voice=voice,
+        )
+
+        self.assertIn("Never promise performance outcomes.", provider.prompt)
+        self.assertEqual(
+            run.input_data["claim_boundaries"],
+            voice.claim_boundaries,
+        )
