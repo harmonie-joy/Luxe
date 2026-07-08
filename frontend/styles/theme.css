@@ -1,26 +1,111 @@
+/* Luxe Ether — tokens 1:1 from docs/reference/Design.md frontmatter. Do not invent values. */
+@theme {
+  --color-surface: #f7f9fb;
+  --color-surface-dim: #d8dadc;
+  --color-surface-bright: #f7f9fb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f2f4f6;
+  --color-surface-container: #eceef0;
+  --color-surface-container-high: #e6e8ea;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-surface: #191c1e;
+  --color-on-surface-variant: #48464d;
+  --color-inverse-surface: #2d3133;
+  --color-inverse-on-surface: #eff1f3;
+  --color-outline: #79767e;
+  --color-outline-variant: #c9c5ce;
+  --color-surface-tint: #605a7c;
+  --color-primary: #605a7c;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #e0d7ff;
+  --color-on-primary-container: #625c7e;
+  --color-inverse-primary: #cac1e8;
+  --color-secondary: #755849;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #ffd8c4;
+  --color-on-secondary-container: #795c4d;
+  --color-tertiary: #506351;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #cce2cb;
+  --color-on-tertiary-container: #526553;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+  --color-primary-fixed: #e6deff;
+  --color-primary-fixed-dim: #cac1e8;
+  --color-on-primary-fixed: #1c1735;
+  --color-on-primary-fixed-variant: #484263;
+  --color-secondary-fixed: #ffdbc9;
+  --color-secondary-fixed-dim: #e4bfac;
+  --color-on-secondary-fixed: #2b170b;
+  --color-on-secondary-fixed-variant: #5b4132;
+  --color-tertiary-fixed: #d2e8d1;
+  --color-tertiary-fixed-dim: #b7ccb6;
+  --color-on-tertiary-fixed: #0e1f11;
+  --color-on-tertiary-fixed-variant: #384b3a;
+  --color-background: #f7f9fb;
+  --color-on-background: #191c1e;
+  --color-surface-variant: #e0e3e5;
+  --color-muted-blue: #d1e3ff;
+  --color-luxe-text: #1a1a1a;
+  --color-subtle-grey: #6b7280;
+  --color-glass-surface: rgba(255, 255, 255, 0.4);
+
+  /* rounded: scale — drives Tailwind rounded-* utilities */
+  --radius-sm: 0.5rem;
+  --radius: 1rem;
+  --radius-md: 1.5rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+  --radius-full: 9999px;
+}
+
 :root {
-  --color-background: #fcf9f8;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f6f3f2;
-  --color-surface-subtle: #f0edec;
-  --color-surface-strong: #e5e2e1;
-  --color-text-primary: #1c1b1b;
-  --color-text-secondary: #4e4639;
-  --color-text-muted: #7f7667;
-  --color-brand: #775a19;
-  --color-brand-muted: #c5a059;
-  --color-brand-soft: #ffdea5;
-  --color-border: #d1c5b4;
-  --color-border-subtle: #e5e2e1;
-  --status-success: #2d5a27;
-  --status-warning: #b85f00;
-  --status-danger: #d32f2f;
-  --status-info: #4f6073;
-  --shadow-card: 0 1px 0 rgb(28 27 27 / 0.04);
-  --shadow-panel: 0 18px 48px rgb(49 48 48 / 0.12);
-  --radius-card: 0.25rem;
-  --radius-panel: 0.5rem;
-  --radius-pill: 9999px;
+  /* Legacy aliases → Luxe Ether tokens; migrate luxe-* classes to the real names, then delete. */
+  --color-text-primary: var(--color-luxe-text);
+  --color-text-secondary: var(--color-on-surface-variant);
+  --color-text-muted: var(--color-subtle-grey);
+  --color-surface-muted: var(--color-surface-container-low);
+  --color-surface-subtle: var(--color-surface-container);
+  --color-surface-strong: var(--color-surface-container-highest);
+  --color-brand: var(--color-primary);
+  --color-brand-muted: var(--color-primary-fixed-dim);
+  --color-brand-soft: var(--color-primary-container);
+  --color-border: var(--color-outline-variant);
+  --color-border-subtle: var(--color-surface-variant);
+  --status-success: var(--color-tertiary);
+  --status-warning: var(--color-secondary);
+  --status-danger: var(--color-error);
+  --status-info: var(--color-on-surface-variant);
+
+  /* Glassmorphism (Design.md "Elevation & Depth") */
+  --glass-surface: var(--color-glass-surface);
+  --glass-surface-strong: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-blur: 20px;
+
+  /* Ambient glows: soft, low-opacity, tinted toward surface-tint — no hard black shadows */
+  --shadow-card: 0 4px 24px rgb(96 90 124 / 0.08);
+  --shadow-panel: 0 12px 48px rgb(96 90 124 / 0.14);
+
+  /* Ethereal background gradient: Soft Lavender / Muted Blue / Sunset Peach washes */
+  --gradient-ambient:
+    radial-gradient(110% 80% at 12% 0%, var(--color-primary-container) 0%, transparent 55%),
+    radial-gradient(90% 70% at 88% 12%, var(--color-muted-blue) 0%, transparent 50%),
+    radial-gradient(100% 80% at 50% 100%, var(--color-secondary-container) 0%, transparent 60%);
+
+  --radius-card: var(--radius-md);
+  --radius-panel: var(--radius-lg);
+  --radius-pill: var(--radius-full);
+
+  /* spacing: block from Design.md (8px base unit) */
+  --space-unit: 8px;
+  --space-container-desktop: 64px;
+  --space-container-mobile: 24px;
+  --space-gutter: 32px;
+  --space-section-gap: 120px;
+
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -47,27 +132,32 @@
   --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* Design.md defines no dark palette; derived from its inverse-* / *-fixed-dim tokens only. */
 .dark,
 [data-theme="dark"] {
-  --color-background: #121111;
-  --color-surface: #1c1b1b;
-  --color-surface-muted: #242222;
-  --color-surface-subtle: #313030;
-  --color-surface-strong: #4e4639;
-  --color-text-primary: #f3f0ef;
-  --color-text-secondary: #dcd9d9;
-  --color-text-muted: #b9afa0;
-  --color-brand: #e9c176;
-  --color-brand-muted: #c5a059;
-  --color-brand-soft: #4e3700;
-  --color-border: rgb(243 240 239 / 0.18);
-  --color-border-subtle: rgb(243 240 239 / 0.1);
-  --status-success: #80b275;
-  --status-warning: #f3a13a;
-  --status-danger: #ff7a70;
-  --status-info: #b7c8de;
-  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.04);
-  --shadow-panel: 0 24px 60px rgb(0 0 0 / 0.35);
+  --color-background: var(--color-inverse-surface);
+  --color-surface: var(--color-inverse-surface);
+  --color-surface-muted: rgb(239 241 243 / 0.06);
+  --color-surface-subtle: rgb(239 241 243 / 0.1);
+  --color-surface-strong: rgb(239 241 243 / 0.16);
+  --color-text-primary: var(--color-inverse-on-surface);
+  --color-text-secondary: var(--color-outline-variant);
+  --color-text-muted: var(--color-outline);
+  --color-brand: var(--color-inverse-primary);
+  --color-brand-muted: var(--color-primary-fixed-dim);
+  --color-brand-soft: var(--color-on-primary-fixed-variant);
+  --color-border: rgb(239 241 243 / 0.18);
+  --color-border-subtle: rgb(239 241 243 / 0.1);
+  --status-success: var(--color-tertiary-fixed-dim);
+  --status-warning: var(--color-secondary-fixed-dim);
+  --status-danger: var(--color-error-container);
+  --status-info: var(--color-muted-blue);
+  --glass-surface: rgb(45 49 51 / 0.4);
+  --glass-surface-strong: rgb(45 49 51 / 0.7);
+  --glass-border: rgb(239 241 243 / 0.18);
+  --gradient-ambient: none;
+  --shadow-card: 0 4px 24px rgb(0 0 0 / 0.2);
+  --shadow-panel: 0 12px 48px rgb(0 0 0 / 0.3);
 }
 
 @layer base {
@@ -78,7 +168,9 @@
   }
 
   body {
-    background: var(--color-background);
+    background-color: var(--color-background);
+    background-image: var(--gradient-ambient);
+    background-attachment: fixed;
     color: var(--color-text-primary);
     font-family: var(--font-luxe-sans, var(--font-geist-sans), Arial, sans-serif);
   }
