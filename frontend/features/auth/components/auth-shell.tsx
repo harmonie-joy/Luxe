@@ -55,23 +55,23 @@ export function AuthShell({ mode }: AuthShellProps) {
 
   return (
     <main
-      className="h-screen overflow-y-auto bg-[var(--color-background)] px-5 py-8 text-[var(--color-text-primary)] md:px-16"
+      className="h-screen overflow-y-auto bg-[--color-luxe-background] px-5 py-8 text-luxe-text-primary md:px-16"
       data-theme="dark"
     >
       <div className="mx-auto flex min-h-full w-full max-w-6xl items-center justify-center">
         <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
           <section className="max-w-2xl space-y-8">
             <Link
-              className="luxe-focus-ring inline-block rounded-sm font-[var(--font-luxe-serif)] text-4xl leading-none tracking-[-0.04em] text-[var(--color-brand)]"
+              className="luxe-focus-ring inline-block rounded-sm font-(--font-luxe-serif) text-4xl leading-none tracking-[-0.04em] text-luxe-brand"
               href={APP_ROUTES.home}
             >
               THE LUXE
             </Link>
             <div className="space-y-5">
-              <h1 className="font-[var(--font-luxe-serif)] text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">
+              <h1 className="font-(--font-luxe-serif) text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">
                 {isSignup ? "Start your content cockpit." : "Welcome back."}
               </h1>
-              <p className="max-w-xl text-base leading-7 text-[var(--color-text-secondary)] md:text-lg">
+              <p className="max-w-xl text-base leading-7 text-luxe-text-secondary md:text-lg">
                 {isSignup
                   ? "Create a workspace, shape your brand voice, and move from homepage to working product flow."
                   : "Use the demo account or your own credentials to enter the THE LUXE workspace."}
@@ -128,7 +128,7 @@ export function AuthShell({ mode }: AuthShellProps) {
             </label>
 
             {message ? (
-              <p className="text-sm leading-6 text-[var(--status-danger)]">{message}</p>
+              <p className="text-sm leading-6 text-luxe-danger">{message}</p>
             ) : null}
 
             <button
@@ -146,7 +146,7 @@ export function AuthShell({ mode }: AuthShellProps) {
             <p className="luxe-form-help text-center">
               {isSignup ? "Already have access? " : "Need access? "}
               <Link
-                className="luxe-focus-ring rounded-sm font-semibold text-[var(--color-brand)]"
+                className="luxe-focus-ring rounded-sm font-semibold text-luxe-brand"
                 href={isSignup ? APP_ROUTES.login : APP_ROUTES.signup}
               >
                 {isSignup ? "Sign in" : "Create an account"}
