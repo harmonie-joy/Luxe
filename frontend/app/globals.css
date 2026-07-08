@@ -14,6 +14,7 @@
   --color-luxe-warning: var(--status-warning);
   --color-luxe-danger: var(--status-danger);
   --color-luxe-info: var(--status-info);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-luxe-sans);
+  --font-serif: var(--font-luxe-serif);
   --font-mono: var(--font-geist-mono);
 }
