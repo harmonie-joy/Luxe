@@ -210,7 +210,18 @@ Frontend:
 - `backend/audit/`: decide whether audit logs are manually posted or automatically created by domain actions.
 - `frontend/types/brand-profile.ts` and `frontend/types/content.ts`: review UI-only comment/score/user-ish types before treating them as API contracts.
 
-## 12. Final Recommendation
+## 12. Known Gaps (Voice DNA architecture, 2026-07-07)
+
+Deliberately out of scope for the structured Voice DNA upgrade; do not build
+without explicit scoping:
+
+- Positioning-audit AI task type (scoring drafts/brands against the structured positioning fields).
+- Brand-from-idea generative flow (creating a BrandProfile from a prompt instead of samples).
+- Website crawling to populate `crawled` BrandAssets (the source type exists; no crawler does).
+- New frontend screens for voice versions, segments, channel styles, or audit history — existing screens were only kept compiling against the new types.
+- Dropping the deprecated flat BrandProfile fields (`audience`, `tone`, `preferred_vocabulary`, `banned_phrases`, `positioning_notes`); they remain until serializers and frontend stop reading them.
+
+## 13. Final Recommendation
 
 Build next: a persisted Create Brief -> Draft Studio API-connected slice, scoped to the active workspace and using the existing content brief/draft APIs.
 

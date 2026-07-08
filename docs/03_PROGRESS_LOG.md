@@ -785,6 +785,29 @@ Decision Log Update Needed:
 Next Step:
 - Unchanged: Draft Studio Core Value Loop (epic #34), starting with #35.
 
+### 2026-07-07 - Structured Voice DNA Architecture
+
+Worked On:
+- Replaced the flat brand model with the research-based Voice DNA architecture across six slices (one commit each), adapted from `docs/reference/brand-engine/`.
+
+Completed:
+- Slice 1: BrandProfile gained structured positioning, archetypes, Aaker personality sliders, and distinctive assets; new AudienceSegment, versioned BrandVoice (NN/g tone sliders, single-active constraint), VoiceExample, ChannelStyle, and VoiceAuditScore models; BrandAsset evidence fields (`source_url`, `channel`, `language`, `performance_signal`, `content_date`, `crawled`, `excluded`). Data migration seeds BrandVoice v1 + a primary AudienceSegment from the deprecated flat fields without data loss.
+- Slice 2: `llm/schemas.py` replaced with structured extraction/review shapes; all prompts moved to `llm/prompts.py`; prompts are tenant-neutral (no platform name; brand name comes from context); mock provider fixtures updated.
+- Slice 3: `llm/services.py` refactored — `_run_ai_task` always returns `(result, run)`, extraction creates voice version N+1 with examples and provenance, voice review persists VoiceAuditScore, draft generation applies effective tone (voice sliders + clamped ChannelStyle deltas) and channel-matched examples.
+- Slice 4: workspace-scoped DRF endpoints `/api/brand-voices/` (+activate), `/api/audience-segments/`, `/api/channel-styles/`, `/api/voice-examples/`, `/api/voice-audit-scores/`; extended BrandProfile/BrandAsset serializers (camelCase reads).
+- Slice 5: frontend types, API clients, and mocks mirror the new shapes; the Brand Voice AI panel displays the new suggestion shape and activates the extracted voice version; onboarding stopped writing extraction results back onto the profile.
+- Slice 6: D-0010 in `docs/02_DECISIONS.md`, module/data-flow updates in `docs/01_ARCHITECTURE.md`, Known Gaps in `docs/mvp-progress-report.md`.
+
+Verification:
+- Backend: 147 tests OK locally (same suite as `make test-be`); fresh-DB migrate clean; old-shape seeded DB migrates with correct voice/segment rows; `grep -rn "THE LUXE" backend/llm/` returns nothing.
+- Frontend: `npm run typecheck`, `npm run lint`, `npm run test` (68 tests), `npm run build` all passed. `make dev-check` passed.
+
+Decision Log Update Needed:
+- Yes — recorded as D-0010 (Structured Voice DNA architecture).
+
+Next Step:
+- Unchanged: Draft Studio Core Value Loop (epic #34); voice-version/segment/channel-style UI is deliberately deferred (see Known Gaps).
+
 ### Existing MVP Implementation Snapshot
 
 - Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.

@@ -22,11 +22,11 @@
 ### Backend
 
 - `tenancy`: Workspace and membership concepts.
-- `brand`: Brand profiles and brand assets.
+- `brand`: The structured Voice DNA brand engine — BrandProfile (structured positioning, archetypes, Aaker personality sliders, distinctive assets), AudienceSegment, versioned BrandVoice (NN/g tone sliders 0-100, behavioral voice rules, single active version per profile), VoiceExample (annotated do/don't few-shot rows), ChannelStyle (per-channel tone deltas and norms), BrandAsset (extraction evidence with source, channel, language, performance signal, and content date), and VoiceAuditScore (persisted voice-review results).
 - `content`: Content briefs, content drafts, scheduled content, and approvals.
 - `compliance`: Compliance checks and compliance issues.
 - `audit`: Audit logs.
-- `llm`: Local-first AI orchestration boundary, structured schemas, providers, and AI run tracking.
+- `llm`: Local-first AI orchestration boundary — pydantic schemas in `schemas.py`, all prompt builders in `prompts.py` (tenant-neutral: prompts reference the workspace's brand name from context, never a hardcoded name), services in `services.py`, mock/Ollama providers, and AIRun tracking. Voice extraction creates new BrandVoice versions; voice review persists VoiceAuditScore rows; draft generation applies effective tone (voice sliders + channel deltas) and channel-matched examples.
 
 ### Frontend
 
@@ -44,12 +44,14 @@ This is a compact summary of the current implemented MVP shape from `docs/mvp-pr
 
 1. A user operates inside one Workspace.
 2. The Workspace owns BrandProfiles and ContentBriefs.
-3. A ContentBrief references one BrandProfile and target channels.
-4. ContentDraft records are created per brief and channel.
-5. ComplianceCheck records evaluate drafts and own ComplianceIssue records.
-6. Approval records capture draft sign-off.
-7. Approved drafts can become ScheduledContent.
-8. Important actions should be represented in AuditLog records.
+3. A BrandProfile owns AudienceSegments, ChannelStyles, BrandAssets (extraction evidence), and versioned BrandVoices; exactly one voice can be active. Voice extraction reads the assets and creates a new BrandVoice version plus VoiceExample rows — it never overwrites the profile.
+4. A ContentBrief references one BrandProfile and target channels.
+5. ContentDraft records are created per brief and channel. Draft generation applies the active BrandVoice, the effective tone (voice sliders + ChannelStyle deltas), and channel-matched VoiceExamples.
+6. BrandVoice and VoiceAuditScore sit between BrandProfile and ContentDraft review: voice reviews score a draft against the active voice version and persist a VoiceAuditScore (dimension scores + violations, linked to the llm.AIRun).
+7. ComplianceCheck records evaluate drafts and own ComplianceIssue records.
+8. Approval records capture draft sign-off.
+9. Approved drafts can become ScheduledContent.
+10. Important actions should be represented in AuditLog records.
 
 ## API Shape
 
@@ -60,9 +62,9 @@ This is a compact summary of the current implemented MVP shape from `docs/mvp-pr
 
 ## Current Alignment
 
-- Backend models exist for Workspace, Membership, BrandProfile, BrandAsset, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, and AuditLog.
-- Backend DRF serializers and routes exist for brand profiles/assets, content briefs/drafts, scheduled content, approvals, compliance checks/issues, audit logs, and health.
-- Frontend shared types exist for workspace roles, brand profile/assets, content briefs/drafts/scheduled content/approval/audit, and compliance checks/issues.
+- Backend models exist for Workspace, Membership, BrandProfile, AudienceSegment, BrandVoice, VoiceExample, ChannelStyle, BrandAsset, VoiceAuditScore, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, AuditLog, and AIRun.
+- Backend DRF serializers and routes exist for brand profiles/assets, brand voices (with activate action), audience segments, channel styles, voice examples, voice audit scores, content briefs/drafts, scheduled content, approvals, compliance checks/issues, audit logs, and health.
+- Frontend shared types exist for workspace roles, brand profile/assets, brand voices/segments/channel styles/voice examples/audit scores, content briefs/drafts/scheduled content/approval/audit, and compliance checks/issues.
 - Mock data exists for every MVP screen and generally resembles future API responses.
 - The main gap is runtime integration: most product screens still consume mocks and do not persist create/edit/review actions.
 
