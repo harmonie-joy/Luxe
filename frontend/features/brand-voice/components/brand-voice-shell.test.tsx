@@ -72,28 +72,28 @@ describe("BrandVoiceOverviewShell", () => {
 });
 
 describe("BrandVoiceProfileShell", () => {
-  it("saves the live profile and shows it in the preview", async () => {
-    vi.mocked(brandVoiceApi.updateBrandProfile).mockResolvedValue({
-      ...mockBrandVoiceSetup.profile,
-      name: "Saved Live Voice",
-    });
+  it("lists voice versions and shows the active voice summary", () => {
+    render(<BrandVoiceProfileShell initialData={mockBrandVoiceSetup} />);
+
+    const select = screen.getByLabelText<HTMLSelectElement>(/Version/);
+    expect(select.options.length).toBe(2);
+    expect(select.options[0].text).toContain("v2 · Active");
+    expect(screen.getByText("Ready to draft")).toBeTruthy();
+    expect(screen.getAllByText("quietly confident").length).toBeGreaterThan(0);
+  });
+
+  it("activates a past version locally in demo mode without calling the API", async () => {
     const user = userEvent.setup();
-    render(
-      <BrandVoiceProfileShell
-        initialData={{ ...mockBrandVoiceSetup, source: "api" }}
-      />,
-    );
+    render(<BrandVoiceProfileShell initialData={mockBrandVoiceSetup} />);
 
-    await user.click(screen.getByRole("button", { name: "Save draft profile" }));
-
-    // The shell propagates the saved profile into the preview panel.
-    // (The form's own success message is cleared when the profile prop
-    // updates, so the propagated preview is the stable signal.)
-    expect(await screen.findByText("Saved Live Voice")).toBeTruthy();
-    expect(brandVoiceApi.updateBrandProfile).toHaveBeenCalledWith(
-      mockBrandVoiceSetup.profile.id,
-      expect.objectContaining({ name: mockBrandVoiceSetup.profile.name }),
+    await user.selectOptions(
+      screen.getByLabelText(/Version/),
+      "voice-the-luxe-v1",
     );
+    await user.click(screen.getByRole("button", { name: "Activate v1" }));
+
+    expect(await screen.findByText("Voice v1 is now active (demo).")).toBeTruthy();
+    expect(brandVoiceApi.activateBrandVoice).not.toHaveBeenCalled();
   });
 });
 

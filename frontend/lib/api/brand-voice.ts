@@ -10,11 +10,14 @@
  */
 
 import type {
+  AudienceSegment,
   BrandAsset,
   BrandAssetMediaType,
   BrandProfile,
   BrandVoice,
   BrandVoiceTone,
+  ChannelStyle,
+  VoiceExample,
 } from "@/types/brand-profile";
 
 import { httpClient } from "./http-client";
@@ -175,4 +178,30 @@ export function getBrandVoices(brandProfileId?: string): Promise<BrandVoice[]> {
 /** Makes the given voice version the active one for its profile. */
 export function activateBrandVoice(id: string): Promise<BrandVoice> {
   return httpClient.post<BrandVoice>(`/api/brand-voices/${id}/activate/`, {});
+}
+
+/** Returns do/don't voice examples, optionally scoped to one voice version. */
+export function getVoiceExamples(voiceId?: string): Promise<VoiceExample[]> {
+  const query = voiceId ? `?voice=${voiceId}` : "";
+  return httpClient.get<VoiceExample[]>(`/api/voice-examples/${query}`);
+}
+
+// ---------------------------------------------------------------------------
+// Brand-profile-level Voice DNA entities (read-only on the voice screen)
+// ---------------------------------------------------------------------------
+
+/** Returns audience segments, optionally scoped to one BrandProfile. */
+export function getAudienceSegments(
+  brandProfileId?: string,
+): Promise<AudienceSegment[]> {
+  const query = brandProfileId ? `?brand_profile=${brandProfileId}` : "";
+  return httpClient.get<AudienceSegment[]>(`/api/audience-segments/${query}`);
+}
+
+/** Returns per-channel style overrides, optionally scoped to one BrandProfile. */
+export function getChannelStyles(
+  brandProfileId?: string,
+): Promise<ChannelStyle[]> {
+  const query = brandProfileId ? `?brand_profile=${brandProfileId}` : "";
+  return httpClient.get<ChannelStyle[]>(`/api/channel-styles/${query}`);
 }

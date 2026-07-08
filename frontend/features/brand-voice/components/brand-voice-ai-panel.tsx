@@ -22,6 +22,8 @@ import type { BrandAsset, BrandProfile } from "@/types/brand-profile";
 interface BrandVoiceAiPanelProps {
   /** Receives the refreshed profile after voice activation so the shell can update visible state. */
   onProfileSaved: (profile: BrandProfile) => void;
+  /** Called after a voice version is created or activated, so hosts can refetch the version list. */
+  onVoiceChanged?: () => void;
   profile: BrandProfile;
   samples: readonly BrandAsset[];
   source: "api" | "mock";
@@ -72,6 +74,7 @@ const TONE_DIMENSION_LABELS = [
 
 export function BrandVoiceAiPanel({
   onProfileSaved,
+  onVoiceChanged,
   profile,
   samples,
   source,
@@ -151,6 +154,7 @@ export function BrandVoiceAiPanel({
       setSuggestions(result.suggestions);
       setExtractedVoice(result.voice);
       setAiRunId(result.aiRunId);
+      onVoiceChanged?.();
       if (analysis.warnings.length > 0) {
         setMessage(
           `Brand voice suggestions are ready. ${analysis.warnings
@@ -180,6 +184,7 @@ export function BrandVoiceAiPanel({
       setExtractedVoice({ id: voice.id, version: voice.version, isActive: true });
       const refreshedProfile = await getBrandProfile(profile.id);
       onProfileSaved(refreshedProfile);
+      onVoiceChanged?.();
       setMessage(`Voice version ${voice.version} is now active for this profile.`);
     } catch (err) {
       setError(getErrorMessage(err));

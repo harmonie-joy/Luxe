@@ -7,6 +7,7 @@ import type {
   ChannelStyle,
   SampleContentConfig,
   VoiceAuditScore,
+  VoiceExample,
 } from "@/types/brand-profile";
 
 export interface BrandVoicePageCopy {
@@ -360,6 +361,69 @@ export const mockChannelStyles = [
     updatedAt: "2026-06-02T15:30:00.000Z",
   },
 ] as const satisfies readonly ChannelStyle[];
+
+export const mockVoiceExamples = [
+  {
+    id: "example-do-newsletter-opener",
+    voiceId: "voice-the-luxe-v2",
+    kind: "do",
+    text: "The autumn edit is ready for you: nine pieces, each chosen for how it will live in your wardrobe, not how it photographs.",
+    annotation: "Opens with the point and grounds the claim in client benefit, not spectacle.",
+    channel: "newsletter",
+    sourceAssetId: "editorial-launch-note",
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+  {
+    id: "example-do-linkedin-craft",
+    voiceId: "voice-the-luxe-v2",
+    kind: "do",
+    text: "Hand-finished seams take our atelier partners four hours per garment. That is the difference clients feel on the second year of wear.",
+    annotation: "Proof through craft specifics — concrete nouns, no superlatives.",
+    channel: "linkedin",
+    sourceAssetId: "atelier-collection-brief",
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+  {
+    id: "example-do-invitation",
+    voiceId: "voice-the-luxe-v2",
+    kind: "do",
+    text: "Your styling appointment for the private preview is open to book through Thursday.",
+    annotation: "Invitation-led CTA; states availability without manufacturing urgency.",
+    channel: "",
+    sourceAssetId: null,
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+  {
+    id: "example-dont-urgency",
+    voiceId: "voice-the-luxe-v2",
+    kind: "dont",
+    text: "Last chance! Our must-have drop is selling out FAST — grab yours before it's gone!",
+    annotation: "Urgency-led framing, exclamation marks, and 'drop' all violate the voice.",
+    channel: "instagram",
+    sourceAssetId: null,
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+  {
+    id: "example-dont-superlative",
+    voiceId: "voice-the-luxe-v2",
+    kind: "dont",
+    text: "The most luxurious, game-changing collection we've ever created.",
+    annotation: "Stacked superlatives with no substantiating craft detail.",
+    channel: "",
+    sourceAssetId: null,
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+  {
+    id: "example-dont-affordable",
+    voiceId: "voice-the-luxe-v2",
+    kind: "dont",
+    text: "Affordable luxury for every closet.",
+    annotation: "Uses the banned phrase 'affordable luxury' and dilutes positioning.",
+    channel: "newsletter",
+    sourceAssetId: null,
+    createdAt: "2026-06-02T15:30:00.000Z",
+  },
+] as const satisfies readonly VoiceExample[];
 
 export const mockVoiceAuditScores = [
   {

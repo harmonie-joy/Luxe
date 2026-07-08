@@ -1,4 +1,8 @@
-import type { BrandAssetSourceType, BrandAssetStatus } from "@/types/brand-profile";
+import type {
+  AudienceMaturityLevel,
+  BrandAssetSourceType,
+  BrandAssetStatus,
+} from "@/types/brand-profile";
 import type {
   ComplianceCategory,
   ComplianceSeverity,
@@ -16,6 +20,14 @@ export const BRAND_ASSET_STATUS_LABELS: Record<BrandAssetStatus, string> = {
   ready: "Ready",
   needs_review: "Needs review",
   excluded: "Excluded",
+};
+
+export const AUDIENCE_MATURITY_LABELS: Record<AudienceMaturityLevel, string> = {
+  unaware: "Unaware",
+  problem_aware: "Problem-aware",
+  solution_aware: "Solution-aware",
+  product_aware: "Product-aware",
+  expert: "Expert",
 };
 
 export const CONTENT_CHANNEL_LABELS: Record<ContentChannel, string> = {

@@ -6,9 +6,9 @@ import { useEffect, useState } from "react";
 import type { BrandVoiceSetupData } from "@/data/mock-brand-profiles";
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { BrandProfileForm } from "@/features/brand-voice/components/brand-profile-form";
 import { BrandProfilePreview } from "@/features/brand-voice/components/brand-profile-preview";
 import { BrandVoiceAiPanel } from "@/features/brand-voice/components/brand-voice-ai-panel";
+import { VoiceDnaStudio } from "@/features/brand-voice/components/voice-dna-studio";
 import { SampleContentUploader } from "@/features/brand-voice/components/sample-content-uploader";
 import { getBrandVoiceSetup } from "@/features/brand-voice/data/get-brand-voice-setup";
 import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
@@ -166,23 +166,21 @@ function BrandVoiceShell({
           sampleContent={sampleContent}
           source={source}
         />
+      ) : view === "profile" ? (
+        <VoiceDnaStudio
+          onProfileSaved={handleProfileSaved}
+          profile={profile}
+          samples={sampleContent.samples}
+          source={source}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-          {view === "profile" ? (
-            <BrandProfileForm
-              onProfileSaved={handleProfileSaved}
-              profile={profile}
-              source={source}
-              toneOptions={toneOptions}
-            />
-          ) : (
-            <BrandVoiceAiPanel
-              onProfileSaved={handleProfileSaved}
-              profile={profile}
-              samples={sampleContent.samples}
-              source={source}
-            />
-          )}
+          <BrandVoiceAiPanel
+            onProfileSaved={handleProfileSaved}
+            profile={profile}
+            samples={sampleContent.samples}
+            source={source}
+          />
 
           <BrandProfilePreview
             profile={profile}
