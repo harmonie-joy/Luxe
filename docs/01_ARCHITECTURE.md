@@ -31,7 +31,7 @@
 ### Frontend
 
 - `frontend/app`: App Router pages for dashboard, brand voice, create brief, drafts, compliance, and calendar.
-- `frontend/features`: Feature-specific UI and data-loading modules.
+- `frontend/features`: Feature-specific UI and data-loading modules. `features/brand-voice` includes the Voice DNA studio (`voice-dna-studio.tsx`): a read-only, two-panel screen — left drives the workflow (version selection/activation, extraction, tabbed tone/positioning/segments/channel-style/example displays), right summarizes the active voice. Voice data is never hand-edited in the UI (D-0011).
 - `frontend/components`: Shared layout and UI building blocks.
 - `frontend/types`: Shared domain types and canonical frontend enum unions.
 - `frontend/data`: Mock data shaped like future API responses.

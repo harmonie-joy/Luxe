@@ -14,6 +14,7 @@
 | D-0008 | 2026-07-01 | Accepted | Make local-first AI orchestration part of MVP scope. | The founder requested local AI functionality now; the backend supports mock execution and optional Ollama without cloud SDKs or API keys. | `backend/llm/`, `backend/config/settings.py`, `backend/requirements/base.txt` |
 | D-0009 | 2026-07-01 | Accepted | Extend BrandAsset with minimal media metadata for text, image, and audio transcript inputs. | The Brand Voice analysis engine needs saved text, uploaded images, and transcript-labeled text without adding a separate asset model, vector store, or document parsing pipeline. | `backend/brand/models.py`, `backend/brand/migrations/0003_brandasset_media_fields.py`, `frontend/types/brand-profile.ts` |
 | D-0010 | 2026-07-07 | Accepted | Structured Voice DNA architecture. | See detailed entry below. | `backend/brand/models.py`, `backend/llm/{schemas,prompts,services}.py`, `docs/reference/brand-engine/` |
+| D-0011 | 2026-07-08 | Accepted | The Brand Voice Profile screen is a read-only Voice DNA studio; voice fields are never hand-edited in the UI. | See detailed entry below. | `frontend/features/brand-voice/components/voice-dna-studio.tsx` |
 
 ### D-0010: Structured Voice DNA architecture
 
@@ -77,6 +78,35 @@
 - Follow-up actions: drop deprecated columns after the frontend stops reading
   them; build the positioning-audit task type, brand-from-idea flow, and
   crawling for `crawled` assets only when explicitly scoped.
+
+### D-0011: Brand Voice Profile screen is read-only over extracted voice data
+
+- Date: 2026-07-08
+- Status: Accepted
+- Context: The old `/brand-voice/profile` screen was a flat editable form
+  (name, audience textarea, tone chips, vocabulary/banned-phrase textareas)
+  writing the deprecated flat BrandProfile fields. Under D-0010, voice data is
+  extracted evidence with versioning, confidence, and asset provenance —
+  hand-editing individual fields would silently detach a voice from what the
+  samples support.
+- Decision: The redesigned screen surfaces the Voice DNA read-only. The only
+  mutations are (a) selecting samples and extracting a new voice version and
+  (b) activating a version. Tone renders as `role="meter"` bars, not inputs;
+  positioning, segments, channel styles, and examples are display-only.
+  Correcting a voice means re-extracting from better samples, not typing over
+  fields. The flat profile form and its tests were deleted; editing
+  positioning/segments/channel styles belongs to future dedicated screens if
+  ever scoped.
+- Consequences: The frontend stopped writing the deprecated flat fields from
+  this screen (one less consumer blocking the D-0010 column drop). Read-only
+  UI uses native `select`/`details` elements instead of new interactive
+  slider/tab/dropdown components. Version compare is a stubbed button.
+- Related files: `frontend/features/brand-voice/components/voice-dna-studio.tsx`,
+  `voice-dna-sections.tsx`, `voice-summary-panel.tsx`, `tone-meter.tsx`,
+  `frontend/lib/api/brand-voice.ts`, `frontend/data/mock-brand-profiles.ts`.
+- Follow-up actions: version compare/diff UI; drop the remaining flat-field
+  reads (`brand-profile-preview.tsx`, overview cards) so D-0010's deprecated
+  columns can be removed.
 
 ## Decision Entry Template
 

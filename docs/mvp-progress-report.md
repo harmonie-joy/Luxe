@@ -218,7 +218,7 @@ without explicit scoping:
 - Positioning-audit AI task type (scoring drafts/brands against the structured positioning fields).
 - Brand-from-idea generative flow (creating a BrandProfile from a prompt instead of samples).
 - Website crawling to populate `crawled` BrandAssets (the source type exists; no crawler does).
-- New frontend screens for voice versions, segments, channel styles, or audit history — existing screens were only kept compiling against the new types.
+- New frontend screens for voice versions, segments, channel styles, or audit history — partially resolved 2026-07-08: `/brand-voice/profile` is now the read-only Voice DNA studio surfacing versions (with activation), tone, positioning, segments, channel styles, and examples. Still missing: version compare/diff UI, an audit-history screen, and any editing UI for segments/channel styles/positioning.
 - Dropping the deprecated flat BrandProfile fields (`audience`, `tone`, `preferred_vocabulary`, `banned_phrases`, `positioning_notes`); they remain until serializers and frontend stop reading them.
 
 ## 13. Final Recommendation

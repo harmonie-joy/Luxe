@@ -2,7 +2,7 @@
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. The Brand Voice slice is hardened and QA-accepted: `/brand-voice` exposes Live/Demo/Error state, demo mode blocks fake asset writes and fake AI analysis, saved live assets update the UI immediately, and stale selected asset IDs are reconciled after mock-to-live hydration with regression test coverage. The next feature slice is the Draft Studio Core Value Loop (epic #34): persist Draft Studio output (#35) and validate generation from saved Brand Voice context (#26). Compliance Review still needs broader runtime integration.
+THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. The Brand Voice slice is hardened and QA-accepted: `/brand-voice` exposes Live/Demo/Error state, demo mode blocks fake asset writes and fake AI analysis, saved live assets update the UI immediately, and stale selected asset IDs are reconciled after mock-to-live hydration with regression test coverage. `/brand-voice/profile` is now the read-only Voice DNA studio (D-0011): version selection and activation, extraction workflow, tone meters, and positioning/segments/channel-style/example displays, with an active-voice summary panel. The next feature slice is the Draft Studio Core Value Loop (epic #34): persist Draft Studio output (#35) and validate generation from saved Brand Voice context (#26). Compliance Review still needs broader runtime integration.
 
 ## Progress Entries
 
@@ -807,6 +807,34 @@ Decision Log Update Needed:
 
 Next Step:
 - Unchanged: Draft Studio Core Value Loop (epic #34); voice-version/segment/channel-style UI is deliberately deferred (see Known Gaps).
+
+### 2026-07-08 - Brand Voice Studio UI
+
+Worked On:
+- Redesigned `/brand-voice/profile` into the Voice DNA studio: the frontend surface for the D-0010 architecture, replacing the flat editable form.
+
+Completed:
+- Left panel: version selector (native select) with detail card (summary, confidence, extracted-from asset titles, expandable extraction notes), Activate action, and a stubbed Compare button; six tabs — Extraction (reuses `BrandVoiceAiPanel`), Tone, Positioning, Segments, Channels, Examples.
+- Right panel: active-voice summary — version badge, ready-to-draft status, confidence/provenance stats, compact tone meters, tone tags, positioning and primary-segment snapshots, do/don't counts, vocabulary/banned previews, Create-content CTA.
+- New components: `tone-meter.tsx` (read-only `role="meter"` bar with channel-delta display, e.g. "20 + 10 → 30"), `voice-dna-sections.tsx`, `voice-dna-studio.tsx`, `voice-summary-panel.tsx`. Expandables use native `<details>`.
+- API client: `getAudienceSegments`, `getChannelStyles`, `getVoiceExamples` added to `frontend/lib/api/brand-voice.ts`; `mockVoiceExamples` added; `AUDIENCE_MATURITY_LABELS` added to formatters.
+- `BrandVoiceAiPanel` gained an optional `onVoiceChanged` callback so the studio refreshes its version list after extraction/activation; the analysis route is unchanged.
+- Demo mode activates versions locally and logs the would-be API call; live mode POSTs `/api/brand-voices/{id}/activate/` and refetches profile + versions.
+- Deleted `brand-profile-form.tsx` and its test (this screen no longer writes the deprecated flat fields); replaced the profile-shell test with version-listing and demo-activation tests.
+
+Problems Found:
+- `frontend/styles/theme.css` is pinned 1:1 to `docs/reference/Design.md` and external tooling reverts additions; the tone meter uses canonical `luxe-*` Tailwind utilities instead of new theme classes. A red→blue tone accent needs Design.md tokens first.
+- `.next/dev` is root-owned from a Docker run, so local `next dev` fails with a lockfile permission error; visual verification used `next start` on the production build (`sudo chown -R mario:mario frontend/.next` would fix dev).
+
+Verification:
+- `npm run typecheck`, `npm run lint`, `npm run test` (66 tests), and `npm run build` all passed.
+- Playwright drove the served build through all six tabs and a demo activation (v1 became active; the summary panel re-rendered) with no unexpected console errors.
+
+Decision Log Update Needed:
+- Yes — recorded as D-0011 (Brand Voice Profile screen is read-only over extracted voice data).
+
+Next Step:
+- Unchanged: Draft Studio Core Value Loop (epic #34). Deferred from this slice: version compare/diff UI, segment/channel-style editing screens, per-version example browsing.
 
 ### Existing MVP Implementation Snapshot
 
