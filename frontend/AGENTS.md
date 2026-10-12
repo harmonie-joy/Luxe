@@ -17,7 +17,7 @@
 - Keep mock data in `frontend/data/mock-*.ts` aligned with backend-like API shapes.
 - Components should consume typed props.
 - Status values must match the canonical enums.
-- Routes should match the MVP flow: dashboard, brand voice, brief creation, drafting, compliance review, and calendar or approval.
+- Current target routes should serve the Creator/CEO flow from `docs/04_NEXT_ACTIONS.md`: context restore, ContentItem work, LinkedIn-first caption versions, approval, and later Gallery/Media Finalizer. The July dashboard/brand voice/create/drafts/compliance/calendar flow is reusable history, not the primary route plan.
 - Frontend-only fields should be clearly marked or avoided.
 - Forms should collect all backend-required fields.
 - Mock data should look like realistic API responses, including IDs and ISO 8601 timestamps.
@@ -68,7 +68,7 @@ The project uses the **Next.js App Router**. All routes live under `frontend/app
 - **Active route detection** must use the `isActiveRoute` helper pattern (exact match for leaf routes, `startsWith` for parent routes with an `exact` flag).
 - **Do not use the Pages Router** (`frontend/pages/`). All new routes use the App Router.
 - **Dynamic and nested routes** should follow the App Router conventions: `[param]` for dynamic segments, `(group)` for route groups without URL impact, and nested `layout.tsx` files for scoped shells.
-- **MVP route order** follows the intended flow: `/dashboard` → `/brand-voice` → `/create` → `/drafts` → `/compliance` → `/calendar`.
+- **MVP route order** should come from the scoped spec. Do not assume the old `/dashboard` -> `/brand-voice` -> `/create` -> `/drafts` -> `/compliance` -> `/calendar` flow is still canonical.
 
 ---
 

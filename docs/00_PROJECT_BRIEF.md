@@ -48,34 +48,30 @@ The repo is in an MVP-contract and scaffolding stage.
 
 ## Current Priority
 
-Connect one persisted MVP workflow slice: Create Brief -> Draft Studio -> Compliance Review, using existing backend APIs, shared frontend types, workspace scoping, and mock fallback where needed.
+M0 is this rebaseline: update project memory, classify stale issues, record the test baseline, and define implementation boundaries.
 
-## Non-Goals
+The next implementation milestone should be converted into a spec from the boundaries in `docs/04_NEXT_ACTIONS.md`. Do not start product implementation until that spec exists.
 
-- Do not add cloud AI provider integrations yet.
-- Do not add publishing integrations yet.
-- Do not add authentication unless explicitly requested for a scoped task.
-- Do not build a full agent dashboard, vector database, autonomous planner, or multi-agent orchestration system.
-- Do not introduce a parallel Organization model; Workspace is the MVP tenant root.
-- Do not import production code from `temp/`; treat `temp/` as design reference only.
+## Non-Goals For The Next Implementation Spec
 
-## Important Constraints
+- Do not rebuild the whole app or replace the Django/DRF/PostgreSQL plus Next.js architecture.
+- Do not replace Workspace/Membership with a parallel Organization tenant model.
+- Do not continue the old generic multi-channel flow as the primary MVP path.
+- Do not add direct social posting until LinkedIn-ready export and approval are stable.
+- Do not build a CapCut clone; build the bounded short-form Media Finalizer only after its spike passes.
+- Do not use production mock fallback. Demo mode must be explicit and separated.
+- Do not use founder-local Ollama as a production dependency.
+- Do not send creator/client content to AI providers until processor location, retention/training terms, and contracts are approved.
+- Do not add public media hosting or public share pages before DSA review.
+- Do not modify application source code during documentation rebaseline phases.
 
-- Bootstrap-first and validation-first.
-- Protect proprietary backend logic and compliance heuristics.
-- Keep AI local-first and the architecture repo-native until the MVP proves it needs more.
-- Never store secrets, API keys, credentials, private user data, or production tokens in docs.
-- Treat compliance features as checklist and review support, not legal certification or legal advice.
-- Keep backend models, serializers, frontend shared types, mock data, enums, and UI logic aligned in the same task when a product concept changes.
+## Product Constraints
 
-## Existing Source Material
-
-- `AGENTS.md`
-- `backend/AGENTS.md`
-- `frontend/AGENTS.md`
-- `.github/copilot-instructions.md`
-- `README.md`
-- `docs/mvp-progress-report.md`
-- `docs/prototype-audit.md`
-- `docs/the_luxe_data_model_source_of_truth.md`
-- `prompts/agent-creation.md`
+- Preserve Workspace as the tenant boundary.
+- WorkOS AuthKit is the target product authentication layer; Workspace and Membership remain authorization and tenancy.
+- AI proposes; humans approve; accepted changes are explicit state transitions.
+- Creator DNA, Voice DNA, text, media, and final outputs are non-destructive and versioned.
+- BrandAsset is evidence for DNA extraction. MediaAsset is operational creator content.
+- EU-resident data plane is the default for production account data, Creator DNA, content, media, render outputs, and approved AI processing.
+- Private, expiring review links come before public hosting.
+- First-party pilot metrics should measure time, resume friction, correction categories, and planned-content completion without sending creator content to broad analytics.

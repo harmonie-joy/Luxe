@@ -35,7 +35,7 @@ Founder Page10A composition and existing Page9 typography/card density/mobile dr
 - Confidential UX PDF remains the local verified reference at `temp/THE_LUXE_Mario_Spec.pdf.pdf` in the original workspace (physical31 preferred night;33–34 logic;35 unfinished dashboard). Keep it, the DOCX and raw renders out of Git. Durable private archival remains pending under baseline governance.
 - Preserve additive backend migrations after user writes; no rollback or migration change occurred here. Full workspace management, automatic audit logging and real AI/publishing orchestration remain separate backend/product concerns.
 
-## Do Not Start Yet
+## Best Next Task for AI
 
 Do not implement #54 within #53, or add WorkOS, CreatorDNAProposal, Gallery, Media Finalizer, caption/version comparison, direct LinkedIn publishing, production hosting or another agent/state framework. Do not claim #58/#49/#51/milestone4 complete. PR3 company visibility/preview readiness remains separate; no deployment is authorized.
 

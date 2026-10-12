@@ -1,3 +1,12 @@
+## Current Backend Product Baseline
+
+- Preserve Django, Django REST Framework, PostgreSQL, and the existing app boundaries unless a scoped spec says otherwise.
+- WorkOS AuthKit is the target product authentication layer. Workspace and Membership remain THE LUXE authorization and tenant boundary.
+- The next domain additions are CreatorContext, CreatorDNAProposal, Project, ContentItem, ContentTemplate, DraftVersion, ExecutionCheckpoint, MediaAsset, MediaEdit, and MediaRenderJob.
+- BrandAsset remains evidence for Brand/Voice DNA extraction. Do not stretch it into operational gallery/render storage.
+- Production AI must record AIRun provenance, require human approval for authoritative changes, and never fall back to mock success.
+- Do not change backend application code during documentation-only rebaseline tasks.
+
 ## Backend Migration Rules
 
 - Explain every migration before creating it.
@@ -44,6 +53,17 @@ If a requested task needs new endpoints and serializers do not yet exist, propos
 
 Recommended endpoint style:
 
+- `/api/creator-context/`
+- `/api/creator-context/proposals/`
+- `/api/projects/`
+- `/api/content-items/`
+- `/api/content-items/{id}/context/`
+- `/api/content-items/{id}/checkpoint/`
+- `/api/content-templates/`
+- `/api/drafts/{id}/versions/`
+- `/api/media-assets/`
+- `/api/media-edits/`
+- `/api/media-render-jobs/`
 - `/api/workspaces/`
 - `/api/brand-profiles/`
 - `/api/brand-assets/` or `/api/sample-content/`

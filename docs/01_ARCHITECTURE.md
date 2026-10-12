@@ -5,99 +5,157 @@
 ## Tech Stack
 
 - Monorepo with `backend/`, `frontend/`, `infra/`, `docs/`, and `prompts/`.
-- Backend: Django, Django REST Framework, PostgreSQL in local Docker, local-first AI orchestration with mock and optional Ollama providers.
-- Frontend: Next.js App Router, TypeScript, Tailwind v4 token bridge, CSS custom properties in `frontend/styles/theme.css`.
-- Local workflow: Make targets and Docker Compose under `infra/docker-compose.yml`.
-- Project memory: Markdown-first docs in `docs/`, root `AGENTS.md`, tool-specific instruction files, and reusable prompts.
+- Backend: Django, Django REST Framework, PostgreSQL, local Docker, and explicit service boundaries.
+- Frontend: Next.js App Router, TypeScript, Tailwind v4 token bridge, and CSS custom properties in `frontend/styles/theme.css`.
+- AI: repo-native `llm` app with AIRun provenance, pydantic schemas, mock provider, optional local Ollama for development, and future approved EU production provider.
+- Auth target: WorkOS AuthKit for product authentication.
+- Tenancy target: Workspace and Membership remain THE LUXE authorization and tenant boundary.
+- Media target: EU object storage for original/rendered assets, non-destructive edit recipes, and server-side FFmpeg canonical render jobs.
 
-## Repository Layout
+## Current Implemented Foundation
 
-- `backend/`: Django project, app modules, models, serializers, routes, migrations, admin, and tests.
-- `frontend/`: Next.js app routes, feature components, shared UI, shared domain types, mock data, API clients, and route helpers.
-- `infra/`: local Docker Compose runtime services.
-- `docs/`: canonical project memory, progress, diagrams, audits, and technical source-of-truth documents.
-- `prompts/`: reusable AI prompts and task workflows.
-- `temp/`: design reference material only; do not import from it in production code.
+The repo already contains reusable implementation assets:
 
-## Main Modules
+- `tenancy`: Workspace and Membership.
+- `brand`: BrandProfile, AudienceSegment, versioned BrandVoice, VoiceExample, ChannelStyle, BrandAsset evidence, and VoiceAuditScore.
+- `content`: ContentBrief, ContentDraft, ScheduledContent, and Approval.
+- `compliance`: ComplianceCheck and ComplianceIssue.
+- `audit`: AuditLog.
+- `llm`: AIRun, provider abstraction, prompt/service boundaries, mock provider, optional local Ollama provider, draft generation, brand voice extraction, voice review, and compliance review plumbing.
+- `frontend`: App shell, product routes, shared domain types, API clients, mock/live state patterns, theme tokens, and focused component tests.
 
-### Backend
+Known baseline as of 2026-10-12:
 
-- `tenancy`: Workspace and membership concepts.
-- `brand`: The structured Voice DNA brand engine — BrandProfile (structured positioning, archetypes, Aaker personality sliders, distinctive assets), AudienceSegment, versioned BrandVoice (NN/g tone sliders 0-100, behavioral voice rules, single active version per profile), VoiceExample (annotated do/don't few-shot rows), ChannelStyle (per-channel tone deltas and norms), BrandAsset (extraction evidence with source, channel, language, performance signal, and content date), and VoiceAuditScore (persisted voice-review results).
-- `content`: Content briefs, content drafts, scheduled content, and approvals.
-- `compliance`: Compliance checks and compliance issues.
-- `audit`: Audit logs.
-- `llm`: Local-first AI orchestration boundary — pydantic schemas in `schemas.py`, all prompt builders in `prompts.py` (tenant-neutral: prompts reference the workspace's brand name from context, never a hardcoded name), services in `services.py`, mock/Ollama providers, and AIRun tracking. Voice extraction creates new BrandVoice versions; voice review persists VoiceAuditScore rows; draft generation applies effective tone (voice sliders + channel deltas) and channel-matched examples.
+- Backend tests pass: 147 tests.
+- `make check` fails in frontend tests because `sample-content-uploader.test.tsx` expects a `Save Image` button while the rendered UI exposes `Save File`.
+- There is an existing uncommitted application-source change in `frontend/features/brand-voice/components/sample-content-uploader.tsx`; documentation rebaseline must not touch it.
 
-### Frontend
+## Target Domain Layers
 
-- `frontend/app`: App Router pages for dashboard, brand voice, create brief, drafts, compliance, and calendar.
-- `frontend/features`: Feature-specific UI and data-loading modules. `features/brand-voice` includes the Voice DNA studio (`voice-dna-studio.tsx`): a read-only, two-panel screen — left drives the workflow (version selection/activation, extraction, tabbed tone/positioning/segments/channel-style/example displays), right summarizes the active voice. Voice data is never hand-edited in the UI (D-0011).
-- `frontend/components`: Shared layout and UI building blocks.
-- `frontend/types`: Shared domain types and canonical frontend enum unions.
-- `frontend/data`: Mock data shaped like future API responses.
-- `frontend/lib/api`: API client helpers and endpoint-specific clients.
-- `frontend/lib/routes.ts`: Route constants and navigation helpers.
+### Authentication And Tenancy
 
-## Data Flow
+- WorkOS AuthKit authenticates the person.
+- Django stores or maps the authenticated user needed for ownership, audit, and workspace membership.
+- Workspace remains the tenant root for all user-owned data.
+- Membership remains the authorization model for workspace roles.
+- Existing django-allauth signup/login implementation is superseded by the WorkOS target and should be replaced only in a scoped auth migration spec.
 
-This is a compact summary of the current implemented MVP shape from `docs/mvp-progress-report.md`. For broader conceptual diagrams and data-model review notes, reference `docs/the_luxe_data_model_source_of_truth.md`; do not duplicate its diagrams here. If the older conceptual source-of-truth language differs from the current MVP implementation, preserve Workspace as the current tenant root per `AGENTS.md` and use `docs/mvp-progress-report.md` for current-state accuracy.
+### Creator Intelligence
 
-1. A user operates inside one Workspace.
-2. The Workspace owns BrandProfiles and ContentBriefs.
-3. A BrandProfile owns AudienceSegments, ChannelStyles, BrandAssets (extraction evidence), and versioned BrandVoices; exactly one voice can be active. Voice extraction reads the assets and creates a new BrandVoice version plus VoiceExample rows — it never overwrites the profile.
-4. A ContentBrief references one BrandProfile and target channels.
-5. ContentDraft records are created per brief and channel. Draft generation applies the active BrandVoice, the effective tone (voice sliders + ChannelStyle deltas), and channel-matched VoiceExamples.
-6. BrandVoice and VoiceAuditScore sit between BrandProfile and ContentDraft review: voice reviews score a draft against the active voice version and persist a VoiceAuditScore (dimension scores + violations, linked to the llm.AIRun).
-7. ComplianceCheck records evaluate drafts and own ComplianceIssue records.
-8. Approval records capture draft sign-off.
-9. Approved drafts can become ScheduledContent.
-10. Important actions should be represented in AuditLog records.
+- CreatorContext is the approved, creator-level execution context.
+- CreatorContext may reference an active BrandProfile and BrandVoice, but it does not replace them.
+- CreatorDNAProposal records suggested context changes from interviews, assets, or observed corrections.
+- Proposed context changes require explicit accept/reject; background AI may not silently update approved CreatorContext.
+- Communication guide output is generated from approved CreatorContext plus current Brand/Voice DNA.
 
-## API Shape
+### Content Execution
 
-- Backend responses intentionally expose camelCase fields through serializers where frontend types expect them.
-- Write payloads may remain DRF-style snake_case when isolated in frontend API clients.
-- Date and datetime values should be ISO 8601 strings.
-- Workspace scoping must be preserved on all user-owned reads and writes.
+- Project is a campaign or bounded body of work.
+- ContentItem is the main workflow unit for the first release.
+- ContentTemplate stores reusable LinkedIn/content-type structures and defaults.
+- DraftVersion records caption/text versions, AI suggestions, accepted alternatives, and restore points.
+- ExecutionCheckpoint stores the resumable state: summary, last decision, open questions, workflow stage, and next action.
+- ContentBrief and ContentDraft remain reusable lower-level assets, but the user-facing MVP flow should move to Project/ContentItem and versioned captions.
 
-## Current Alignment
+### Media And Gallery
 
-- Backend models exist for Workspace, Membership, BrandProfile, AudienceSegment, BrandVoice, VoiceExample, ChannelStyle, BrandAsset, VoiceAuditScore, ContentBrief, ContentDraft, ScheduledContent, Approval, ComplianceCheck, ComplianceIssue, AuditLog, and AIRun.
-- Backend DRF serializers and routes exist for brand profiles/assets, brand voices (with activate action), audience segments, channel styles, voice examples, voice audit scores, content briefs/drafts, scheduled content, approvals, compliance checks/issues, audit logs, and health.
-- Frontend shared types exist for workspace roles, brand profile/assets, brand voices/segments/channel styles/voice examples/audit scores, content briefs/drafts/scheduled content/approval/audit, and compliance checks/issues.
-- Mock data exists for every MVP screen and generally resembles future API responses.
-- The main gap is runtime integration: most product screens still consume mocks and do not persist create/edit/review actions.
+- BrandAsset remains evidence for Brand/Voice DNA extraction.
+- MediaAsset represents operational creator media: original uploads, rendered outputs, and gallery items.
+- Original media is immutable.
+- MediaEdit stores non-destructive edit recipes.
+- MediaRenderJob produces canonical output through a server-side renderer in an EU environment.
+- Gallery starts private, organized, and review-link oriented. Public hosting is out of scope until DSA review.
 
-## Important Design Rules
+### AI And Provenance
 
-- Prefer small, reversible feature slices.
-- Keep backend models, serializers, frontend types, mock data, and UI logic aligned.
-- Do not add cloud AI, publishing, or authentication integrations unless explicitly requested.
-- Do not duplicate domain types inside feature folders.
-- Do not create migrations without explaining why.
-- Do not introduce new architecture without updating `docs/02_DECISIONS.md`.
-- Use theme tokens and `luxe-*` semantic classes on the frontend; avoid hardcoded colors in components.
-- Treat `temp/` as design reference only.
+- AIRun remains the provenance record for AI tasks.
+- AI-generated suggestions must record provider/model, source inputs, AI run ID, human review, and approved version.
+- Development can keep mock/Ollama flows.
+- Production cannot fall back to mocks and cannot depend on founder-local Ollama.
+- Production AI must run in an approved EU-controlled environment or through an approved processor configuration.
 
-## Known Gaps
+## Target Data Flow
 
-- No full workspace switcher or membership management UI yet.
-- No dashboard aggregate API.
-- Create Brief, Draft Studio, Compliance Review, Calendar, approvals, and audit surfaces are not fully API-connected in the UI.
-- No frontend tests yet.
-- No automatic audit logging from domain actions yet.
+1. A WorkOS-authenticated user enters a Workspace through Membership.
+2. The user completes or resumes Discover Me.
+3. THE LUXE presents CreatorContext and communication guide proposals for explicit approval.
+4. The user creates or resumes a Project and ContentItem.
+5. The system assembles execution context from approved CreatorContext, active BrandProfile/BrandVoice, the template, assets, current DraftVersion, previous decisions, open questions, and next action.
+6. The user edits or accepts versioned caption suggestions.
+7. If media is needed, MediaAssets are selected and finalized through a bounded Media Finalizer.
+8. Human approval marks the content item release-ready.
+9. LinkedIn-ready output/export is produced before direct publishing integrations.
+10. ExecutionCheckpoint, provenance, and pilot metrics are updated for future resume and learning.
 
-## Verification Commands
+## Target API Surface
 
-- `make dev-check`
-- `make dev`
-- `make logs`
-- `make ps`
-- `make dev-down`
-- `make test-be`
-- `make migrate`
-- `cd frontend && npm run typecheck`
-- `cd frontend && npm run lint`
-- `cd frontend && npm run build`
+The TDR sketches these API areas. Implement them only through scoped specs:
+
+- `GET /api/creator-context/`
+- `GET /api/creator-context/proposals/`
+- `POST /api/creator-context/proposals/{id}/accept/`
+- `POST /api/creator-context/proposals/{id}/reject/`
+- `POST /api/projects/`
+- `POST /api/content-items/`
+- `GET /api/content-items/{id}/context/`
+- `POST /api/content-items/{id}/checkpoint/`
+- `PATCH /api/content-items/{id}/stage/`
+- `GET /api/content-templates/`
+- `POST /api/media-assets/upload-url/`
+- `POST /api/media-assets/{id}/complete/`
+- `POST /api/media-edits/`
+- `PATCH /api/media-edits/{id}/`
+- `POST /api/media-edits/{id}/render/`
+- `GET /api/media-render-jobs/{id}/`
+- `GET /api/drafts/{id}/versions/`
+- `POST /api/drafts/{id}/versions/`
+- `POST /api/drafts/{id}/suggest-edit/`
+- `POST /api/drafts/{id}/finalize/`
+- `POST /api/share-links/`
+- `DELETE /api/share-links/{id}/`
+
+## Media Release Envelope
+
+First release support should stay narrow:
+
+- Desktop Chrome/Edge.
+- LinkedIn-first output.
+- Final video up to 30 seconds.
+- Up to 5 source clips.
+- 1080p maximum output.
+- H.264/AAC MP4 for video.
+- Explicit size, type, codec, and compatibility validation before editing.
+
+Capabilities a-f are the core pilot media scope: trim, crop/resize, captions, logo/watermark, text overlays, and basic color/filter controls.
+
+Capabilities g-j are gated: combine clips, audio/music, transitions, and timeline editing should stay feature-flagged or use a maintained SDK fallback until the spike and render regression suite prove reliability.
+
+## Production And EU Baseline
+
+- EU-resident application/database/storage is the default.
+- Uploads require signed/private access, size/type validation, checksum, failed-upload cleanup, and later malware scanning before production release.
+- Render jobs require persisted state, idempotency, retry limits, explicit failure codes, and output validation.
+- Monitoring must not log creator content.
+- User deletion/export must cover database rows, object storage, rendered outputs, share links, and downstream processors where applicable.
+- Only strictly necessary cookies/storage are enabled by default before consent/legal review.
+- Private expiring share links come before any public creator hosting.
+
+## Current Gaps To Close Through Specs
+
+- Red frontend test baseline.
+- WorkOS AuthKit migration from django-allauth signup/login.
+- CreatorContext and CreatorDNAProposal model/API.
+- Project, ContentItem, ContentTemplate, DraftVersion, and ExecutionCheckpoint model/API.
+- LinkedIn-first content workflow and context restore UI.
+- MediaAsset/Gallery upload and metadata foundation.
+- Server render worker and Media Finalizer spike.
+- EU data inventory, retention/delete/export, processor register, production no-mock policy, monitoring, backups, and rollback runbook.
+
+## Design Rules
+
+- Preserve Workspace isolation on every user-owned read/write.
+- Prefer vertical slices.
+- Keep backend models, serializers, frontend types, mock data, and tests aligned within each scoped implementation task.
+- Do not weaken security, accessibility, data-loss protection, or privacy safeguards.
+- Do not add broad abstractions before the first linked workflow needs them.
+- Update `docs/02_DECISIONS.md` when architecture, auth, data model, AI provider, EU posture, or MVP scope changes.

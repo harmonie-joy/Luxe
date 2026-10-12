@@ -54,6 +54,31 @@ Track AI-assisted changes so the repo remains auditable across Codex, Copilot, C
 
 ## Work Entries
 
+### 2026-10-12 - Codex - TDR Revision 1.1 Rebaseline And Issue Audit
+
+- Tool: Codex
+- Request: Resume THE LUXE after an implementation pause, read the approved MVP TDR PDF, run verification, audit stale July-era assumptions, update only docs/project memory, classify GitHub issues, run Ponytail review, and return spec boundaries.
+- Files changed:
+  - `AGENTS.md`
+  - `backend/AGENTS.md`
+  - `frontend/AGENTS.md`
+  - `docs/00_PROJECT_BRIEF.md`
+  - `docs/01_ARCHITECTURE.md`
+  - `docs/02_DECISIONS.md`
+  - `docs/03_PROGRESS_LOG.md`
+  - `docs/04_NEXT_ACTIONS.md`
+  - `docs/05_AI_WORK_LOG.md`
+  - `docs/agents/domain.md`
+  - `docs/agents/issue-tracker.md`
+- Summary: Rebaselined project memory to the August 12, 2026 MVP Technical Decision Record Revision 1.1: context-preserving Creator/CEO execution, WorkOS AuthKit target, Workspace/Membership tenancy, CreatorContext, Project/ContentItem, DraftVersion, ExecutionCheckpoint, MediaAsset/Gallery, bounded Media Finalizer, LinkedIn-first routing, EU baseline, AI provenance, human approval, and no production mock fallback.
+- Issue audit: Classified GitHub issues in `docs/04_NEXT_ACTIONS.md` as implemented/completed, still valid with re-scope, deferred, or superseded.
+- Verification:
+  - `make check` failed: frontend lint/typecheck passed, frontend tests had 64 passed and 2 failed in `sample-content-uploader.test.tsx` because tests expect `Save Image` while the UI renders `Save File`.
+  - `make test-be-local` passed with 147 backend tests and no Django system-check issues.
+- Human review status: Pending.
+- Decision log update needed: Completed. Added D-0012 through D-0018; marked D-0006 and D-0007 superseded.
+- Next action: Convert one recommended spec boundary from `docs/04_NEXT_ACTIONS.md` into a concrete implementation spec before touching app code.
+
 ### 2026-06-05 - Codex - Agent Memory Scaffolding
 
 - Tool: Codex

@@ -53,9 +53,38 @@ The older snapshot and entries below are historical; current priorities are in [
 
 ## Current Snapshot
 
-THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. The Brand Voice slice is hardened and QA-accepted: `/brand-voice` exposes Live/Demo/Error state, demo mode blocks fake asset writes and fake AI analysis, saved live assets update the UI immediately, and stale selected asset IDs are reconciled after mock-to-live hydration with regression test coverage. `/brand-voice/profile` is now the read-only Voice DNA studio (D-0011): version selection and activation, extraction workflow, tone meters, and positioning/segments/channel-style/example displays, with an active-voice summary panel. The next feature slice is the Draft Studio Core Value Loop (epic #34): persist Draft Studio output (#35) and validate generation from saved Brand Voice context (#26). Compliance Review still needs broader runtime integration.
+THE LUXE is rebaselined to the approved August 12, 2026 MVP Technical Decision Record Revision 1.1. The current product target is a context-preserving Creator/CEO execution system: approved CreatorContext, communication guide, Project/ContentItem workflow, versioned LinkedIn-first captions, ExecutionCheckpoint resume state, MediaAsset/Gallery, bounded Media Finalizer, explicit human approval, EU production baseline, and no production mock fallback. The existing Django/DRF/PostgreSQL plus Next.js architecture remains the foundation. Workspace/Membership remain tenancy and authorization. WorkOS AuthKit is the target product authentication layer. The July Create Brief -> Draft Studio -> Compliance -> Calendar flow is reusable implementation history, not the next primary milestone.
+
+Current verification baseline: `make check` fails because two frontend tests expect `Save Image` while the rendered uploader button is `Save File`; frontend lint/typecheck pass through `make check`; backend local tests pass with 147 tests.
 
 ## Progress Entries
+
+### 2026-10-12 - TDR Revision 1.1 Rebaseline And Issue Audit
+
+Worked On:
+- Rebaselined project memory against the August 12, 2026 MVP Technical Decision Record Revision 1.1 and Harmonie's latest Creator/CEO Builder Spec.
+
+Completed:
+- Updated `docs/00_PROJECT_BRIEF.md`, `docs/01_ARCHITECTURE.md`, `docs/02_DECISIONS.md`, and `docs/04_NEXT_ACTIONS.md`.
+- Updated root/backend/frontend agent instructions and `docs/agents/*` to point at the current org repo, TDR-era domain boundaries, and scoped spec workflow.
+- Marked django-allauth/signup-login and old Draft Studio bootstrap decisions as superseded where the WorkOS/CreatorContext TDR changes the direction.
+- Classified GitHub issues as implemented, still valid with re-scope, deferred, or superseded in `docs/04_NEXT_ACTIONS.md`.
+- Recorded recommended implementation spec boundaries.
+
+Problems Found:
+- The repo is red before new product work: `sample-content-uploader.test.tsx` expects `Save Image`; the UI renders `Save File`.
+- The private repo has moved to `harmonie-joy/Luxe`; issue tracker docs now use that org repo.
+- An application-source file is already modified in the worktree: `frontend/features/brand-voice/components/sample-content-uploader.tsx`. This documentation task did not touch it.
+
+Verification:
+- `make check` failed after frontend unit tests: 64 passed, 2 failed.
+- `make test-be-local` passed with 147 tests.
+
+Decision Log Update Needed:
+- Completed. Added D-0012 through D-0018 and marked D-0006/D-0007 superseded.
+
+Next Step:
+- Convert Spec 0 or Spec 1 from `docs/04_NEXT_ACTIONS.md` into a concrete implementation spec before touching application code.
 
 ### 2026-06-05 - Project Memory Scaffolding
 
