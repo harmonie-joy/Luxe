@@ -64,7 +64,7 @@ describe("SampleContentUploader", () => {
 
     const file = new File(["img"], "campaign.png", { type: "image/png" });
     selectFile(file);
-    await user.click(screen.getByRole("button", { name: "Save Image" }));
+    await user.click(screen.getByRole("button", { name: "Save File" }));
 
     expect(
       await screen.findByText("Image asset saved for analysis."),
@@ -87,7 +87,7 @@ describe("SampleContentUploader", () => {
     renderUploader("api");
 
     selectFile(new File(["text"], "notes.txt", { type: "text/plain" }));
-    await user.click(screen.getByRole("button", { name: "Save Image" }));
+    await user.click(screen.getByRole("button", { name: "Save File" }));
 
     expect(
       await screen.findByText(

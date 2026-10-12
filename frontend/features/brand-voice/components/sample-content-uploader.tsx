@@ -222,7 +222,7 @@ export function SampleContentUploader({
                 disabled={isSaving}
                 onClick={handleUpload}
               >
-                Save Image
+                Save File
               </button>
             </>
           ) : (
