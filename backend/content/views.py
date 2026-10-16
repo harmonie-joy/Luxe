@@ -1,15 +1,53 @@
-from django.core.exceptions import ValidationError
-from rest_framework import viewsets
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import IsAuthenticated
+import copy
+import uuid
 
-from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import F
+from rest_framework import serializers as drf_serializers, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError as APIValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from tenancy.models import Membership
+from brand.models import BrandProfile, BrandVoice
+
+from .models import (
+    Approval,
+    ContentBrief,
+    ContentDraft,
+    ContentItem,
+    ExecutionCheckpoint,
+    Project,
+    ScheduledContent,
+)
 from .serializers import (
     ApprovalSerializer,
+    CheckpointWriteSerializer,
     ContentBriefSerializer,
     ContentDraftSerializer,
+    ContentItemReadSerializer,
+    ContentItemWriteSerializer,
+    ProjectSerializer,
     ScheduledContentSerializer,
+    execution_context,
 )
+
+
+WRITE_ROLES = (Membership.Role.OWNER, Membership.Role.ADMIN, Membership.Role.EDITOR)
+
+
+def _list_workspace(request):
+    value = request.query_params.get("workspace")
+    if value is None:
+        raise APIValidationError({"workspace": "This query parameter is required."})
+    return drf_serializers.IntegerField(min_value=1).run_validation(value)
+
+
+def _require_writer(user, workspace_id):
+    if not Membership.objects.filter(user=user, workspace_id=workspace_id, role__in=WRITE_ROLES).exists():
+        raise PermissionDenied("You cannot edit content in this workspace.")
 
 
 class ContentBriefViewSet(viewsets.ModelViewSet):
@@ -238,3 +276,126 @@ class ApprovalViewSet(viewsets.ModelViewSet):
             )
 
         serializer.save()
+
+
+class ProjectViewSet(viewsets.GenericViewSet):
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Project.objects.filter(workspace__memberships__user=self.request.user)
+
+    def list(self, request):
+        workspace_id = _list_workspace(request)
+        projects = self.get_queryset().filter(workspace_id=workspace_id)
+        return Response(self.get_serializer(projects, many=True).data)
+
+    def create(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        _require_writer(request.user, serializer.validated_data["workspace"].id)
+        project = serializer.save(created_by=request.user)
+        return Response(self.get_serializer(project).data, status=status.HTTP_201_CREATED)
+
+
+class ContentItemViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ContentItem.objects.select_related("project", "brand_profile", "brand_voice").filter(
+            project__workspace__memberships__user=self.request.user,
+            brand_profile__workspace_id=F("project__workspace_id"),
+            brand_voice__brand_profile_id=F("brand_profile_id"),
+        )
+
+    def list(self, request):
+        workspace_id = _list_workspace(request)
+        items = self.get_queryset().filter(project__workspace_id=workspace_id)
+        return Response(ContentItemReadSerializer(items, many=True).data)
+
+    def retrieve(self, request, pk=None):
+        item = self.get_object()
+        return Response(execution_context(item, item.checkpoints.first()))
+
+    @action(detail=True, methods=["get"], url_path="context")
+    def context(self, request, pk=None):
+        return self.retrieve(request, pk)
+
+    def create(self, request):
+        serializer = ContentItemWriteSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        _require_writer(request.user, serializer.validated_data["project"].workspace_id)
+        with transaction.atomic():
+            profile = BrandProfile.objects.select_for_update().get(
+                pk=serializer.validated_data["brand_profile"].pk
+            )
+            voice = BrandVoice.objects.select_for_update().get(
+                pk=serializer.validated_data["brand_voice"].pk
+            )
+            if (
+                profile.workspace_id != serializer.validated_data["project"].workspace_id
+                or voice.brand_profile_id != profile.id
+                or not voice.is_active
+            ):
+                raise APIValidationError({"brand_voice": "The selected voice is no longer active for this workspace."})
+            item = serializer.save(created_by=request.user)
+            checkpoint = ExecutionCheckpoint.objects.create(
+                content_item=item,
+                revision=1,
+                client_request_id=uuid.uuid4(),
+                goal=item.goal,
+                workflow_stage=item.workflow_stage,
+                next_action=item.next_action,
+                decisions=item.decisions,
+                open_questions=item.open_questions,
+                created_by=request.user,
+            )
+        return Response(execution_context(item, checkpoint), status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["post"], url_path="checkpoint")
+    def checkpoint(self, request, pk=None):
+        item = self.get_object()
+        _require_writer(request.user, item.project.workspace_id)
+        serializer = CheckpointWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        with transaction.atomic():
+            item = self.get_queryset().select_for_update().get(pk=item.pk)
+            prior = item.checkpoints.filter(client_request_id=data["client_request_id"]).first()
+            if prior:
+                snapshot_matches = prior.revision == data["expected_revision"] + 1 and all(
+                    getattr(prior, field) == data[field]
+                    for field in ("goal", "workflow_stage", "next_action", "decisions", "open_questions")
+                )
+                if not snapshot_matches:
+                    return Response(
+                        {"code": "idempotency_key_reused", "currentRevision": item.revision},
+                        status=409,
+                    )
+                previous_item = copy.copy(item)
+                for field in ("goal", "workflow_stage", "next_action", "decisions", "open_questions"):
+                    setattr(previous_item, field, getattr(prior, field))
+                previous_item.revision = prior.revision
+                previous_item.updated_at = prior.created_at
+                return Response(execution_context(previous_item, prior), status=status.HTTP_201_CREATED)
+            if item.revision != data["expected_revision"]:
+                return Response({"code": "stale_revision", "currentRevision": item.revision}, status=409)
+            for field in ("goal", "workflow_stage", "next_action", "decisions", "open_questions"):
+                setattr(item, field, data[field])
+            item.revision += 1
+            item.save(update_fields=[
+                "goal", "workflow_stage", "next_action", "decisions",
+                "open_questions", "revision", "updated_at",
+            ])
+            checkpoint = ExecutionCheckpoint.objects.create(
+                content_item=item,
+                revision=item.revision,
+                client_request_id=data["client_request_id"],
+                goal=item.goal,
+                workflow_stage=item.workflow_stage,
+                next_action=item.next_action,
+                decisions=item.decisions,
+                open_questions=item.open_questions,
+                created_by=request.user,
+            )
+        return Response(execution_context(item, checkpoint), status=status.HTTP_201_CREATED)

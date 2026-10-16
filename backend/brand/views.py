@@ -1,6 +1,7 @@
+from django.db import transaction
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -54,7 +55,12 @@ class BrandProfileViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 "You do not have permission to move profiles into this workspace."
             )
-        serializer.save()
+        with transaction.atomic():
+            profile = BrandProfile.objects.select_for_update().get(pk=serializer.instance.pk)
+            if workspace.id != profile.workspace_id and profile.content_items.exists():
+                raise ValidationError({"workspace": "A profile linked to content items cannot move workspaces."})
+            serializer.instance = profile
+            serializer.save()
 
 
 class _ProfileScopedViewSet(viewsets.ModelViewSet):

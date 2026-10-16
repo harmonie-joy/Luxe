@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from brand.models import BrandProfile
+from brand.models import BrandProfile, BrandVoice
 from tenancy.models import Membership, Workspace
 
 
@@ -188,3 +188,87 @@ class Approval(models.Model):
 
     def __str__(self) -> str:
         return f"Approval for {self.draft} by {self.user} ({self.role})"
+
+
+class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="projects")
+    name = models.CharField(max_length=200)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+        indexes = [models.Index(fields=["workspace", "updated_at"])]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class ContentItem(models.Model):
+    class Stage(models.TextChoices):
+        IDEA = "idea", "Idea"
+        DRAFTING = "drafting", "Drafting"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="content_items")
+    brand_profile = models.ForeignKey(BrandProfile, on_delete=models.PROTECT, related_name="content_items")
+    brand_voice = models.ForeignKey(BrandVoice, on_delete=models.PROTECT, related_name="content_items")
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    title = models.CharField(max_length=200)
+    goal = models.TextField()
+    workflow_stage = models.CharField(max_length=16, choices=Stage.choices, default=Stage.IDEA)
+    next_action = models.CharField(max_length=500)
+    decisions = models.JSONField(default=list)
+    open_questions = models.JSONField(default=list)
+    revision = models.PositiveIntegerField(default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at",)
+        indexes = [models.Index(fields=["project", "updated_at"])]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(revision__gte=1), name="content_item_positive_revision"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(workflow_stage__in=["idea", "drafting"]),
+                name="content_item_ia1_stage",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class ExecutionCheckpoint(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    content_item = models.ForeignKey(ContentItem, on_delete=models.CASCADE, related_name="checkpoints")
+    revision = models.PositiveIntegerField()
+    client_request_id = models.UUIDField()
+    goal = models.TextField()
+    workflow_stage = models.CharField(max_length=16, choices=ContentItem.Stage.choices)
+    next_action = models.CharField(max_length=500)
+    decisions = models.JSONField(default=list)
+    open_questions = models.JSONField(default=list)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-revision",)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["content_item", "revision"], name="unique_item_checkpoint_revision"
+            ),
+            models.UniqueConstraint(
+                fields=["content_item", "client_request_id"],
+                name="unique_item_checkpoint_request",
+            ),
+            models.CheckConstraint(condition=models.Q(revision__gte=1), name="checkpoint_positive_revision"),
+            models.CheckConstraint(
+                condition=models.Q(workflow_stage__in=["idea", "drafting"]),
+                name="checkpoint_ia1_stage",
+            ),
+        ]
