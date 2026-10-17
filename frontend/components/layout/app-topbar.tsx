@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { APP_ROUTES, PRIMARY_NAV_ITEMS, SECONDARY_NAV_ITEMS } from "@/lib/routes";
+import { APP_ROUTES, APP_PAGE_LABELS } from "@/lib/routes";
 import type { AuthSession } from "@/types/auth";
 
 export function AppTopbar({ session }: { session?: AuthSession } = {}) {
@@ -12,13 +12,7 @@ export function AppTopbar({ session }: { session?: AuthSession } = {}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
   const workspace = session?.workspaces.find((item) => item.id === session.activeWorkspaceId);
-  const pages = [
-    ...PRIMARY_NAV_ITEMS.flatMap((item) => [...(item.children ?? []), item]),
-    ...SECONDARY_NAV_ITEMS,
-    { href: APP_ROUTES.account, label: "Account" },
-    { href: APP_ROUTES.onboarding, label: "Onboarding" },
-  ];
-  const title = pages.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.label ?? "Workspace";
+  const title = APP_PAGE_LABELS.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.label ?? "Workspace";
 
   return (
     <header className="luxe-topbar flex shrink-0 items-center justify-between gap-4 px-5 py-4 md:px-8">

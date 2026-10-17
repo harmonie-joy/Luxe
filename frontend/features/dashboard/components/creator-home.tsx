@@ -9,6 +9,7 @@ const creationPaths = [
     description: "Turn your idea into a post, one focused step at a time.",
     points: ["Start with a clear goal", "Keep your decisions together", "Pick up where you paused"],
     accent: "violet",
+    badge: "Coming next",
     icon: "M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z",
     availability: "Guided creation is coming next.",
   },
@@ -18,6 +19,7 @@ const creationPaths = [
     description: "A shorter path from a spark of an idea to a first draft.",
     points: ["Bring a simple idea", "Build on your brand voice", "Make the words your own"],
     accent: "blue",
+    badge: "Coming next",
     icon: "M13 3 5 14h6l-1 7 9-12h-6l1-6Z",
     availability: "This shortcut isn’t available yet.",
   },
@@ -27,6 +29,7 @@ const creationPaths = [
     description: "A place for the ideas and material you don’t want to lose.",
     points: ["An idea worth keeping", "Something you’ve already made", "A new starting point"],
     accent: "rose",
+    badge: "Planned",
     icon: "M8 18H6a4 4 0 0 1-1-7.9 7 7 0 0 1 13.6-1A4.5 4.5 0 0 1 18 18h-2M12 21V11m-4 4 4-4 4 4",
     availability: "Import and uploads are planned.",
   },
@@ -67,7 +70,7 @@ export function CreatorHome() {
           <SurfaceCard className={`luxe-creation-card luxe-creation-card--${path.accent} flex min-w-0 flex-col gap-5 p-6`} padding="none" key={path.title} aria-label={path.title}>
             <div className="flex items-start justify-between gap-3">
               <span className="luxe-creation-icon" aria-hidden><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round"><path d={path.icon} /></svg></span>
-              <span className="luxe-availability">{path.accent === "rose" ? "Planned" : "Coming next"}</span>
+              <span className="luxe-availability">{path.badge}</span>
             </div>
             <div className="space-y-2">
               <p className="luxe-card-kicker">{path.label}</p>

@@ -77,6 +77,7 @@
   --status-success: var(--color-tertiary);
   --status-warning: var(--color-secondary);
   --status-danger: var(--color-error);
+  --color-on-danger: var(--color-on-error);
   --status-info: var(--color-on-surface-variant);
 
   /* Glassmorphism (Design.md "Elevation & Depth") */
@@ -169,11 +170,13 @@
   --color-brand-soft: var(--color-primary-container);
   --color-border: var(--color-outline-variant);
   --color-border-subtle: var(--color-surface-variant);
+  --color-control-border: #747b91;
   --color-accent-blue: #86b7ff;
   --color-accent-rose: #dfa6ba;
   --status-success: #95d9b3;
   --status-warning: #e8c58d;
   --status-danger: #ffa9ad;
+  --color-on-danger: #2c1015;
   --status-info: var(--color-accent-blue);
   --glass-surface: var(--color-surface);
   --glass-surface-strong: var(--color-surface-bright);
@@ -464,7 +467,7 @@
 
   .luxe-field {
     background: var(--color-surface);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control-border, var(--color-border));
     border-radius: var(--radius-card);
     color: var(--color-text-primary);
     transition-duration: var(--motion-duration-fast);
@@ -473,7 +476,7 @@
   }
 
   .luxe-field::placeholder {
-    color: color-mix(in srgb, var(--color-text-muted) 72%, transparent);
+    color: var(--color-text-muted);
   }
 
   .luxe-field:focus {
@@ -695,7 +698,7 @@
   /* Secondary action button: transparent bg + 1px border (design ref: "Secondary" button style) */
   .luxe-secondary-action {
     background: transparent;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-control-border, var(--color-border));
     border-radius: var(--radius-card);
     color: var(--color-text-secondary);
     transition-duration: var(--motion-duration-fast);
@@ -709,11 +712,11 @@
     color: var(--color-text-primary);
   }
 
-  /* Danger action button: error color bg, white text (delete / destructive actions) */
+  /* Status colors need their own contrasting action foreground. */
   .luxe-danger-action {
     background: var(--status-danger);
     border-radius: var(--radius-card);
-    color: #ffffff;
+    color: var(--color-on-danger);
     transition-duration: var(--motion-duration-fast);
     transition-property: background-color, opacity;
     transition-timing-function: var(--motion-ease-standard);

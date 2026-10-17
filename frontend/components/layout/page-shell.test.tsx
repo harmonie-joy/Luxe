@@ -3,10 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { PageShell } from "@/components/layout/page-shell";
-import { mockSession } from "@/test/setup";
+import { AccountShell } from "@/features/account/components/account-shell";
+import { mockSession, router } from "@/test/setup";
 
 const pathname = vi.hoisted(() => ({ current: "/dashboard" }));
-vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.current, useRouter: () => router }));
 beforeEach(() => { pathname.current = "/dashboard"; });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -73,4 +74,23 @@ it.each(["/calendar", "/compliance/example-draft"])("identifies the existing syn
   render(<PageShell><p>Existing screen</p></PageShell>);
   await screen.findByText("Existing screen");
   expect(screen.getByRole("note").textContent).toContain("Demonstration");
+});
+
+it("shows the newly saved account name in the shell without navigation or losing form feedback", async () => {
+  pathname.current = "/account";
+  let saved = mockSession;
+  vi.stubGlobal("fetch", vi.fn(async (_url, init) => {
+    if (init.method === "PATCH") {
+      saved = { ...mockSession, user: { ...mockSession.user, displayName: "Mario Updated" } };
+    }
+    return Response.json(saved);
+  }));
+  render(<PageShell><AccountShell /></PageShell>);
+  const user = userEvent.setup();
+  const input = await screen.findByLabelText("Display name", { exact: true });
+  await user.clear(input);
+  await user.type(input, "Mario Updated");
+  await user.click(screen.getByRole("button", { name: "Save display name" }));
+  expect(await screen.findByText("Display name saved.")).toBeTruthy();
+  expect(await within(screen.getByRole("complementary")).findByText("Mario Updated")).toBeTruthy();
 });

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppTopbar } from "@/components/layout/app-topbar";
-import { getSession } from "@/lib/api/auth";
+import { AUTH_SESSION_UPDATED_EVENT, getSession } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/http-client";
 import { APP_ROUTES } from "@/lib/routes";
 import type { AuthSession } from "@/types/auth";
@@ -28,15 +28,24 @@ export function PageShell({ children }: PageShellProps) {
 
   useEffect(() => {
     let cancelled = false;
-    getSession().then((nextSession) => {
-      if (!cancelled) setResult({ pathname, session: nextSession });
-    }).catch((failure: unknown) => {
-      if (!cancelled) {
-        setResult({ pathname, error: failure instanceof ApiError && [401, 403].includes(failure.status)
-          ? "signin" : "unavailable" });
-      }
-    });
-    return () => { cancelled = true; };
+    let latestRequest = 0;
+    function readSession() {
+      const request = ++latestRequest;
+      getSession().then((nextSession) => {
+        if (!cancelled && request === latestRequest) setResult({ pathname, session: nextSession });
+      }).catch((failure: unknown) => {
+        if (!cancelled && request === latestRequest) {
+          setResult({ pathname, error: failure instanceof ApiError && [401, 403].includes(failure.status)
+            ? "signin" : "unavailable" });
+        }
+      });
+    }
+    readSession();
+    window.addEventListener(AUTH_SESSION_UPDATED_EVENT, readSession);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(AUTH_SESSION_UPDATED_EVENT, readSession);
+    };
   }, [attempt, pathname]);
 
   if (!session) {

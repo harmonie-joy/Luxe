@@ -7,6 +7,18 @@ const session = {
   activeWorkspaceId: "1",
 };
 
+function contrastRatio(foreground: string, background: string) {
+  const luminance = (color: string) => {
+    const [red, green, blue] = color.match(/[\d.]+/g)!.slice(0, 3).map((channel) => {
+      const value = Number(channel) / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    });
+    return red * 0.2126 + green * 0.7152 + blue * 0.0722;
+  };
+  const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (values[0] + 0.05) / (values[1] + 0.05);
+}
+
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/auth/me/", (route) => route.fulfill({ json: session }));
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -76,6 +88,16 @@ test("keyboard skip link reaches content and existing account/logout remain usab
   await expect(page.locator("main")).toBeFocused();
   await page.getByRole("link", { name: "Open account page" }).click();
   await expect(page.getByLabel("Display name", { exact: true })).toHaveValue("Preview Reviewer");
+  const inputColors = await page.getByLabel("Display name", { exact: true }).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.borderColor, style.backgroundColor];
+  });
+  expect(contrastRatio(inputColors[0], inputColors[1])).toBeGreaterThanOrEqual(3);
+  const dangerColors = await page.getByRole("button", { name: "Log out", exact: true }).evaluate((element) => {
+    const style = getComputedStyle(element);
+    return [style.color, style.backgroundColor];
+  });
+  expect(contrastRatio(dangerColors[0], dangerColors[1])).toBeGreaterThanOrEqual(4.5);
   await page.getByRole("button", { name: "Log out", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
 });

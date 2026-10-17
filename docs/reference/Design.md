@@ -82,6 +82,8 @@ dark-colors:
   status-success: '#95d9b3'
   status-warning: '#e8c58d'
   status-danger: '#ffa9ad'
+  on-danger: '#2c1015'
+  control-border: '#747b91'
 typography:
   display-lg:
     fontFamily: Libre Caslon Text
