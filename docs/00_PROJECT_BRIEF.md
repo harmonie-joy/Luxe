@@ -1,5 +1,7 @@
 # THE LUXE Project Brief
 
+> Historical July-era brief. Current approved MVP planning authority is the confidential `THE_LUXE_MVP_Technical_Feasibility_EU_Ready_Plan_FINAL_POLISHED.docx` (2026-08-10; founder confirmation 2026-10-16; SHA-256 `771ec02713b6a75a3015db06fd84018ac0181e40e60d98d4be912e1e0a8144ec`). Do not treat the flow or priorities below as the current backlog. See [Next Actions](04_NEXT_ACTIONS.md) and GitHub issues #49/#51/#53/#54 for the active IA-1 slice.
+
 ## Project Name
 
 THE LUXE

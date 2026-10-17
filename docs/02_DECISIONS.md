@@ -15,6 +15,13 @@
 | D-0009 | 2026-07-01 | Accepted | Extend BrandAsset with minimal media metadata for text, image, and audio transcript inputs. | The Brand Voice analysis engine needs saved text, uploaded images, and transcript-labeled text without adding a separate asset model, vector store, or document parsing pipeline. | `backend/brand/models.py`, `backend/brand/migrations/0003_brandasset_media_fields.py`, `frontend/types/brand-profile.ts` |
 | D-0010 | 2026-07-07 | Accepted | Structured Voice DNA architecture. | See detailed entry below. | `backend/brand/models.py`, `backend/llm/{schemas,prompts,services}.py`, `docs/reference/brand-engine/` |
 | D-0011 | 2026-07-08 | Accepted | The Brand Voice Profile screen is a read-only Voice DNA studio; voice fields are never hand-edited in the UI. | See detailed entry below. | `frontend/features/brand-voice/components/voice-dna-studio.tsx` |
+| D-0012 | 2026-10-17 | Accepted | An active BrandVoice is not approved context; IA-1 requires explicit version-specific human acceptance before binding a ContentItem. | Activation, AI extraction, and historical seeding do not prove creator intent. | Merged PR #56, issues #52 and #38 |
+
+### D-0012: Version-specific BrandVoice acceptance
+
+- Status: Accepted for IA-1 backend in merged PR #56; the wider Creator/CEO approval workflow remains open in #38.
+- Decision: Record the workspace, exact BrandVoice version, authenticated approving user, acceptance event, and timestamp. Approval is separate from `is_active`; existing active versions receive no synthetic approval. A ContentItem pins the selected approved version and does not follow later activation. Historical records without acceptance remain unverified.
+- Consequences: #53 must provide a human review action. No Creator DNA proposal or multi-brand identity model is decided here. Approval evidence follows its voice on intentional deletion; there is no public voice-delete endpoint, and workspace erasure remains a separate data-governance concern.
 
 ### D-0010: Structured Voice DNA architecture
 
