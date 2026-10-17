@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from tenancy.models import Membership
-from brand.models import BrandProfile, BrandVoice
+from brand.models import BrandProfile, BrandVoice, BrandVoiceApproval
 
 from .models import (
     Approval,
@@ -336,8 +336,15 @@ class ContentItemViewSet(viewsets.GenericViewSet):
                 profile.workspace_id != serializer.validated_data["project"].workspace_id
                 or voice.brand_profile_id != profile.id
                 or not voice.is_active
+                or not BrandVoiceApproval.objects.filter(
+                    voice=voice,
+                    workspace_id=profile.workspace_id,
+                    event=BrandVoiceApproval.Event.ACCEPTED,
+                ).exists()
             ):
-                raise APIValidationError({"brand_voice": "The selected voice is no longer active for this workspace."})
+                raise APIValidationError(
+                    {"brand_voice": "The selected voice is not an active, human-approved voice for this workspace."}
+                )
             item = serializer.save(created_by=request.user)
             checkpoint = ExecutionCheckpoint.objects.create(
                 content_item=item,

@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.test import RequestFactory
 from rest_framework.test import APITestCase
 
-from brand.models import BrandProfile, BrandVoice
+from brand.models import BrandProfile, BrandVoice, BrandVoiceApproval
 from tenancy.models import Membership, Workspace
 
 from .models import ContentBrief, ContentDraft, ContentItem, ExecutionCheckpoint, Project
@@ -26,6 +26,12 @@ class ExecutionAPITest(APITestCase):
         Membership.objects.create(user=self.user, workspace=self.workspace, role=Membership.Role.EDITOR)
         self.profile = BrandProfile.objects.create(workspace=self.workspace, name="Creator brand")
         self.voice = BrandVoice.objects.create(brand_profile=self.profile, version=1, is_active=True)
+        BrandVoiceApproval.objects.create(
+            workspace=self.workspace,
+            voice=self.voice,
+            approved_by=self.user,
+            approved_by_identifier=str(self.user.pk),
+        )
         self.client.force_authenticate(user=self.user)
 
     def create_project(self):
@@ -86,7 +92,10 @@ class ExecutionAPITest(APITestCase):
         second_voice = BrandVoice.objects.create(brand_profile=self.profile, version=2)
         second_voice.activate()
         restored = self.client.get(f"{ITEMS_URL}{item_id}/context/")
-        self.assertEqual(restored.data["brandVoice"], {"id": str(self.voice.id), "version": 1})
+        self.assertEqual(
+            restored.data["brandVoice"],
+            {"id": str(self.voice.id), "version": 1, "isApproved": True},
+        )
         self.assertEqual(restored.data["checkpoint"]["decisions"], ["Use the concrete example"])
         self.assertEqual(restored.data["item"]["revision"], 2)
         self.assertEqual(ExecutionCheckpoint.objects.filter(content_item_id=item_id).count(), 2)
@@ -198,6 +207,47 @@ class ExecutionAPITest(APITestCase):
         rejected = self.create_item(project_id)
         self.assertEqual(rejected.status_code, 400)
         self.assertEqual(ContentItem.objects.count(), 2)
+
+    def test_active_voice_requires_explicit_human_approval(self):
+        project_id = self.create_project()
+        BrandVoiceApproval.objects.filter(voice=self.voice).delete()
+        rejected = self.create_item(project_id)
+        self.assertEqual(rejected.status_code, 400)
+        self.assertIn("brand_voice", rejected.data)
+        self.assertEqual(ContentItem.objects.count(), 0)
+
+    def test_approval_is_pinned_to_the_accepted_voice_version(self):
+        project_id = self.create_project()
+        second_voice = BrandVoice.objects.create(brand_profile=self.profile, version=2)
+        second_voice.activate()
+        payload = {
+            "project": project_id,
+            "brand_profile": str(self.profile.id),
+            "brand_voice": str(second_voice.id),
+            "title": "Second voice post",
+            "goal": "Explain the new offer",
+            "workflow_stage": "idea",
+            "next_action": "Write an outline",
+            "decisions": [],
+            "open_questions": [],
+        }
+        rejected = self.client.post(ITEMS_URL, payload, format="json")
+        self.assertEqual(rejected.status_code, 400)
+        self.assertFalse(BrandVoiceApproval.objects.filter(voice=second_voice).exists())
+
+        approved = self.client.post(f"/api/brand-voices/{second_voice.id}/approve/")
+        self.assertEqual(approved.status_code, 201, approved.data)
+        self.assertEqual(self.client.post(ITEMS_URL, payload, format="json").status_code, 201)
+
+    def test_historical_content_item_without_approval_is_exposed_as_unverified(self):
+        project_id = self.create_project()
+        created = self.create_item(project_id)
+        self.assertEqual(created.status_code, 201)
+        BrandVoiceApproval.objects.filter(voice=self.voice).delete()
+
+        restored = self.client.get(f"{ITEMS_URL}{created.data['item']['id']}/context/")
+        self.assertEqual(restored.status_code, 200, restored.data)
+        self.assertFalse(restored.data["brandVoice"]["isApproved"])
 
     def test_missing_ids_and_unauthenticated_requests_fail_without_exposing_items(self):
         item_id = self.create_item(self.create_project()).data["item"]["id"]

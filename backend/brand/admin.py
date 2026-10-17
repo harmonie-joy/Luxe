@@ -5,6 +5,7 @@ from brand.models import (
     BrandAsset,
     BrandProfile,
     BrandVoice,
+    BrandVoiceApproval,
     ChannelStyle,
     VoiceAuditScore,
     VoiceExample,
@@ -81,6 +82,37 @@ class BrandVoiceAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("brand_profile__name",)
     readonly_fields = ("created_at",)
+
+
+@admin.register(BrandVoiceApproval)
+class BrandVoiceApprovalAdmin(admin.ModelAdmin):
+    list_display = (
+        "voice",
+        "workspace",
+        "approved_by",
+        "approved_by_identifier",
+        "event",
+        "approved_at",
+    )
+    list_filter = ("workspace", "event")
+    search_fields = ("voice__brand_profile__name", "approved_by__username")
+    readonly_fields = (
+        "voice",
+        "workspace",
+        "approved_by",
+        "approved_by_identifier",
+        "event",
+        "approved_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(VoiceExample)

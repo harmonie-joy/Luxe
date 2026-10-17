@@ -24,9 +24,18 @@ class ExecutionMigrationTest(TransactionTestCase):
         draft = ContentDraft.objects.create(brief=brief, title="Existing draft", channel="linkedin")
 
         executor = MigrationExecutor(connection)
-        executor.migrate([("content", "0005_ia1_execution_context")])
-        new_apps = executor.loader.project_state([("content", "0005_ia1_execution_context")]).apps
+        targets = [
+            ("brand", "0006_brand_voice_approval"),
+            ("content", "0005_ia1_execution_context"),
+        ]
+        executor.migrate(targets)
+        new_apps = executor.loader.project_state(targets).apps
         self.assertEqual(new_apps.get_model("content", "ContentBrief").objects.get(pk=brief.pk).content_objective, "Existing objective")
         self.assertEqual(new_apps.get_model("content", "ContentDraft").objects.get(pk=draft.pk).title, "Existing draft")
         self.assertEqual(new_apps.get_model("brand", "BrandProfile").objects.get(pk=profile.pk).name, "Existing profile")
         self.assertEqual(new_apps.get_model("brand", "BrandVoice").objects.get(pk=voice.pk).version, 1)
+        self.assertFalse(
+            new_apps.get_model("brand", "BrandVoiceApproval").objects.filter(
+                voice_id=voice.pk
+            ).exists()
+        )

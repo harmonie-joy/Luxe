@@ -6,6 +6,7 @@ from .models import (
     BrandAsset,
     BrandProfile,
     BrandVoice,
+    BrandVoiceApproval,
     ChannelStyle,
     VoiceAuditScore,
     VoiceExample,
@@ -291,6 +292,22 @@ class BrandVoiceSerializer(serializers.ModelSerializer):
             "extractionConfidence": rep["extraction_confidence"],
             "extractionNotes": rep["extraction_notes"],
             "createdAt": rep["created_at"],
+        }
+
+
+class BrandVoiceApprovalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BrandVoiceApproval
+        fields = ["id", "workspace", "voice", "approved_by", "event", "approved_at"]
+
+    def to_representation(self, instance):
+        return {
+            "id": str(instance.id),
+            "workspaceId": str(instance.workspace_id),
+            "voiceId": str(instance.voice_id),
+            "approvedById": instance.approved_by_identifier,
+            "event": instance.event,
+            "approvedAt": instance.approved_at.isoformat(),
         }
 
 

@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from brand.models import BrandVoiceApproval
+
 from .models import (
     Approval,
     ContentBrief,
@@ -303,6 +305,13 @@ class ContentItemWriteSerializer(serializers.ModelSerializer):
             )
         if not voice.is_active:
             raise serializers.ValidationError({"brand_voice": "Select the active voice version."})
+        if not voice.approvals.filter(
+            workspace_id=project.workspace_id,
+            event=BrandVoiceApproval.Event.ACCEPTED,
+        ).exists():
+            raise serializers.ValidationError(
+                {"brand_voice": "Select a human-approved voice version."}
+            )
         return attrs
 
 
@@ -352,5 +361,13 @@ def execution_context(item, checkpoint):
             "openQuestions": checkpoint.open_questions,
             "createdAt": checkpoint.created_at.isoformat(),
         },
-        "brandVoice": {"id": str(item.brand_voice_id), "version": item.brand_voice.version},
+        "brandVoice": {
+            "id": str(item.brand_voice_id),
+            "version": item.brand_voice.version,
+            "isApproved": BrandVoiceApproval.objects.filter(
+                voice_id=item.brand_voice_id,
+                workspace_id=item.project.workspace_id,
+                event=BrandVoiceApproval.Event.ACCEPTED,
+            ).exists(),
+        },
     }
