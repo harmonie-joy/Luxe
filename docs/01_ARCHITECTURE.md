@@ -1,5 +1,7 @@
 # THE LUXE Architecture
 
+> The description below records the July implementation baseline, not the approved product scope. The 2026-08-10 founder-confirmed MVP plan governs delivery; the August 12 Technical Decision Record Revision 1.1 remains a technical reference where compatible. IA-1 backend additions (Project, ContentItem, ExecutionCheckpoint, BrandVoiceApproval) merged in PR #56 on 2026-10-17. See [Next Actions](04_NEXT_ACTIONS.md) for current status.
+
 ## Tech Stack
 
 - Monorepo with `backend/`, `frontend/`, `infra/`, `docs/`, and `prompts/`.

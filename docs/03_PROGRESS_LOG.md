@@ -1,5 +1,16 @@
 # Progress Log
 
+## 2026-10-17 - IA-1 backend acceptance
+
+- Product authority: the confidential 2026-08-10 MVP plan, founder-confirmed 2026-10-16. The August 12 Revision 1.1 technical record does not supersede this product approval.
+- Independent uploader baseline repair merged as [PR #55](https://github.com/harmonie-joy/Luxe/pull/55), master merge commit `7a292d5`, after local `make check` and GitHub backend/frontend checks passed.
+- #52 backend merged in [PR #56](https://github.com/harmonie-joy/Luxe/pull/56), merge commit `3313c3b`: `ab507fe` adds Project, ContentItem, ExecutionCheckpoint, workspace-scoped APIs, revision/idempotency behavior and migrations; `6c3691e` adds explicit, version-specific BrandVoiceApproval and migration; `1487134` adds a PostgreSQL CI service and concurrent-connection test step; `c343f68` fixes its DRF client fixture; `bf441c8` serializes voice activation with item creation and adds a PostgreSQL regression test.
+- Earlier local `make check` passed. Fresh SQLite verification used the original workspace virtualenv because the isolated worktree lacks `.venv`: 56 content and 173 total backend tests passed, with 3 PostgreSQL-only skips. CI run `39068049872` passed the backend suite and four real PostgreSQL concurrency/rollback/idempotency/activation tests; frontend lint, typecheck, unit tests, build, and smoke passed. Two-axis review found an activation race, fixed in `bf441c8` and verified in PostgreSQL CI. The historical active-only approval assumption was superseded by the later Stage 3C requirement; no unresolved backend blocker remained.
+- No frontend #53, persisted browser #54, production deployment, or product-scope expansion. #52 is closed/Done with evidence; #51, #49, #38, #53, #54 and milestone #4 remain open.
+- Original local `master` and three untracked planning files, including confidential DOCX/PDF copies, were preserved. No confidential product document was staged or committed.
+
+The older snapshot and entries below are historical; current priorities are in [Next Actions](04_NEXT_ACTIONS.md).
+
 ## Current Snapshot
 
 THE LUXE has a strong MVP contract across backend and frontend. The root homepage now presents a prototype landing experience, and signup/login can create a Django session, bootstrap a workspace, and enter the dashboard. The Create Brief screen is API-connected, local AI endpoints exist for brand asset analysis, brand voice extraction, and persisted draft generation, and Draft Studio can now generate, render, edit, save, switch, and delete persisted brief-scoped drafts. The Brand Voice slice is hardened and QA-accepted: `/brand-voice` exposes Live/Demo/Error state, demo mode blocks fake asset writes and fake AI analysis, saved live assets update the UI immediately, and stale selected asset IDs are reconciled after mock-to-live hydration with regression test coverage. `/brand-voice/profile` is now the read-only Voice DNA studio (D-0011): version selection and activation, extraction workflow, tone meters, and positioning/segments/channel-style/example displays, with an active-voice summary panel. The next feature slice is the Draft Studio Core Value Loop (epic #34): persist Draft Studio output (#35) and validate generation from saved Brand Voice context (#26). Compliance Review still needs broader runtime integration.
