@@ -11,6 +11,7 @@ from brand.models import (
     BrandAsset,
     BrandProfile,
     BrandVoice,
+    BrandVoiceApproval,
     ChannelStyle,
     VoiceAuditScore,
     VoiceExample,
@@ -428,6 +429,7 @@ class BrandVoiceExtractionAPITests(APITestCase):
         self.assertEqual(response.data["voice"]["version"], voice.version)
         # First extraction for a profile with no active voice auto-activates.
         self.assertTrue(response.data["voice"]["isActive"])
+        self.assertFalse(BrandVoiceApproval.objects.filter(voice=voice).exists())
         self.assertEqual(voice.examples.count(), len(suggestions.examples))
 
     def test_unauthenticated_request_is_rejected(self):

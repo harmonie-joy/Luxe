@@ -1,6 +1,15 @@
 from rest_framework import serializers
 
-from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
+from brand.models import BrandVoiceApproval
+
+from .models import (
+    Approval,
+    ContentBrief,
+    ContentDraft,
+    ContentItem,
+    Project,
+    ScheduledContent,
+)
 
 
 class ContentBriefSerializer(serializers.ModelSerializer):
@@ -233,3 +242,132 @@ class ApprovalSerializer(serializers.ModelSerializer):
             "role": rep["role"],
             "createdAt": rep["created_at"],
         }
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Project
+        fields = ["id", "workspace", "name", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["workspace"].queryset = fields["workspace"].queryset.filter(
+            memberships__user=self.context["request"].user
+        )
+        return fields
+
+    def validate_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Project name cannot be blank.")
+        return value
+
+    def to_representation(self, instance):
+        return {
+            "id": str(instance.id),
+            "workspaceId": instance.workspace_id,
+            "name": instance.name,
+            "createdAt": instance.created_at.isoformat(),
+            "updatedAt": instance.updated_at.isoformat(),
+        }
+
+
+class ContentItemWriteSerializer(serializers.ModelSerializer):
+    goal = serializers.CharField(max_length=5000)
+    next_action = serializers.CharField(max_length=500)
+    decisions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
+    open_questions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
+
+    class Meta:
+        model = ContentItem
+        fields = [
+            "project", "brand_profile", "brand_voice", "title", "goal",
+            "workflow_stage", "next_action", "decisions", "open_questions",
+        ]
+
+    def get_fields(self):
+        fields = super().get_fields()
+        user = self.context["request"].user
+        fields["project"].queryset = fields["project"].queryset.filter(workspace__memberships__user=user)
+        fields["brand_profile"].queryset = fields["brand_profile"].queryset.filter(
+            workspace__memberships__user=user
+        )
+        fields["brand_voice"].queryset = fields["brand_voice"].queryset.filter(
+            brand_profile__workspace__memberships__user=user
+        )
+        return fields
+
+    def validate(self, attrs):
+        project, profile, voice = attrs["project"], attrs["brand_profile"], attrs["brand_voice"]
+        if profile.workspace_id != project.workspace_id or voice.brand_profile_id != profile.id:
+            raise serializers.ValidationError(
+                "Project, brand profile, and voice must belong to the same workspace and profile."
+            )
+        if not voice.is_active:
+            raise serializers.ValidationError({"brand_voice": "Select the active voice version."})
+        if not voice.approvals.filter(
+            workspace_id=project.workspace_id,
+            event=BrandVoiceApproval.Event.ACCEPTED,
+        ).exists():
+            raise serializers.ValidationError(
+                {"brand_voice": "Select a human-approved voice version."}
+            )
+        return attrs
+
+
+class CheckpointWriteSerializer(serializers.Serializer):
+    expected_revision = serializers.IntegerField(min_value=1)
+    client_request_id = serializers.UUIDField()
+    goal = serializers.CharField(max_length=5000)
+    workflow_stage = serializers.ChoiceField(choices=ContentItem.Stage.choices)
+    next_action = serializers.CharField(max_length=500)
+    decisions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
+    open_questions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
+
+
+class ContentItemReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContentItem
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        return {
+            "id": str(instance.id),
+            "projectId": str(instance.project_id),
+            "brandProfileId": str(instance.brand_profile_id),
+            "brandVoiceId": str(instance.brand_voice_id),
+            "title": instance.title,
+            "goal": instance.goal,
+            "workflowStage": instance.workflow_stage,
+            "nextAction": instance.next_action,
+            "decisions": instance.decisions,
+            "openQuestions": instance.open_questions,
+            "revision": instance.revision,
+            "createdAt": instance.created_at.isoformat(),
+            "updatedAt": instance.updated_at.isoformat(),
+        }
+
+
+def execution_context(item, checkpoint):
+    return {
+        "item": ContentItemReadSerializer(item).data,
+        "checkpoint": {
+            "id": str(checkpoint.id),
+            "revision": checkpoint.revision,
+            "goal": checkpoint.goal,
+            "workflowStage": checkpoint.workflow_stage,
+            "nextAction": checkpoint.next_action,
+            "decisions": checkpoint.decisions,
+            "openQuestions": checkpoint.open_questions,
+            "createdAt": checkpoint.created_at.isoformat(),
+        },
+        "brandVoice": {
+            "id": str(item.brand_voice_id),
+            "version": item.brand_voice.version,
+            "isApproved": BrandVoiceApproval.objects.filter(
+                voice_id=item.brand_voice_id,
+                workspace_id=item.project.workspace_id,
+                event=BrandVoiceApproval.Event.ACCEPTED,
+            ).exists(),
+        },
+    }

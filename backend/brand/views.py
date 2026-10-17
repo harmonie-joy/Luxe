@@ -1,14 +1,18 @@
-from rest_framework import viewsets
+from django.db import transaction
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from tenancy.models import Membership
 
 from .models import (
     AudienceSegment,
     BrandAsset,
     BrandProfile,
     BrandVoice,
+    BrandVoiceApproval,
     ChannelStyle,
     VoiceAuditScore,
     VoiceExample,
@@ -18,10 +22,14 @@ from .serializers import (
     BrandAssetSerializer,
     BrandProfileSerializer,
     BrandVoiceSerializer,
+    BrandVoiceApprovalSerializer,
     ChannelStyleSerializer,
     VoiceAuditScoreSerializer,
     VoiceExampleSerializer,
 )
+
+
+APPROVER_ROLES = (Membership.Role.OWNER, Membership.Role.ADMIN, Membership.Role.EDITOR)
 
 
 class BrandProfileViewSet(viewsets.ModelViewSet):
@@ -54,7 +62,17 @@ class BrandProfileViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 "You do not have permission to move profiles into this workspace."
             )
-        serializer.save()
+        with transaction.atomic():
+            profile = BrandProfile.objects.select_for_update().get(pk=serializer.instance.pk)
+            if workspace.id != profile.workspace_id and (
+                profile.content_items.exists()
+                or profile.voices.filter(approvals__isnull=False).exists()
+            ):
+                raise ValidationError(
+                    {"workspace": "A profile linked to content items or voice approvals cannot move workspaces."}
+                )
+            serializer.instance = profile
+            serializer.save()
 
 
 class _ProfileScopedViewSet(viewsets.ModelViewSet):
@@ -147,6 +165,30 @@ class BrandVoiceViewSet(viewsets.ReadOnlyModelViewSet):
         voice = self.get_object()
         voice.activate()
         return Response(self.get_serializer(voice).data)
+
+    @action(detail=True, methods=["post"])
+    def approve(self, request, pk=None):
+        voice = self.get_object()
+        with transaction.atomic():
+            profile = BrandProfile.objects.select_for_update().get(pk=voice.brand_profile_id)
+            voice = BrandVoice.objects.select_for_update().get(pk=voice.pk)
+            if not profile.workspace.memberships.filter(
+                user=request.user, role__in=APPROVER_ROLES
+            ).exists():
+                raise PermissionDenied("You do not have permission to approve this voice.")
+            approval, created = BrandVoiceApproval.objects.get_or_create(
+                voice=voice,
+                defaults={
+                    "workspace": profile.workspace,
+                    "approved_by": request.user,
+                    "approved_by_identifier": str(request.user.pk),
+                    "event": BrandVoiceApproval.Event.ACCEPTED,
+                },
+            )
+        return Response(
+            BrandVoiceApprovalSerializer(approval).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class VoiceExampleViewSet(viewsets.ReadOnlyModelViewSet):

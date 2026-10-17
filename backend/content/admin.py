@@ -1,6 +1,14 @@
 from django.contrib import admin
 
-from .models import ContentBrief, ContentDraft, ScheduledContent, Approval
+from .models import (
+    Approval,
+    ContentBrief,
+    ContentDraft,
+    ContentItem,
+    ExecutionCheckpoint,
+    Project,
+    ScheduledContent,
+)
 
 
 @admin.register(ContentBrief)
@@ -83,3 +91,17 @@ class ApprovalAdmin(admin.ModelAdmin):
         "user__email",
     )
     readonly_fields = ("created_at",)
+
+
+@admin.register(Project, ContentItem, ExecutionCheckpoint)
+class ExecutionStateAdmin(admin.ModelAdmin):
+    list_display = ("id",)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

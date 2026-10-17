@@ -12,6 +12,7 @@ from brand.models import (
     BrandAsset,
     BrandProfile,
     BrandVoice,
+    BrandVoiceApproval,
     Channel,
     ChannelStyle,
     VoiceAuditScore,
@@ -767,3 +768,95 @@ class VoiceDnaAPITest(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(profile_detail_url(self.profile.id))
         self.assertEqual(response.data["activeVoiceId"], str(self.voice.id))
+
+
+class BrandVoiceApprovalAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="voice_approver", password="pass")
+        self.viewer = User.objects.create_user(username="voice_viewer", password="pass")
+        self.other_user = User.objects.create_user(username="voice_other", password="pass")
+        self.workspace = Workspace.objects.create(name="Approval workspace")
+        self.other_workspace = Workspace.objects.create(name="Other approval workspace")
+        Membership.objects.create(
+            user=self.user, workspace=self.workspace, role=Membership.Role.EDITOR
+        )
+        Membership.objects.create(
+            user=self.viewer, workspace=self.workspace, role=Membership.Role.VIEWER
+        )
+        Membership.objects.create(user=self.other_user, workspace=self.other_workspace)
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace, name="Approved voice brand"
+        )
+        self.other_profile = BrandProfile.objects.create(
+            workspace=self.other_workspace, name="Other approved voice brand"
+        )
+        self.voice = BrandVoice.objects.create(
+            brand_profile=self.profile, version=1, is_active=True
+        )
+        self.other_voice = BrandVoice.objects.create(
+            brand_profile=self.other_profile, version=1, is_active=True
+        )
+
+    def approve_url(self, voice):
+        return f"/api/brand-voices/{voice.id}/approve/"
+
+    def test_authorized_acceptance_is_version_specific_and_idempotent(self):
+        self.client.force_authenticate(user=self.user)
+        created = self.client.post(self.approve_url(self.voice))
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertEqual(created.data["voiceId"], str(self.voice.id))
+        self.assertEqual(created.data["workspaceId"], str(self.workspace.id))
+        self.assertEqual(created.data["approvedById"], str(self.user.id))
+        self.assertEqual(created.data["event"], "accepted")
+        self.assertTrue(created.data["approvedAt"])
+        self.assertEqual(BrandVoiceApproval.objects.filter(voice=self.voice).count(), 1)
+
+        repeated = self.client.post(self.approve_url(self.voice))
+        self.assertEqual(repeated.status_code, 200, repeated.data)
+        self.assertEqual(repeated.data["id"], created.data["id"])
+        self.assertEqual(BrandVoiceApproval.objects.filter(voice=self.voice).count(), 1)
+
+    def test_viewer_cannot_accept_and_foreign_voice_is_not_exposed(self):
+        self.client.force_authenticate(user=self.viewer)
+        self.assertEqual(self.client.post(self.approve_url(self.voice)).status_code, 403)
+        self.assertFalse(BrandVoiceApproval.objects.filter(voice=self.voice).exists())
+
+        self.client.force_authenticate(user=self.user)
+        self.assertEqual(self.client.post(self.approve_url(self.other_voice)).status_code, 404)
+        self.assertFalse(BrandVoiceApproval.objects.filter(voice=self.other_voice).exists())
+
+    def test_active_or_ai_provenanced_voice_is_not_approved_without_acceptance(self):
+        self.assertTrue(self.voice.is_active)
+        self.assertFalse(BrandVoiceApproval.objects.filter(voice=self.voice).exists())
+
+    def test_acceptance_keeps_the_approver_identifier_after_account_removal(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.approve_url(self.voice))
+        self.assertEqual(response.status_code, 201, response.data)
+        approver_id = str(self.user.pk)
+        self.user.delete()
+
+        approval = BrandVoiceApproval.objects.get(voice=self.voice)
+        self.assertIsNone(approval.approved_by)
+        self.assertEqual(approval.approved_by_identifier, approver_id)
+
+    def test_profile_with_voice_approval_cannot_move_workspaces(self):
+        destination = Workspace.objects.create(name="Approval destination")
+        Membership.objects.create(
+            user=self.user, workspace=destination, role=Membership.Role.EDITOR
+        )
+        BrandVoiceApproval.objects.create(
+            workspace=self.workspace,
+            voice=self.voice,
+            approved_by=self.user,
+            approved_by_identifier=str(self.user.pk),
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(
+            profile_detail_url(self.profile.id),
+            {"workspace": destination.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.workspace_id, self.workspace.id)

@@ -30,6 +30,20 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: theluxe
+          POSTGRES_USER: theluxe
+          POSTGRES_PASSWORD: theluxe
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U theluxe -d theluxe"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
     defaults:
       run:
         working-directory: backend
@@ -45,3 +59,6 @@ jobs:
       - run: pip install -r requirements/base.txt
       - run: python manage.py check
       - run: python manage.py test
+      - run: python manage.py test content.test_execution_postgres
+        env:
+          DATABASE_URL: postgres://theluxe:theluxe@localhost:5432/theluxe

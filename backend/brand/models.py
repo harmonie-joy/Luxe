@@ -24,8 +24,9 @@ Design principles:
 
 import uuid
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 from tenancy.models import Workspace
 
@@ -362,11 +363,46 @@ class BrandVoice(models.Model):
         return f"{self.brand_profile.name} voice v{self.version}"
 
     def activate(self):
-        BrandVoice.objects.filter(
-            brand_profile=self.brand_profile, is_active=True
-        ).update(is_active=False)
-        self.is_active = True
-        self.save(update_fields=["is_active"])
+        with transaction.atomic():
+            BrandProfile.objects.select_for_update().get(pk=self.brand_profile_id)
+            BrandVoice.objects.filter(
+                brand_profile_id=self.brand_profile_id, is_active=True
+            ).update(is_active=False)
+            self.is_active = True
+            self.save(update_fields=["is_active"])
+
+
+class BrandVoiceApproval(models.Model):
+    class Event(models.TextChoices):
+        ACCEPTED = "accepted", "Accepted"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="brand_voice_approvals"
+    )
+    voice = models.ForeignKey(
+        BrandVoice, on_delete=models.CASCADE, related_name="approvals"
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="approved_brand_voices",
+    )
+    approved_by_identifier = models.CharField(max_length=255)
+    event = models.CharField(
+        max_length=16, choices=Event.choices, default=Event.ACCEPTED
+    )
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-approved_at",)
+        constraints = [
+            models.UniqueConstraint(fields=["voice"], name="unique_brand_voice_approval")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.voice} accepted"
 
 
 class VoiceExample(models.Model):
