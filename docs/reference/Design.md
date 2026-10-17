@@ -52,6 +52,36 @@ colors:
   luxe-text: '#1A1A1A'
   subtle-grey: '#6B7280'
   glass-surface: rgba(255, 255, 255, 0.4)
+# Active authenticated workspace overrides. Keep frontend theme CSS aligned.
+dark-colors:
+  background: '#0b0c10'
+  on-background: '#f4f2f9'
+  surface: '#12141c'
+  surface-dim: '#0d0e14'
+  surface-bright: '#1c1f2b'
+  surface-container-lowest: '#0d0e14'
+  surface-container-low: '#151721'
+  surface-container: '#191c27'
+  surface-container-high: '#202431'
+  surface-container-highest: '#292e3e'
+  on-surface: '#f4f2f9'
+  on-surface-variant: '#bec2d3'
+  primary: '#b79aff'
+  on-primary: '#171021'
+  primary-container: '#27203c'
+  on-primary-container: '#e6daff'
+  outline: '#939aaf'
+  outline-variant: '#3b4053'
+  surface-variant: '#242834'
+  luxe-text: '#f4f2f9'
+  subtle-grey: '#939aaf'
+  muted-blue: '#86b7ff'
+  brand-muted: '#d1bdff'
+  accent-blue: '#86b7ff'
+  accent-rose: '#dfa6ba'
+  status-success: '#95d9b3'
+  status-warning: '#e8c58d'
+  status-danger: '#ffa9ad'
 typography:
   display-lg:
     fontFamily: Libre Caslon Text
@@ -122,7 +152,15 @@ spacing:
   section-gap: 120px
 ---
 
-## Brand & Style
+## Creator workspace — active Stage 3D direction
+
+The authenticated application uses the Mario Builder Spec logical Page 9 preferred night design: deep neutral surfaces, restrained violet/blue accents, compact navigation, focused creation cards and an honest resume area. The confidential document remains a local reference and is never shipped as application imagery. The August 10 approved MVP plan governs functional scope.
+
+The `dark-colors` values above override the existing light palette through `[data-theme="dark"]`. Keep them aligned with the centralized theme CSS; the light palette below remains historical compatibility, not a second active product direction. No theme switcher is required.
+
+Use 16px cards, 20px panels and 10px controls for the night workspace. Keep the existing Inter/Libre Caslon pairing; scale the workspace title from 32px to 52px. Prioritize readable text and 44px touch targets. Borders and static low-opacity accents establish depth; no animated gradients, decorative images, or heavy glass blur. Reduced-motion preferences disable entrance animations and transitions.
+
+## Historical light reference — Brand & Style
 
 The design system is centered around the concept of "Atmospheric Zen"—a digital environment that prioritizes mental clarity, sophistication, and a sense of effortless flow. It is tailored for creative professionals and high-end lifestyle products where the experience of the interface is as important as the utility itself.
 

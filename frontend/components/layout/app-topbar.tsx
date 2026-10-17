@@ -1,149 +1,77 @@
 "use client";
 
-import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { APP_ROUTES, TOPBAR_LINKS, type TopbarLink } from "@/lib/routes";
+import { useRef, useState } from "react";
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { APP_ROUTES, PRIMARY_NAV_ITEMS, SECONDARY_NAV_ITEMS } from "@/lib/routes";
+import type { AuthSession } from "@/types/auth";
 
-function classNames(...classes: Array<string | false | undefined>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function isActiveTopbarLink(link: TopbarLink, pathname: string) {
-  return pathname === link.href || pathname.startsWith(`${link.href}/`);
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      aria-hidden
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.8"
-      viewBox="0 0 24 24"
-    >
-      <path d="m21 21-4.35-4.35" />
-      <circle cx="11" cy="11" r="7" />
-    </svg>
-  );
-}
-
-function BellIcon() {
-  return (
-    <svg
-      aria-hidden
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-      viewBox="0 0 24 24"
-    >
-      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" />
-      <path d="M10 20a2 2 0 0 0 4 0" />
-    </svg>
-  );
-}
-
-function UserIcon() {
-  return (
-    <svg
-      aria-hidden
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.7"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
-      <path d="M5 21a7 7 0 0 1 14 0" />
-    </svg>
-  );
-}
-
-const topbarActionClassName =
-  "luxe-icon-action luxe-focus-ring grid h-10 w-10 place-items-center rounded-full";
-
-interface TopbarActionProps {
-  children: ReactNode;
-  label: string;
-}
-
-function TopbarAction({ children, label }: TopbarActionProps) {
-  return (
-    <button aria-label={label} className={topbarActionClassName} type="button">
-      {children}
-    </button>
-  );
-}
-
-export function AppTopbar() {
+export function AppTopbar({ session }: { session?: AuthSession } = {}) {
   const pathname = usePathname();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
+  const workspace = session?.workspaces.find((item) => item.id === session.activeWorkspaceId);
+  const pages = [
+    ...PRIMARY_NAV_ITEMS.flatMap((item) => [...(item.children ?? []), item]),
+    ...SECONDARY_NAV_ITEMS,
+    { href: APP_ROUTES.account, label: "Account" },
+    { href: APP_ROUTES.onboarding, label: "Onboarding" },
+  ];
+  const title = pages.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.label ?? "Workspace";
 
   return (
-    <header className="luxe-topbar sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b px-4 backdrop-blur md:px-8 lg:px-10">
-      <div className="flex min-w-0 flex-1 items-center gap-4">
-        <Link
-          className="luxe-mobile-brand luxe-focus-ring shrink-0 rounded-sm text-2xl leading-none tracking-[-0.04em] md:hidden"
-          href={APP_ROUTES.dashboard}
+    <header className="luxe-topbar flex shrink-0 items-center justify-between gap-4 px-5 py-4 md:px-8">
+      <div className="flex min-w-0 items-center gap-4">
+        <button
+          aria-label="Open navigation"
+          aria-controls="workspace-navigation"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          className="luxe-icon-action luxe-focus-ring grid h-11 w-11 shrink-0 place-items-center lg:hidden"
+          onClick={() => { dialog.current?.showModal(); setOpen(true); }}
+          type="button"
         >
-          THE LUXE
-        </Link>
-
-        <label className="luxe-search relative hidden w-full max-w-sm sm:block">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
-            <SearchIcon />
-          </span>
-          <span className="sr-only">Search workspace</span>
-          <input
-            className="luxe-search-input h-10 w-full rounded-sm pl-10 pr-4 text-sm"
-            placeholder="Search workspace..."
-            type="search"
-          />
-        </label>
+          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
+        </button>
+        <div className="min-w-0 lg:hidden">
+          <Link className="luxe-wordmark luxe-focus-ring text-base" href={APP_ROUTES.dashboard}>THE LUXE<span aria-hidden>✦</span></Link>
+          <p className="luxe-form-help truncate" title={workspace?.name}>{workspace?.name ?? "No active workspace"}</p>
+        </div>
+        <p className="luxe-muted hidden text-sm lg:block">Workspace <span aria-hidden className="px-3">/</span><span className="luxe-strong">{title}</span></p>
       </div>
-
-      <nav
-        aria-label="Workspace shortcuts"
-        className="hidden items-center gap-8 md:flex"
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="luxe-alpha-badge hidden sm:inline-flex">Internal alpha</span>
+        <Link className="luxe-icon-action luxe-focus-ring grid h-11 w-11 place-items-center" href={APP_ROUTES.account} aria-label="Open account page">
+          <svg aria-hidden width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="8" r="3.5" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg>
+        </Link>
+      </div>
+      <dialog
+        id="workspace-navigation"
+        aria-label="Workspace navigation"
+        className="luxe-mobile-navigation"
+        ref={dialog}
+        onClose={() => setOpen(false)}
+        onKeyDown={(event) => {
+          if (event.key !== "Tab") return;
+          const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("button:not(:disabled), a[href], summary"))
+            .filter((element) => element.getClientRects().length > 0);
+          const first = controls[0];
+          const last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last?.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first?.focus();
+          }
+        }}
       >
-        {TOPBAR_LINKS.map((link) => {
-          const active = isActiveTopbarLink(link, pathname);
-
-          return (
-            <Link
-              aria-current={active ? "page" : undefined}
-              className={classNames(
-                "luxe-topbar-link luxe-focus-ring rounded-sm border-b-2 py-5 text-[15px] font-semibold",
-                active && "luxe-topbar-link-active",
-              )}
-              href={link.href}
-              key={link.href}
-            >
-              {link.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-        <TopbarAction label="Notifications">
-          <BellIcon />
-        </TopbarAction>
-        <Link
-          aria-label="Open account page"
-          className={topbarActionClassName}
-          href={APP_ROUTES.account}
-        >
-          <UserIcon />
-        </Link>
-      </div>
+        <div className="flex justify-end px-4 pt-4">
+          <button autoFocus aria-label="Close navigation" className="luxe-icon-action luxe-focus-ring grid h-11 w-11 place-items-center" onClick={() => dialog.current?.close()} type="button">✕</button>
+        </div>
+        {open ? <AppSidebar mobile session={session} onNavigate={() => dialog.current?.close()} /> : null}
+      </dialog>
     </header>
   );
 }

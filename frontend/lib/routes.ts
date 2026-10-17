@@ -64,7 +64,7 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
   {
     href: APP_ROUTES.dashboard,
     icon: "dashboard",
-    label: "Dashboard",
+    label: "Creator Home",
     exact: true,
   },
   {
@@ -80,7 +80,15 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
   {
     href: APP_ROUTES.drafts,
     icon: "drafts",
-    label: "Drafts",
+    label: "Draft Studio",
+  },
+] as const;
+
+export const SECONDARY_NAV_ITEMS: readonly NavigationItem[] = [
+  {
+    href: APP_ROUTES.create,
+    icon: "create",
+    label: "Create Brief",
   },
   {
     href: APP_ROUTES.compliance,
