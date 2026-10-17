@@ -126,6 +126,58 @@ class PostgreSQLCheckpointConcurrencyTest(TransactionTestCase):
         self.assertEqual(errors, [])
         self.assertTrue(contender_acquired.is_set())
 
+    def test_voice_activation_waits_for_profile_lock(self):
+        second_voice = BrandVoice.objects.create(brand_profile=self.profile, version=2)
+        locked = threading.Event()
+        started = threading.Event()
+        activated = threading.Event()
+        release = threading.Event()
+        errors = []
+
+        def hold_profile():
+            close_old_connections()
+            try:
+                with transaction.atomic():
+                    BrandProfile.objects.select_for_update().get(pk=self.profile.pk)
+                    locked.set()
+                    release.wait(timeout=10)
+            except Exception as error:
+                errors.append(error)
+            finally:
+                close_old_connections()
+
+        def activate_voice():
+            close_old_connections()
+            try:
+                locked.wait(timeout=10)
+                started.set()
+                BrandVoice.objects.get(pk=second_voice.pk).activate()
+                activated.set()
+            except Exception as error:
+                errors.append(error)
+            finally:
+                close_old_connections()
+
+        holder = threading.Thread(target=hold_profile)
+        activator = threading.Thread(target=activate_voice)
+        holder.start()
+        activator.start()
+        try:
+            self.assertTrue(locked.wait(timeout=10))
+            self.assertTrue(started.wait(timeout=10))
+            time.sleep(0.1)
+            self.assertFalse(activated.is_set())
+        finally:
+            release.set()
+        holder.join(timeout=10)
+        activator.join(timeout=10)
+        self.assertFalse(holder.is_alive())
+        self.assertFalse(activator.is_alive())
+        self.assertEqual(errors, [])
+        self.assertTrue(activated.is_set())
+        second_voice.refresh_from_db()
+        self.assertTrue(second_voice.is_active)
+
     def test_postgresql_checkpoint_failure_rolls_back_the_item_update(self):
         with patch(
             "content.views.ExecutionCheckpoint.objects.create",

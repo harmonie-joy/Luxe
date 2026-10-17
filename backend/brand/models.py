@@ -26,7 +26,7 @@ import uuid
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 
 from tenancy.models import Workspace
 
@@ -363,11 +363,13 @@ class BrandVoice(models.Model):
         return f"{self.brand_profile.name} voice v{self.version}"
 
     def activate(self):
-        BrandVoice.objects.filter(
-            brand_profile=self.brand_profile, is_active=True
-        ).update(is_active=False)
-        self.is_active = True
-        self.save(update_fields=["is_active"])
+        with transaction.atomic():
+            BrandProfile.objects.select_for_update().get(pk=self.brand_profile_id)
+            BrandVoice.objects.filter(
+                brand_profile_id=self.brand_profile_id, is_active=True
+            ).update(is_active=False)
+            self.is_active = True
+            self.save(update_fields=["is_active"])
 
 
 class BrandVoiceApproval(models.Model):
