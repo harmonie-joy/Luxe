@@ -23,6 +23,7 @@ User = get_user_model()
 )
 class PostgreSQLCheckpointConcurrencyTest(TransactionTestCase):
     def setUp(self):
+        self.client = APIClient()
         self.user = User.objects.create_user(username="postgres_creator", password="pass")
         self.workspace = Workspace.objects.create(name="PostgreSQL workspace")
         Membership.objects.create(
