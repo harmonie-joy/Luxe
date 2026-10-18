@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CreatorSessionProvider } from "@/features/creator/components/creator-session";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -79,7 +80,7 @@ export function PageShell({ children }: PageShellProps) {
               {pathname === APP_ROUTES.calendar || pathname === APP_ROUTES.compliance || pathname.startsWith(`${APP_ROUTES.compliance}/`) ? (
                 <p className="luxe-demo-notice mb-6 px-4 py-3 text-sm" role="note">Demonstration · This screen shows synthetic examples, not your saved creator progress.</p>
               ) : null}
-              {children}
+              <CreatorSessionProvider session={session}>{children}</CreatorSessionProvider>
             </div>
           </main>
         </div>

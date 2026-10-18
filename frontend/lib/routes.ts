@@ -4,6 +4,8 @@ export const APP_ROUTES = {
   signup: "/signup",
   onboarding: "/onboarding",
   dashboard: "/dashboard",
+  contentItemNew: "/content-items/new",
+  contentItems: "/content-items",
   brandVoice: "/brand-voice",
   brandVoiceProfile: "/brand-voice/profile",
   brandVoiceAnalysis: "/brand-voice/analysis",
@@ -116,8 +118,14 @@ export const TOPBAR_LINKS: readonly TopbarLink[] = [
 export const CREATE_BRIEF_ROUTE = APP_ROUTES.create;
 
 export const APP_PAGE_LABELS: readonly NavigationChildItem[] = [
+  { href: APP_ROUTES.contentItemNew, label: "Create With Me" },
+  { href: APP_ROUTES.contentItems, label: "Single-Post Dashboard" },
   ...PRIMARY_NAV_ITEMS.flatMap((item) => [...(item.children ?? []), item]),
   ...SECONDARY_NAV_ITEMS,
   { href: APP_ROUTES.account, label: "Account" },
   { href: APP_ROUTES.onboarding, label: "Onboarding" },
 ];
+
+export function contentItemRoute(id: string): string {
+  return `${APP_ROUTES.contentItems}/${encodeURIComponent(id)}`;
+}

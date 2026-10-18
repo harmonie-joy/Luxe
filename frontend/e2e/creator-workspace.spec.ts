@@ -21,6 +21,7 @@ function contrastRatio(foreground: string, background: string) {
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/auth/me/", (route) => route.fulfill({ json: session }));
+  await page.route("**/api/content-items/?workspace=*", (route) => route.fulfill({ json: [] }));
   await page.emulateMedia({ reducedMotion: "reduce" });
 });
 
@@ -39,11 +40,12 @@ for (const [name, width, height] of [
     await page.setViewportSize({ width, height });
     await page.goto("/dashboard");
     await expect(page.getByRole("heading", { name: "What are we creating today?" })).toBeVisible();
-    for (const action of ["Create With Me", "Quick Draft", "Bring Something In"]) {
+    for (const action of ["Quick Draft", "Bring Something In"]) {
       await expect(page.getByRole("button", { name: action, exact: true })).toBeDisabled();
     }
+    await expect(page.getByRole("link", { name: "Create With Me", exact: true })).toHaveAttribute("href", "/content-items/new");
     await expect(page.getByRole("link", { name: "Open Brand Voice" })).toHaveAttribute("href", "/brand-voice");
-    await expect(page.getByText("Saved-post resume is coming next.", { exact: false })).toBeAttached();
+    await expect(page.getByText("No saved posts in this workspace yet.", { exact: false })).toBeAttached();
     for (const container of ["html", "main", "header"]) {
       expect(await page.locator(container).first().evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
     }

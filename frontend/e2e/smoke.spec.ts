@@ -5,6 +5,8 @@ const ROUTES = [
   "/login",
   "/signup",
   "/dashboard",
+  "/content-items/new",
+  "/content-items/00000000-0000-0000-0000-000000000053",
   "/brand-voice",
   "/create",
   "/drafts",
@@ -16,6 +18,8 @@ const ROUTES = [
 // With no backend, protected routes must stop at the session gate.
 const NAV_ROUTES = new Set([
   "/dashboard",
+  "/content-items/new",
+  "/content-items/00000000-0000-0000-0000-000000000053",
   "/brand-voice",
   "/create",
   "/drafts",

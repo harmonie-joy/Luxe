@@ -1,6 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useCreatorSession } from "@/features/creator/components/creator-session";
+import { getContentItems } from "@/lib/api/creator";
+import type { ContentItem } from "@/types/creator";
 import Link from "next/link";
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { APP_ROUTES } from "@/lib/routes";
+import { APP_ROUTES, contentItemRoute } from "@/lib/routes";
 
 const creationPaths = [
   {
@@ -9,9 +15,9 @@ const creationPaths = [
     description: "Turn your idea into a post, one focused step at a time.",
     points: ["Start with a clear goal", "Keep your decisions together", "Pick up where you paused"],
     accent: "violet",
-    badge: "Coming next",
+    badge: "Available",
     icon: "M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5Z",
-    availability: "Guided creation is coming next.",
+    availability: "Save your goal and return to the same post.",
   },
   {
     title: "Quick Draft",
@@ -36,24 +42,25 @@ const creationPaths = [
 ] as const;
 
 function ContinueWork() {
-  return (
-    <section aria-labelledby="continue-heading" className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="luxe-section-title" id="continue-heading">Continue where you left off</h2>
-        <span className="luxe-form-help">One post. One home. One next step.</span>
-      </div>
-      <SurfaceCard className="luxe-resume-empty flex flex-col items-start gap-5 p-6 sm:flex-row sm:items-center sm:p-8" padding="none">
-        <div className="luxe-empty-icon shrink-0" aria-hidden>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M4 6h6l2 2h8v12H4Z" /><path d="M9 14h6m-3-3v6" /></svg>
-        </div>
-        <div className="min-w-0 flex-1 space-y-2">
-          <h3 className="luxe-section-title">Your next idea deserves a place to land.</h3>
-          <p className="luxe-form-help max-w-xl">Saved-post resume is coming next. This space will bring your goal, decisions and next step back together. No saved posts are displayed in this preview.</p>
-        </div>
-        <span className="luxe-availability shrink-0">Coming next</span>
-      </SurfaceCard>
-    </section>
-  );
+  const session = useCreatorSession();
+  const workspace = session.activeWorkspaceId;
+  const [items, setItems] = useState<ContentItem[] | null>(null);
+  const [error, setError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    if (workspace) getContentItems(workspace).then((rows) => {
+      if (!cancelled) setItems(rows);
+    }).catch(() => { if (!cancelled) setError(true); });
+    return () => { cancelled = true; };
+  }, [workspace, attempt]);
+  return <section aria-labelledby="continue-heading" className="space-y-5">
+    <h2 className="luxe-section-title" id="continue-heading">Continue where you left off</h2>
+    {!workspace ? <p className="luxe-form-help">Create a workspace with Create With Me to start saving posts.</p> : error ? <SurfaceCard><p role="alert">Saved posts are unavailable. Your saved work has not been replaced with examples.</p><button className="luxe-secondary-action px-4 py-3" onClick={() => { setError(false); setItems(null); setAttempt((n) => n + 1); }}>Try again</button></SurfaceCard> : items === null ? <p role="status">Loading saved posts…</p> : items.length === 0 ? <SurfaceCard><h3 className="luxe-section-title">Your next idea deserves a place to land.</h3><p className="luxe-form-help">No saved posts in this workspace yet. Start with Create With Me.</p></SurfaceCard> : <div className="grid gap-4">{items.map((item) => <SurfaceCard key={item.id} className="flex min-w-0 flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="min-w-0 w-full flex-1 space-y-2 break-words sm:w-auto"><h3 className="luxe-section-title">{item.title}</h3><p>{item.goal}</p><p className="luxe-form-help">{item.workflowStage === "idea" ? "Idea" : "Drafting"} · Checkpoint {item.revision} · Last saved {new Date(item.updatedAt).toLocaleString()}</p><p className="luxe-form-help">Next: {item.nextAction}</p></div>
+      <Link className="luxe-primary-action luxe-focus-ring px-5 py-3" href={contentItemRoute(item.id)} aria-label={`Resume ${item.title}`}>Resume →</Link>
+    </SurfaceCard>)}</div>}
+  </section>;
 }
 
 export function CreatorHome() {
@@ -81,7 +88,7 @@ export function CreatorHome() {
               {path.points.map((point) => <li className="flex items-center gap-2" key={point}><span aria-hidden>↗</span>{point}</li>)}
             </ul>
             <div className="mt-auto space-y-3 pt-2">
-              <button className="luxe-creation-action luxe-focus-ring flex min-h-11 w-full items-center justify-between gap-2 px-4 py-3" disabled type="button" aria-describedby={`availability-${path.accent}`}>{path.title}<span aria-hidden>→</span></button>
+              {path.title === "Create With Me" ? <Link href={APP_ROUTES.contentItemNew} className="luxe-creation-action luxe-focus-ring flex min-h-11 w-full items-center justify-between gap-2 px-4 py-3">Create With Me<span aria-hidden>→</span></Link> : <button className="luxe-creation-action luxe-focus-ring flex min-h-11 w-full items-center justify-between gap-2 px-4 py-3" disabled type="button" aria-describedby={`availability-${path.accent}`}>{path.title}<span aria-hidden>→</span></button>}
               <p id={`availability-${path.accent}`} className="luxe-form-help">{path.availability}</p>
             </div>
           </SurfaceCard>
@@ -97,7 +104,7 @@ export function CreatorHome() {
         </div>
         <Link className="luxe-secondary-action luxe-focus-ring flex min-h-11 shrink-0 items-center gap-5 px-5 py-3 text-sm" href={APP_ROUTES.brandVoice}>Open Brand Voice <span aria-hidden>↗</span></Link>
       </section>
-      <p className="luxe-preview-note">Internal alpha · New creation paths are in progress. Existing tools remain available in navigation.</p>
+      <p className="luxe-preview-note">Internal alpha · Guided posts save to your workspace. Quick Draft and imports remain unavailable.</p>
     </div>
   );
 }
