@@ -1,5 +1,13 @@
 # Progress Log
 
+### 2026-10-18 - UX baseline and PR #59 design review
+
+- Documentation-only follow-up to draft PR #59: [UX baseline](ux/UX_BASELINE.md), [all Phase 1 screens/candidates](ux/SCREEN_TRACEABILITY.md), [design comparison](ux/PR59_DESIGN_REVIEW.md), and a compact root AGENTS review pointer. No existing PR template was present; no separate framework or skill change added.
+- Verified exact confidential PDF hash `2c3da43ba956fb8994614117a38f7120295af427515af8f4638789b30ce65743`. Only local temp copy established; approved durable private archive remains a blocker to archival completion. Source/raw renders remain untracked.
+- Directly inspected preferred night physical31 and actual desktop/tablet/mobile/menu captures. Corrected evidence claim: named resume capture duplicates desktop; tablet shows full unavailable message. Typography/card density, stacked mobile layout and drawer differ from reference and await founder acceptance. No new blocking implementation defect established; no design acceptance granted. Independent review attempts hit usage limits; no new full independent pass claimed.
+- Branch `feat/stage3d-visual-foundation`, documentation follow-up to `3ae9d99`, PR https://github.com/harmonie-joy/Luxe/pull/59. Review records existing CI/test evidence separately from this documentation verification. #58 remains In Progress/open; #53/#51/#54 and milestone4 stay open.
+- Next: confirm durable source archive and obtain PR59 design acceptance; after merge, #53 implements the bounded real Single-Post Dashboard using the matrix/contracts. Physical35 is explicitly unfinished design. #54 remains independent persistence/isolation verification. No feature, merge or deployment work performed.
+
 ## 2026-10-17 - Stage 3D PR 1 visual foundation
 
 - Implemented [draft PR #59](https://github.com/harmonie-joy/Luxe/pull/59), refs [#58](https://github.com/harmonie-joy/Luxe/issues/58), on `feat/stage3d-visual-foundation` from verified remote master `64ea445`. Implementation `ab2b8ce`; review fixes `d5acbc8`. No historical local commits were carried in. Pending documentation commit `92285a2` remains separately preserved on `spec/stage-3d-creator-preview`; do not cherry-pick its obsolete planning status over this handoff.

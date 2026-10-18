@@ -289,3 +289,7 @@ A change is acceptable only when:
 - Required fields, enums, IDs, and timestamps are consistent.
 - Any migration risk is explained.
 - The patch is small, focused, and relevant to the requested task.
+
+## UX review
+
+For PRs changing user-facing interaction or a supporting API contract, read `docs/ux/UX_BASELINE.md`, apply its cross-layer review checklist, and update `docs/ux/SCREEN_TRACEABILITY.md` for meaningful merged changes. Identify the affected page/journey, documented deviations, truthful states/contracts, responsive behavior, tests/screenshots and pending founder design acceptance. For internal-only backend work, explain when no UI journey applies.
