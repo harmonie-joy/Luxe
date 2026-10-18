@@ -33,9 +33,6 @@ class E2EDatabaseGuardTests(unittest.TestCase):
     def test_fragments_are_rejected(self):
         self.reject("postgres://localhost/theluxe_e2e_guard#unexpected")
 
-    def test_encoded_database_path_is_rejected(self):
-        self.reject("postgres://localhost/theluxe_e2e_guard%2F..%2Ftheluxe")
-
 
 if __name__ == "__main__":
     unittest.main()

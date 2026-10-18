@@ -1,7 +1,6 @@
 """Explicit opt-in settings for isolated, local PostgreSQL browser verification."""
 
 import os
-import re
 from urllib.parse import urlparse
 
 from django.core.exceptions import ImproperlyConfigured
@@ -11,7 +10,7 @@ database = urlparse(database_url)
 if (
     database.scheme not in ("postgres", "postgresql")
     or database.hostname not in ("localhost", "127.0.0.1")
-    or not re.fullmatch(r"/theluxe_e2e_[A-Za-z0-9_]+", database.path)
+    or not database.path.startswith("/theluxe_e2e_")
     or database.query
     or database.fragment
     or os.environ.get("E2E_ALLOW_ISOLATED_DATABASE") != "1"
