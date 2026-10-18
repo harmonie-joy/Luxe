@@ -62,3 +62,52 @@ jobs:
       - run: python manage.py test content.test_execution_postgres
         env:
           DATABASE_URL: postgres://theluxe:theluxe@localhost:5432/theluxe
+
+  real-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: theluxe_e2e_ci
+          POSTGRES_USER: theluxe_e2e
+          POSTGRES_PASSWORD: synthetic-e2e-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U theluxe_e2e -d theluxe_e2e_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      E2E_DATABASE_URL: postgres://theluxe_e2e:synthetic-e2e-only@127.0.0.1:5432/theluxe_e2e_ci
+      E2E_ALLOW_ISOLATED_DATABASE: "1"
+      E2E_PYTHON: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements/base.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements/base.txt
+      - run: python backend/config/test_e2e_guard.py
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run test:e2e:real
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-e2e-chromium
+          path: |
+            frontend/playwright-report-real/
+            frontend/test-results-real/
+          retention-days: 7
