@@ -1,6 +1,6 @@
 # Creator/CEO UX baseline
 
-Revision 1 · recorded 2026-10-18 · design direction approved; PR #59 founder design acceptance pending.
+Revision 1 · recorded 2026-10-18 · PR #59 merged at `c6d3e44`; founder acceptance of larger typography, taller cards and mobile navigation remains pending. Merge alone is not design sign-off.
 
 ## Authority and private source
 
