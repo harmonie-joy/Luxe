@@ -11,7 +11,7 @@
 
 ## Environment and safety
 
-- Local runtime: Python **3.12.10**, Django **5.2.11**, Node **24.11.1**, Next.js **16.1.6**, Playwright **1.61.1**, Chromium/Chrome for Testing **149.0.7827.55**. CI uses Node 20 and Python 3.12.
+- Local runtime: Python **3.12.10**, Django **5.2.11**, Node **24.11.1**, Next.js **16.1.6**, Playwright **1.61.1**, Chromium/Chrome for Testing **149.0.7827.55**. CI uses Node 20, Python 3.12 and PostgreSQL **16.15** (verified in the corrected-code runner log and ORM artifact).
 - Local PostgreSQL **16.12** (`postgres:16`, Debian), dedicated ephemeral `theluxe-54-postgres` container on loopback port 55454, tmpfs storage. Database `theluxe_e2e_54`; this is separate from the running developer stack. Test application ports 3154/8154 preserve developer ports 3000/8000.
 - Tests require explicit isolated database opt-in; normal development settings remain unchanged. Real Django session authentication, authorization and CSRF protections are retained. Only test-origin CORS/CSRF origins change in test settings.
 - Fixtures use synthetic users/workspaces/brand profiles and unapproved active voices. The browser performs exact-version acceptance. Independent ORM reads use a separate process/connection. Cleanup targets only fixtures belonging to that run.
@@ -72,6 +72,8 @@ Independent verdict **Accepted with Notes** on implementation `1555a35`: no bloc
 
 ## Delivery and final gates
 
-[PR #63](https://github.com/harmonie-joy/Luxe/pull/63), implementation `1555a35`, guard fix `9f5f63f`, final resolved tree `82c12a7`. Independent Standards and Spec code QA accepted with notes and zero remaining blocking findings. Final corrected-code CI evidence is pending update; final make check passes103 frontend / 180 PostgreSQL backend tests with no skips. Both independent QA axes have zero remaining blocking code findings. #54/#51 close only after their own evidence, accepted QA and merged delivery. #49/#58/milestone 4 remain open. No decision-log update: no architecture, model, product contract or auth-provider decision changed.
+[PR #63](https://github.com/harmonie-joy/Luxe/pull/63), implementation `1555a35`, guard fix `9f5f63f`, final resolved code tree `82c12a7`. Both independent QA axes accept code and documentation with notes and zero remaining blockers. Corrected-code [CI39155394906](https://github.com/harmonie-joy/Luxe/actions/runs/39155394906) passed **frontend, backend and real-e2e** at `82c12a7`: 103 frontend tests, production build, 27 synthetic browser tests and 7 real-service browser tests (1.6m). CI backend ran 180 tests on SQLite with 4 PostgreSQL-only skips, then ran those 4 PostgreSQL concurrency tests successfully; local final `make check` ran all 180 on PostgreSQL with **zero skips**. Six guard tests are included in 180 and also pass independently.
+
+[Real Chromium CI artifact](https://github.com/harmonie-joy/Luxe/actions/runs/39155394906/artifacts/12146409050) contains the safe action report, HTTP timelines, synthetic persisted-state evidence and screenshots (seven-day retention). Final PR checks must remain green at the final documentation head before merge. #54/#51 close only after their own evidence, accepted QA and merged delivery. #49/#58/milestone4 remain open. No decision-log update: no architecture, model, product contract or auth-provider decision changed.
 
 Exact next implementation task after accepted merge: **#58 PR3**, the already-scoped truthful company/public entry and controlled-preview readiness work; separate from deployment. Founder Page9/Page10A acceptance and private-reference archival remain separate outstanding governance work. Do not begin CreatorDNAProposal, caption versions, Gallery, media, WorkOS migration or publishing under #54.
