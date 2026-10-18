@@ -268,3 +268,19 @@ describe("scheduled content client", () => {
     });
   });
 });
+
+describe("Creator workspace client", () => {
+  it("uses scoped list routes and preserves full checkpoint revision/idempotency payloads", async () => {
+    const creator = await import("./creator");
+    await creator.getProjects("12"); expect(http.get).toHaveBeenLastCalledWith("/api/projects/?workspace=12");
+    await creator.getContentItems("12"); expect(http.get).toHaveBeenLastCalledWith("/api/content-items/?workspace=12");
+    await creator.getContentItemContext("post-1"); expect(http.get).toHaveBeenLastCalledWith("/api/content-items/post-1/context/");
+    await creator.createProject("12", "Launch"); expect(http.post).toHaveBeenLastCalledWith("/api/projects/", { workspace: "12", name: "Launch" });
+    await creator.approveBrandVoice("voice-4"); expect(http.post).toHaveBeenLastCalledWith("/api/brand-voices/voice-4/approve/", {});
+    const snapshot = { goal: "Explain", workflow_stage: "idea" as const, next_action: "Write", decisions: ["Be clear"], open_questions: [] };
+    const create = { ...snapshot, title: "Launch", project: "p-1", brand_profile: "bp-1", brand_voice: "voice-4" };
+    await creator.createContentItem(create); expect(http.post).toHaveBeenLastCalledWith("/api/content-items/", create);
+    const checkpoint = { ...snapshot, expected_revision: 3, client_request_id: "41cc8211-9b0e-4b33-a4cc-5064441bc69e" };
+    await creator.saveCheckpoint("post-1", checkpoint); expect(http.post).toHaveBeenLastCalledWith("/api/content-items/post-1/checkpoint/", checkpoint);
+  });
+});

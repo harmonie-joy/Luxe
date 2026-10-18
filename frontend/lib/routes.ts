@@ -4,6 +4,8 @@ export const APP_ROUTES = {
   signup: "/signup",
   onboarding: "/onboarding",
   dashboard: "/dashboard",
+  contentItemNew: "/content-items/new",
+  contentItems: "/content-items",
   brandVoice: "/brand-voice",
   brandVoiceProfile: "/brand-voice/profile",
   brandVoiceAnalysis: "/brand-voice/analysis",
@@ -121,3 +123,7 @@ export const APP_PAGE_LABELS: readonly NavigationChildItem[] = [
   { href: APP_ROUTES.account, label: "Account" },
   { href: APP_ROUTES.onboarding, label: "Onboarding" },
 ];
+
+export function contentItemRoute(id: string): string {
+  return `${APP_ROUTES.contentItems}/${encodeURIComponent(id)}`;
+}
