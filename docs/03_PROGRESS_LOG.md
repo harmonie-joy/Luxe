@@ -9,6 +9,10 @@
 - Final local evidence at code tip `2521574`: `make check TEST_DATABASE_URL=sqlite:////tmp/theluxe-53-check.sqlite3` passed lint/typecheck, 103 frontend tests and 174 backend tests (4 PostgreSQL-only skips); `npm run build` passed; `PLAYWRIGHT_PORT=3110 npm run test:smoke` passed 27 production-build checks. Browser responses/session are synthetic; no #54 real-backend claim. Desktop/mobile screenshots, API summary, review and exact #54 handoff: [implementation review](ux/PR61_IMPLEMENTATION_REVIEW.md).
 - Page 9 retains the night foundation; Page 10A overview/focused editor is provisional because physical35 remains undesigned. The [matrix](ux/SCREEN_TRACEABILITY.md) separates visuals, integration, automated evidence and founder acceptance. No migration, backend/schema, dependency, auth-provider, AI/publishing, public marketing or deployment change. All 15 logical pages are not complete.
 - #53 remains open/In Progress for PR acceptance; #51/#54/#58/#49 and milestone #4 remain open. Next: review PR #61 and obtain founder design acceptance, then separately implement #54's real create/save/refresh/logout/login/restore/isolation verification. No #54 or PR3 implementation is included.
+### 2026-10-18 - PR #59 post-merge finalization
+
+- Verified PR59 merged at `c6d3e44`; final-head CI39120549810 frontend/backend passed. No explicit design acceptance found in PR/#58 comments or reviews; typography/card height/mobile navigation acceptance remains pending. #58 stays open.
+- Removed misleading duplicate resume screenshot, preserving its historical audit link; remaining named viewport captures have matching dimensions. Updated UX status and exact #53 backend-connected Single-Post Dashboard handoff. Prepared clean `/tmp/theluxe-ia1-frontend` on `feat/53-ia1-frontend` at fetched master `c6d3e44`; no implementation/deployment. Documentation-only follow-up branch `docs/pr59-merged-handoff`.
 
 ### 2026-10-18 - UX baseline and PR #59 design review
 

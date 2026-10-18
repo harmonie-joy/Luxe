@@ -9,6 +9,10 @@
 - Final checks: make check passed lint/typecheck, 103 frontend and 174 backend tests (4 PostgreSQL-only local skips); production build passed; 27 production browser checks passed, including desktop/mobile/narrow, minimum touch targets, keyboard, 200%-equivalent viewport, creation/conflict and navigation. Synthetic HTTP/browser evidence is explicitly separate from #54. [Review and captures](ux/PR61_IMPLEMENTATION_REVIEW.md) record exact boundaries and remaining gates.
 - Files: new shared Creator types/API, feature components/tests, new/detail routes, existing session shell/root navigation bootstrap, route labels, smoke/browser checks, four required memory/traceability docs, implementation review and synthetic application screenshots. No backend/schema/migration, package/lock, auth provider, cloud AI, publishing or deployment changes. No decision-log change needed.
 - Human review: pending; Page10A composition and existing Page9 responsive/type adaptations still require founder design acceptance. #53 stays open/In Progress; #51/#54/#58/#49/milestone4 stay open. Public homepage/PR3 and all remaining Builder pages are outside this work. Next handoff is independently verified #54 after PR61 acceptance, using real backend session and persistence without IA-1 mocks.
+### 2026-10-18 - PR #59 post-merge finalization
+
+- Verified PR59 merged at `c6d3e44`; final-head CI39120549810 frontend/backend passed. No explicit design acceptance found in PR/#58 comments or reviews; typography/card height/mobile navigation acceptance remains pending. #58 stays open.
+- Removed misleading duplicate resume screenshot, preserving its historical audit link; remaining named viewport captures have matching dimensions. Updated UX status and exact #53 backend-connected Single-Post Dashboard handoff. Prepared clean `/tmp/theluxe-ia1-frontend` on `feat/53-ia1-frontend` at fetched master `c6d3e44`; no implementation/deployment. Documentation-only follow-up branch `docs/pr59-merged-handoff`.
 
 ### 2026-10-18 - Codex - UX baseline governance
 
