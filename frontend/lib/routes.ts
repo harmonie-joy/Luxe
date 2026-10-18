@@ -64,7 +64,7 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
   {
     href: APP_ROUTES.dashboard,
     icon: "dashboard",
-    label: "Dashboard",
+    label: "Creator Home",
     exact: true,
   },
   {
@@ -80,7 +80,15 @@ export const PRIMARY_NAV_ITEMS: readonly NavigationItem[] = [
   {
     href: APP_ROUTES.drafts,
     icon: "drafts",
-    label: "Drafts",
+    label: "Draft Studio",
+  },
+] as const;
+
+export const SECONDARY_NAV_ITEMS: readonly NavigationItem[] = [
+  {
+    href: APP_ROUTES.create,
+    icon: "create",
+    label: "Create Brief",
   },
   {
     href: APP_ROUTES.compliance,
@@ -106,3 +114,10 @@ export const TOPBAR_LINKS: readonly TopbarLink[] = [
 ] as const;
 
 export const CREATE_BRIEF_ROUTE = APP_ROUTES.create;
+
+export const APP_PAGE_LABELS: readonly NavigationChildItem[] = [
+  ...PRIMARY_NAV_ITEMS.flatMap((item) => [...(item.children ?? []), item]),
+  ...SECONDARY_NAV_ITEMS,
+  { href: APP_ROUTES.account, label: "Account" },
+  { href: APP_ROUTES.onboarding, label: "Onboarding" },
+];

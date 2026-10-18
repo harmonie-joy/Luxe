@@ -13,7 +13,7 @@ const ROUTES = [
   "/account",
 ] as const;
 
-// App-shell routes render inside the (app) layout with the sidebar nav.
+// With no backend, protected routes must stop at the session gate.
 const NAV_ROUTES = new Set([
   "/dashboard",
   "/brand-voice",
@@ -46,12 +46,16 @@ for (const route of ROUTES) {
     });
     page.on("pageerror", (error) => pageErrors.push(String(error)));
 
+    // Isolate the backend-off check from any developer backend already running.
+    await page.route("**/api/**", (request) => request.abort("connectionrefused"));
     const response = await page.goto(route);
 
     expect(response?.ok()).toBe(true);
     await expect(page.locator("body")).not.toBeEmpty();
     if (NAV_ROUTES.has(route)) {
-      await expect(page.getByRole("navigation").first()).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Workspace unavailable" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Sign in", exact: true })).toBeVisible();
+      await expect(page.getByRole("navigation")).toHaveCount(0);
     }
     expect(pageErrors).toEqual([]);
     expect(consoleErrors).toEqual([]);

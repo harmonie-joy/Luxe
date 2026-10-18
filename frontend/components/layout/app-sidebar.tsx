@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { AuthSession } from "@/types/auth";
 import {
   APP_ROUTES,
-  CREATE_BRIEF_ROUTE,
   PRIMARY_NAV_ITEMS,
+  SECONDARY_NAV_ITEMS,
   type NavigationIcon,
   type NavigationItem,
 } from "@/lib/routes";
@@ -105,7 +106,7 @@ function SidebarLink({ item }: SidebarLinkProps) {
       <Link
         aria-current={pathname === item.href ? "page" : undefined}
         className={classNames(
-          "luxe-nav-link luxe-focus-ring flex items-center gap-3 rounded-sm border-l-2 px-4 py-3 text-[15px] font-semibold",
+          "luxe-nav-link luxe-focus-ring flex items-center gap-3 px-4 py-3 text-sm font-medium",
           active && "luxe-nav-link-active",
         )}
         href={item.href}
@@ -113,7 +114,7 @@ function SidebarLink({ item }: SidebarLinkProps) {
         <NavIcon icon={item.icon} />
         <span>{item.label}</span>
       </Link>
-      {item.children ? (
+      {item.children && active ? (
         <div className="mt-1 space-y-1">
           {item.children.map((child) => {
             const childActive =
@@ -122,7 +123,7 @@ function SidebarLink({ item }: SidebarLinkProps) {
               <Link
                 aria-current={pathname === child.href ? "page" : undefined}
                 className={classNames(
-                  "luxe-nav-link luxe-focus-ring flex items-center rounded-sm border-l-2 py-2 pl-12 pr-4 text-sm font-medium",
+                  "luxe-nav-link luxe-focus-ring flex min-h-11 items-center py-2 pl-12 pr-4 text-sm",
                   childActive && "luxe-nav-link-active",
                 )}
                 href={child.href}
@@ -138,43 +139,63 @@ function SidebarLink({ item }: SidebarLinkProps) {
   );
 }
 
-export function AppSidebar() {
+interface AppSidebarProps {
+  session?: AuthSession;
+  mobile?: boolean;
+  onNavigate?: () => void;
+}
+
+export function AppSidebar({ session, mobile = false, onNavigate }: AppSidebarProps = {}) {
+  const workspace = session?.workspaces.find((item) => item.id === session.activeWorkspaceId);
+  const pathname = usePathname();
+  const moreToolsActive = SECONDARY_NAV_ITEMS.some((item) => isActiveRoute(item, pathname));
   return (
-    <aside className="luxe-sidebar hidden h-full shrink-0 flex-col border-r md:flex">
-      <div className="flex min-h-0 flex-1 flex-col px-5 py-10">
+    <aside className={`luxe-sidebar h-full shrink-0 flex-col ${mobile ? "flex" : "hidden lg:flex"}`} onClick={(event) => {
+      if ((event.target as Element).closest("a")) onNavigate?.();
+    }}>
+      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto p-5">
         <Link
-          aria-label="THE LUXE dashboard"
-          className="luxe-focus-ring mb-10 block rounded-sm"
+          aria-label="THE LUXE Creator Home"
+          className="luxe-wordmark luxe-focus-ring mt-3 block"
           href={APP_ROUTES.dashboard}
         >
-          <span
-            className="luxe-sidebar-brand-title block text-5xl leading-[0.92] tracking-[-0.04em]"
-          >
-            THE
-            <br />
-            LUXE
-          </span>
-          <span className="luxe-sidebar-kicker mt-4 block text-[11px] font-medium uppercase tracking-[0.18em]">
-            Enterprise Workspace
-          </span>
+          THE LUXE<span aria-hidden>✦</span>
         </Link>
 
         <nav aria-label="Primary navigation" className="space-y-1">
+          <p className="luxe-eyebrow mb-4 px-4">Your workspace</p>
           {PRIMARY_NAV_ITEMS.map((item) => (
             <SidebarLink item={item} key={item.href} />
           ))}
         </nav>
 
-        <div className="mt-auto space-y-6 pt-8">
+        <details className="luxe-tools" key={moreToolsActive ? "active" : "inactive"} open={moreToolsActive || undefined}>
+          <summary className="luxe-focus-ring px-4 py-3 text-sm">More tools <span className="luxe-form-help">Existing workflow</span></summary>
+          <nav aria-label="Existing tools" className="mt-2 space-y-1">
+            {SECONDARY_NAV_ITEMS.map((item) => <SidebarLink item={item} key={item.href} />)}
+          </nav>
+          <p className="luxe-form-help mt-3 px-4">Some existing screens include labeled demo data.</p>
+        </details>
+
+        <div className="luxe-sidebar-footer mt-auto space-y-5 pt-6">
+          <div className="luxe-sidebar-note space-y-2 p-4">
+            <p className="luxe-section-title">A little more flow.</p>
+            <p className="luxe-form-help">Your voice, your ideas.<br />One place to move forward.</p>
+          </div>
           <Link
-            className="luxe-primary-action luxe-focus-ring flex w-full items-center justify-center gap-2 rounded-sm px-4 py-3 text-[15px] font-semibold"
-            href={CREATE_BRIEF_ROUTE}
+            className="luxe-identity luxe-focus-ring flex min-w-0 items-center gap-3 rounded-sm p-2"
+            href={APP_ROUTES.account}
           >
-            <span aria-hidden className="text-xl leading-none">
-              +
+            <span className="luxe-avatar shrink-0" aria-hidden>
+              {(session?.user.displayName || session?.user.username || "?").slice(0, 1).toUpperCase()}
             </span>
-            Create New Brief
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-medium">{session?.user.displayName || session?.user.username || "Account"}</span>
+              <span className="luxe-form-help block truncate">{workspace?.name ?? "No active workspace"}</span>
+            </span>
+            <span className="luxe-muted ml-auto" aria-hidden>↗</span>
           </Link>
+          <Link className="luxe-text-link luxe-focus-ring block px-2 text-xs" href={APP_ROUTES.account}>Account &amp; sign out</Link>
         </div>
       </div>
     </aside>

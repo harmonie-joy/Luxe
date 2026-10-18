@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { SurfaceCard } from "@/components/ui/surface-card";
-import { getSession, logout, updateCurrentUser } from "@/lib/api/auth";
+import { AUTH_SESSION_UPDATED_EVENT, getSession, logout, updateCurrentUser } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/http-client";
 import { isBrandVoiceMockMode } from "@/lib/brand-voice-mode";
 import { APP_ROUTES } from "@/lib/routes";
@@ -97,6 +97,7 @@ export function AccountShell() {
       setSession(updated);
       setDisplayName(updated.user.displayName);
       setSaveMessage("Display name saved.");
+      window.dispatchEvent(new Event(AUTH_SESSION_UPDATED_EVENT));
     } catch (error) {
       setSaveError(getErrorMessage(error, "Display name could not be saved."));
     } finally {

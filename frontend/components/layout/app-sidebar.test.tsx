@@ -1,65 +1,59 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { APP_ROUTES } from "@/lib/routes";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
 
-// Overrides the shared setup mock so each test controls the current path.
-vi.mock("next/navigation", () => ({
-  usePathname: () => pathname.current,
-}));
-
-function link(name: string | RegExp) {
+function link(name: string) {
   return screen.getByRole("link", { name });
 }
 
 describe("AppSidebar", () => {
-  it("renders Brand Voice child links", () => {
-    pathname.current = "/dashboard";
+  it("focuses Home navigation and keeps legacy routes reachable under More tools", async () => {
+    pathname.current = APP_ROUTES.dashboard;
     render(<AppSidebar />);
-
-    expect(link("Profile").getAttribute("href")).toBe(
-      APP_ROUTES.brandVoiceProfile,
-    );
-    expect(link("Analysis").getAttribute("href")).toBe(
-      APP_ROUTES.brandVoiceAnalysis,
-    );
-    expect(link("Samples").getAttribute("href")).toBe(
-      APP_ROUTES.brandVoiceSamples,
-    );
-    expect(link("Brand Voice").className).not.toContain("luxe-nav-link-active");
+    expect(link("Creator Home").getAttribute("aria-current")).toBe("page");
+    expect(link("Draft Studio").getAttribute("href")).toBe(APP_ROUTES.drafts);
+    expect(screen.queryByRole("link", { name: "Profile" })).toBeNull();
+    await userEvent.setup().click(screen.getByText("More tools"));
+    expect(link("Create Brief").getAttribute("href")).toBe(APP_ROUTES.create);
+    expect(link("Compliance").getAttribute("href")).toBe(APP_ROUTES.compliance);
+    expect(link("Calendar").getAttribute("href")).toBe(APP_ROUTES.calendar);
   });
 
-  it("marks only the exact overview link as the current page", () => {
+  it("shows Brand Voice tools and marks only the literal current page", () => {
     pathname.current = APP_ROUTES.brandVoice;
     render(<AppSidebar />);
-
     expect(link("Brand Voice").getAttribute("aria-current")).toBe("page");
-    expect(link("Brand Voice").className).toContain("luxe-nav-link-active");
+    expect(link("Profile").getAttribute("href")).toBe(APP_ROUTES.brandVoiceProfile);
+    expect(link("Analysis").getAttribute("href")).toBe(APP_ROUTES.brandVoiceAnalysis);
+    expect(link("Samples").getAttribute("href")).toBe(APP_ROUTES.brandVoiceSamples);
     expect(link("Profile").getAttribute("aria-current")).toBeNull();
-    expect(link("Profile").className).not.toContain("luxe-nav-link-active");
   });
 
-  it("keeps the parent active and marks the matching child on a child route", () => {
+  it("marks a child page rather than its parent as current", () => {
     pathname.current = APP_ROUTES.brandVoiceProfile;
     render(<AppSidebar />);
-
-    expect(link("Brand Voice").className).toContain("luxe-nav-link-active");
     expect(link("Brand Voice").getAttribute("aria-current")).toBeNull();
-    expect(link("Profile").className).toContain("luxe-nav-link-active");
     expect(link("Profile").getAttribute("aria-current")).toBe("page");
-    expect(link("Analysis").className).not.toContain("luxe-nav-link-active");
+    expect(link("Analysis").getAttribute("aria-current")).toBeNull();
   });
 
-  it("keeps the Samples child active on a sample detail route", () => {
+  it("does not mark a parent link as the literal page for sample details", () => {
     pathname.current = `${APP_ROUTES.brandVoiceSamples}/asset-1`;
     render(<AppSidebar />);
-
-    expect(link("Brand Voice").className).toContain("luxe-nav-link-active");
-    expect(link("Samples").className).toContain("luxe-nav-link-active");
-    // No sidebar link is the literal current page here.
     expect(link("Samples").getAttribute("aria-current")).toBeNull();
+    expect(link("Brand Voice").getAttribute("aria-current")).toBeNull();
+  });
+
+  it("discloses secondary navigation automatically on an existing tool route", () => {
+    pathname.current = APP_ROUTES.calendar;
+    render(<AppSidebar />);
+    expect(link("Calendar").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("group").hasAttribute("open")).toBe(true);
   });
 });

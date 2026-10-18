@@ -1,6 +1,8 @@
 import { httpClient } from "@/lib/api/http-client";
 import type { AuthSession } from "@/types/auth";
 
+export const AUTH_SESSION_UPDATED_EVENT = "theluxe:session-updated";
+
 export interface LoginPayload {
   email: string;
   password: string;
