@@ -29,3 +29,5 @@ yarn-error.log*
 
 # Docker
 *.log
+frontend/test-results-real/
+frontend/playwright-report-real/
