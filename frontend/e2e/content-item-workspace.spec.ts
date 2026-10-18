@@ -56,8 +56,9 @@ for (const [name, width, height] of [["desktop", 1440, 900], ["mobile", 390, 844
     await page.goto("/dashboard");
     await expect(page.getByRole("link", { name: /Resume/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "Create With Me", exact: true })).toHaveAttribute("href", "/content-items/new");
+    await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); document.querySelector("main")?.scrollTo(0, 0); });
     await page.screenshot({ path: testInfo.outputPath(`creator-home-${name}.png`), animations: "disabled" });
-    await page.getByRole("link", { name: /Resume/ }).scrollIntoViewIfNeeded();
+    await page.getByRole("heading", { name: "Continue where you left off", exact: true }).evaluate((element) => element.scrollIntoView({ block: "start" }));
     await page.screenshot({ path: testInfo.outputPath(`creator-resume-${name}.png`), animations: "disabled" });
     await page.getByRole("link", { name: /Resume/ }).click();
     await expect(page).toHaveURL(new RegExp(`/content-items/${itemId}$`));
@@ -69,6 +70,7 @@ for (const [name, width, height] of [["desktop", 1440, 900], ["mobile", 390, 844
     await page.screenshot({ path: testInfo.outputPath(`post-dashboard-${name}.png`), animations: "disabled" });
     await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
     await expect(page.getByRole("textbox", { name: "Content goal", exact: true })).toHaveValue(item.goal);
+    await page.evaluate(() => { window.scrollTo(0, 0); document.querySelector("main")?.scrollTo(0, 0); });
     await page.screenshot({ path: testInfo.outputPath(`checkpoint-editor-${name}.png`), animations: "disabled" });
     if (name === "mobile") {
       await page.getByRole("button", { name: "Save and return", exact: true }).scrollIntoViewIfNeeded();
