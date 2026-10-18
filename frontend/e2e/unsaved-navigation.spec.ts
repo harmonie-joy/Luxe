@@ -69,3 +69,35 @@ test("Back and Forward protect edits across repeated save and dirty cycles", asy
   await expect(page).toHaveURL(/\/account$/);
   expect(dialogs).toBe(6);
 });
+
+test("canceling a multi-entry Back jump across a native hash restores the same post and edits", async ({ page }) => {
+  const item = (id: string) => ({ id, projectId: "project-1", title: id, goal: "Saved goal", workflowStage: "idea", nextAction: "Write next", decisions: [], openQuestions: [], revision: 1, updatedAt: "2026-10-18T10:00:00Z" });
+  await page.route("**/api/**", (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/auth/me/") return route.fulfill({ json: { user: { id: "qa", username: "qa", email: "qa@example.com", displayName: "QA" }, workspaces: [{ id: "1", name: "QA", role: "owner" }], activeWorkspaceId: "1" } });
+    if (path === "/api/projects/") return route.fulfill({ json: [{ id: "project-1", workspaceId: 1, name: "QA" }] });
+    if (path === "/api/content-items/") return route.fulfill({ json: [item("post-one"), item("post-two")] });
+    const selected = item(path.split("/")[3]);
+    return route.fulfill({ json: { item: selected, checkpoint: { id: "checkpoint-1", revision: 1, createdAt: selected.updatedAt }, brandVoice: { id: "voice-1", version: 1, isApproved: true } } });
+  });
+  await page.goto("/dashboard");
+  await page.getByRole("link", { name: "Resume post-one", exact: true }).click();
+  await expect(page).toHaveURL(/\/content-items\/post-one$/);
+  await page.getByRole("heading", { name: "post-one", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Skip to content", exact: true }).evaluate((link) => (link as HTMLAnchorElement).click());
+  await expect(page).toHaveURL(/post-one#workspace-main$/);
+  await page.getByRole("link", { name: "Back to Creator Home", exact: true }).click();
+  await page.getByRole("link", { name: "Resume post-two", exact: true }).click();
+  await expect(page).toHaveURL(/\/content-items\/post-two$/);
+  await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
+  const goal = page.getByRole("textbox", { name: "Content goal", exact: true });
+  await goal.fill("Newest edits belong to post two");
+  const dialogs: string[] = [];
+  page.on("dialog", async (dialog) => { dialogs.push(dialog.type()); await dialog.dismiss(); });
+  await page.evaluate(() => history.go(-3));
+  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  await expect(page).toHaveURL(/\/content-items\/post-two$/);
+  await expect(page.getByRole("heading", { name: "post-two", exact: true })).toBeVisible();
+  await expect(goal).toHaveValue("Newest edits belong to post two");
+  expect(dialogs).toEqual(["confirm"]);
+});

@@ -9,6 +9,7 @@ export function confirmDiscard() {
 let installed = false;
 let currentIndex = 0;
 let currentHref = "";
+let currentState: unknown = null;
 let activeGuard: (() => boolean) | null = null;
 
 function trackHistory() {
@@ -20,19 +21,23 @@ function trackHistory() {
   currentIndex = history.state?.luxeNavigationIndex ?? 0;
   currentHref = location.href;
   replace(indexed(history.state, currentIndex), "", location.href);
+  currentState = history.state;
   history.pushState = (state, title, url) => {
     push(indexed(state, currentIndex + 1), title, url);
     currentIndex += 1;
     currentHref = location.href;
+    currentState = history.state;
   };
-  history.replaceState = (state, title, url) => { replace(indexed(state, currentIndex), title, url); currentHref = location.href; };
+  history.replaceState = (state, title, url) => { replace(indexed(state, currentIndex), title, url); currentHref = location.href; currentState = history.state; };
   let restoring = false;
   // Capture before the App Router renders a traversed route; canceled traversals restore its entry.
   window.addEventListener("popstate", (event: PopStateEvent) => {
-    const targetIndex = event.state?.luxeNavigationIndex ?? currentIndex - 1;
-    if (restoring) { restoring = false; currentIndex = targetIndex; currentHref = location.href; return; }
     const previous = new URL(currentHref);
     const samePage = previous.pathname === location.pathname && previous.search === location.search;
+    // A native fragment link adds an entry without going through pushState or copying Next's state.
+    const nativeFragment = samePage && event.state === null;
+    const targetIndex = event.state?.luxeNavigationIndex ?? currentIndex + (nativeFragment ? 1 : -1);
+    if (restoring) { restoring = false; currentIndex = targetIndex; currentHref = location.href; currentState = event.state; return; }
     if (!samePage && activeGuard?.() && !confirmDiscard()) {
       event.stopImmediatePropagation();
       restoring = true;
@@ -41,7 +46,8 @@ function trackHistory() {
     }
     currentIndex = targetIndex;
     currentHref = location.href;
-    replace(indexed(event.state, currentIndex), "", location.href);
+    replace(indexed(nativeFragment ? currentState : event.state, currentIndex), "", location.href);
+    currentState = history.state;
   }, true);
 }
 
