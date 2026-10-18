@@ -27,6 +27,12 @@ class E2EDatabaseGuardTests(unittest.TestCase):
     def test_unprefixed_database(self):
         self.reject("postgres://localhost/theluxe")
 
+    def test_query_cannot_override_database(self):
+        self.reject("postgres://localhost/theluxe_e2e_guard?dbname=theluxe")
+
+    def test_fragments_are_rejected(self):
+        self.reject("postgres://localhost/theluxe_e2e_guard#unexpected")
+
 
 if __name__ == "__main__":
     unittest.main()

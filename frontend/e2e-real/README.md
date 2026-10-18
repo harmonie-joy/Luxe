@@ -34,7 +34,8 @@ introduced. The suite starts/owns dedicated services at `localhost:8154` and
 The normal local stack on ports 8000/3000 is unaffected. Test-only settings adjust
 CORS/CSRF trusted origin to port3154; authentication, authorization and CSRF
 middleware remain enabled. Regular application settings do not import this module.
-The shared guard runs before either web server starts. Its four refusal cases
+Query strings and fragments are rejected so connection parameters cannot override
+the guarded database target. The shared guard runs before either web server starts. Its six refusal cases
 have a database-free self-check: `backend/.venv/bin/python backend/config/test_e2e_guard.py`
 from the repository root; CI runs that check before the browser suite.
 

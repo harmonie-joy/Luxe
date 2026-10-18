@@ -11,11 +11,14 @@ if (
     database.scheme not in ("postgres", "postgresql")
     or database.hostname not in ("localhost", "127.0.0.1")
     or not database.path.startswith("/theluxe_e2e_")
+    or database.query
+    or database.fragment
     or os.environ.get("E2E_ALLOW_ISOLATED_DATABASE") != "1"
 ):
     raise ImproperlyConfigured(
         "E2E requires explicit E2E_ALLOW_ISOLATED_DATABASE=1 and E2E_DATABASE_URL "
-        "pointing to a loopback PostgreSQL database named theluxe_e2e_*."
+        "pointing to a loopback PostgreSQL database named theluxe_e2e_* "
+        "without a query string or fragment."
     )
 
 # Override before importing settings so a developer .env cannot select another DB.
