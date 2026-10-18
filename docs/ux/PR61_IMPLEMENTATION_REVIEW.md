@@ -1,6 +1,6 @@
 # Stage 3D PR 2 — Functional Creator Workspace (#53)
 
-Status: implemented in [PR61](https://github.com/harmonie-joy/Luxe/pull/61), pending PR acceptance/merge. Independent Standards and Spec QA accepted code tip `2521574` with notes and no remaining findings. Founder design acceptance remains separate.
+Status: [PR61](https://github.com/harmonie-joy/Luxe/pull/61) merged at `bfff8ac5096752714b5f78da3b01ec858a210853`; #53 is closed/completed and Done. Final head `5e7c57f` passed [frontend/backend CI](https://github.com/harmonie-joy/Luxe/actions/runs/39125265707), including PostgreSQL concurrency. Merge reconciliation introduced no application changes. Independent Standards and Spec QA accepted code tip `2521574` with notes and no remaining findings. Founder design acceptance remains separate.
 
 ## Scope and baseline
 
@@ -88,7 +88,7 @@ Final verdict: **Accepted with Notes**, remaining documented-standard findings *
 
 Final verdict: **Accepted with Notes**, remaining findings **0**. Resource retries had reset the selected Project/Profile; eligible selections now persist, intentional New Project selection stays selected, and approval clears when profile fallback actually changes the binding. Multi-option HTTP tests cover the recovery. Exact-version approval, stable post home, revisions/retries/conflicts, retained edits, role/workspace boundaries and truthful deferred paths pass.
 
-Visual QA additionally corrected undersized controls and mobile resume text crowding using existing classes. No known blocking code finding remains. QA does not grant founder design acceptance, close #54, or authorize deployment. #53 remains open/In Progress for PR acceptance; #51/#54/#58/#49 and milestone4 remain open. No decision-log change was needed.
+Visual QA additionally corrected undersized controls and mobile resume text crowding using existing classes. No known blocking code finding remains. QA does not grant founder design acceptance, close #54, or authorize deployment. #53 is closed/Done after implementation acceptance; #51/#54/#58/#49 and milestone4 remain open. No decision-log change was needed.
 
 ## Commits and integration
 
@@ -97,7 +97,7 @@ Visual QA additionally corrected undersized controls and mobile resume text crow
 - `238a962a8b8826e67e5538e85aaf505e0819183f`: selection/history recovery, touch targets and route labels.
 - `eecaa261fc886fd7b06a6c495b3a252d924367ae`: readable mobile saved rows.
 - `252157483fb65d31dc00b9d1906b5696f54eccf0`: native fragment/multi-entry history restoration.
-- Evidence/handoff commit follows these on `feat/53-ia1-frontend`; see PR61 for its final SHA. No merge into master or deployment was performed. PR60 remained open when current master was re-fetched before this handoff.
+- Evidence/handoff commits `a39d1b4` and `27cf74c` followed on `feat/53-ia1-frontend`. The owner reconciled PR60 in `5e7c57f` and merged PR61 at `bfff8ac`. PR60 merged at `a16f9da`. No deployment or #54 implementation was performed. Post-merge finalization preserves local-only `bead1e1` separately; it is outside PR61.
 
 ## Independent #54 handoff
 
