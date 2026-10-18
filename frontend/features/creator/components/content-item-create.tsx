@@ -26,6 +26,8 @@ export function ContentItemCreate() {
   const [voiceResult, setVoiceResult] = useState<{ profile: string; voice: BrandVoice | null } | null>(null);
   const voice = voiceResult?.profile === profileId ? voiceResult.voice : null;
   const [accepted, setAccepted] = useState<string | null>(null);
+  const selection = useRef({ projectId, profileId, initialized: false });
+  selection.current = { projectId, profileId, initialized: resources !== null };
   const [title, setTitle] = useState("");
   const [form, setForm] = useState<CheckpointForm>({ goal: "", workflowStage: "idea", nextAction: "", decisions: "", openQuestions: "" });
   const [error, setError] = useState("");
@@ -46,8 +48,11 @@ export function ContentItemCreate() {
       if (cancelled) return;
       const scopedProfiles = profiles.filter((profile) => String(profile.workspaceId) === String(workspace));
       setResources({ projects, profiles: scopedProfiles });
-      setProjectId(projects[0]?.id ?? "");
-      setProfileId(scopedProfiles[0]?.id ?? "");
+      const current = selection.current;
+      setProjectId((current.initialized && !current.projectId) || projects.some((row) => row.id === current.projectId) ? current.projectId : projects[0]?.id ?? "");
+      const nextProfile = scopedProfiles.some((row) => row.id === current.profileId) ? current.profileId : scopedProfiles[0]?.id ?? "";
+      if (nextProfile !== current.profileId) setAccepted(null);
+      setProfileId(nextProfile);
     }).catch(() => { if (!cancelled) setLoadError("Projects and Brand Profiles are unavailable. Try again before creating a post."); });
     return () => { cancelled = true; };
   }, [workspace, attempt]);
@@ -108,9 +113,9 @@ export function ContentItemCreate() {
     {loadError ? <SurfaceCard><p role="alert">{loadError}</p><button className="luxe-secondary-action px-4 py-3" onClick={() => { setLoadError(""); setAttempt((n) => n + 1); }}>Try again</button></SurfaceCard> : !resources ? <p role="status">Loading projects and Brand Profiles…</p> : resources.profiles.length === 0 ? <SurfaceCard><p>No Brand Profile in this workspace. Set up Brand Voice before creating a post.</p><Link href={APP_ROUTES.brandVoice} className="luxe-secondary-action px-4 py-3">Open Brand Voice</Link></SurfaceCard> : <form onSubmit={submit} className="grid min-w-0 gap-6 lg:grid-cols-2"><fieldset disabled={busy} className="contents">
       <SurfaceCard className="min-w-0 space-y-5">
         {!canWrite && <p role="status">Your workspace role can view posts. An owner, admin or editor must create posts and accept voice versions.</p>}
-        <label className="luxe-form-label block space-y-2">Project<select className="luxe-field w-full" value={projectId} disabled={busy} onChange={(e) => setProjectId(e.target.value)}>{resources.projects.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}<option value="">New project</option></select></label>
-        {!projectId && <label className="luxe-form-label block space-y-2">New project name<input className="luxe-field w-full" required maxLength={200} value={projectName} onChange={(e) => setProjectName(e.target.value)} /></label>}
-        <label className="luxe-form-label block space-y-2">Title<input className="luxe-field w-full" required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+        <label className="luxe-form-label block space-y-2">Project<select className="luxe-field h-12 w-full px-4" value={projectId} disabled={busy} onChange={(e) => setProjectId(e.target.value)}>{resources.projects.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}<option value="">New project</option></select></label>
+        {!projectId && <label className="luxe-form-label block space-y-2">New project name<input className="luxe-field h-12 w-full px-4" required maxLength={200} value={projectName} onChange={(e) => setProjectName(e.target.value)} /></label>}
+        <label className="luxe-form-label block space-y-2">Title<input className="luxe-field h-12 w-full px-4" required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
         <CheckpointFields value={form} onChange={setForm} />
         {error && <p role="alert" className="break-words">{error}</p>}
         {uncertain && <div className="space-y-3" role="alert"><p>The request may have reached the server. Check saved posts and projects before starting again; creation cannot be retried safely automatically. Your input stays here until you choose to leave.</p><Link href={APP_ROUTES.dashboard} target="_blank" rel="noopener" className="luxe-secondary-action inline-block px-4 py-3">Check saved posts in a new tab</Link><button type="button" className="luxe-secondary-action px-4 py-3" onClick={() => { if (window.confirm("Have you checked saved posts and projects? Creating again may duplicate a successful request.")) { setUncertain(false); setAttempt((n) => n + 1); } }}>I checked; allow another attempt</button></div>}
@@ -118,7 +123,7 @@ export function ContentItemCreate() {
       </SurfaceCard>
       <SurfaceCard className="min-w-0 space-y-5 break-words">
         <h2 className="luxe-section-title">Pin a Brand Voice</h2>
-        <label className="luxe-form-label block space-y-2">Brand Profile<select className="luxe-field w-full" disabled={busy} value={profileId} onChange={(e) => { setProfileId(e.target.value); setAccepted(null); }}>{resources.profiles.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+        <label className="luxe-form-label block space-y-2">Brand Profile<select className="luxe-field h-12 w-full px-4" disabled={busy} value={profileId} onChange={(e) => { setProfileId(e.target.value); setAccepted(null); }}>{resources.profiles.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
         {voiceResult?.profile !== profileId ? <p role="status">Loading the active voice…</p> : !voice ? <p>No active voice version. Open Brand Voice to extract or activate a version before creating a post.</p> : <>
           <p className="luxe-eyebrow">Active version {voice.version}</p><p>{voice.voiceSummary}</p><p className="luxe-form-help">Voice ID: {voice.id}</p>
           <details className="space-y-3"><summary className="luxe-focus-ring cursor-pointer">Review this exact voice version</summary><dl className="space-y-3">{[["Tone", `Funny: ${voice.tone.funny}/100; casual: ${voice.tone.casual}/100; irreverent: ${voice.tone.irreverent}/100; enthusiastic: ${voice.tone.enthusiastic}/100`], ["Tone tags", voice.toneTags.join(", ")], ["Point of view", voice.pointOfView], ["Sentence style", voice.sentenceStyle], ["Pacing", voice.pacing], ["Proof style", voice.proofStyle], ["Claim boundaries", voice.claimBoundaries.map((row) => `${row.rule}: ${row.reason}`).join("; ")], ["Vocabulary", voice.preferredVocabulary.map((row) => `${row.term} (${row.instead_of ?? "preferred"}): ${row.note}`).join("; ")], ["Banned phrases", voice.bannedPhrases.map((row) => `${row.phrase} (${row.severity}): ${row.reason}`).join("; ")]].map(([label, value]) => <div key={label}><dt className="luxe-form-help">{label}</dt><dd>{value || "None recorded"}</dd></div>)}</dl></details>

@@ -1,0 +1,71 @@
+import { expect, test } from "@playwright/test";
+
+// Synthetic HTTP fixture; #54 separately verifies real backend persistence.
+test("Back and Forward protect edits across repeated save and dirty cycles", async ({ page }) => {
+  const item = { id: "navigation-post", projectId: "navigation-project", title: "Navigation checkpoint", goal: "Initial goal", workflowStage: "idea", nextAction: "Write next", decisions: [], openQuestions: [], revision: 1, createdAt: "2026-10-18T10:00:00Z", updatedAt: "2026-10-18T10:00:00Z" };
+  let context = { item, checkpoint: { id: "checkpoint-1", revision: 1, createdAt: item.createdAt }, brandVoice: { id: "voice-1", version: 1, isApproved: true } };
+  await page.route("**/api/**", async (route) => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === "/api/auth/me/") return route.fulfill({ json: { user: { id: "qa", username: "qa", email: "qa@example.com", displayName: "QA" }, workspaces: [{ id: "1", name: "QA", role: "owner" }], activeWorkspaceId: "1" } });
+    if (path === "/api/projects/") return route.fulfill({ json: [{ id: "navigation-project", workspaceId: 1, name: "Navigation" }] });
+    if (path === "/api/content-items/") return route.fulfill({ json: [context.item] });
+    if (path.endsWith("/checkpoint/")) {
+      const body = route.request().postDataJSON();
+      const revision = context.item.revision + 1;
+      context = { ...context, item: { ...context.item, goal: body.goal, revision }, checkpoint: { ...context.checkpoint, revision } };
+    }
+    return route.fulfill({ json: context });
+  });
+  let dialogs = 0;
+  let accept = false;
+  page.on("dialog", async (dialog) => { dialogs += 1; if (accept) await dialog.accept(); else await dialog.dismiss(); });
+  await page.goto("/dashboard");
+  await page.getByRole("link", { name: /Resume/ }).click();
+  await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
+  const goal = page.getByRole("textbox", { name: "Content goal", exact: true });
+  for (const text of ["Saved first", "Saved second"]) {
+    await goal.fill(text);
+    await page.getByRole("button", { name: "Save checkpoint", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("Saved checkpoint");
+  }
+  await goal.fill("Newest local goal");
+  await expect(page.getByRole("status")).toHaveText("Unsaved changes");
+  await page.getByRole("link", { name: "Skip to content", exact: true }).evaluate((link) => (link as HTMLAnchorElement).click());
+  await page.goBack();
+  await expect(goal).toHaveValue("Newest local goal");
+  expect(dialogs).toBe(0);
+  await page.goBack();
+  await expect(goal).toHaveValue("Newest local goal");
+  expect(dialogs).toBe(1);
+  accept = true;
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(dialogs).toBe(2);
+  await page.goForward();
+  await expect(page).toHaveURL(/\/content-items\/navigation-post$/);
+  await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
+  await expect(goal).toHaveValue("Saved second");
+  await goal.fill("Forward restored edit");
+  accept = false;
+  await page.goBack();
+  await expect(goal).toHaveValue("Forward restored edit");
+  expect(dialogs).toBe(3);
+  accept = true;
+  await page.goBack();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  expect(dialogs).toBe(4);
+  await page.goForward();
+  await page.getByRole("link", { name: "Open account page", exact: true }).click();
+  await expect(page).toHaveURL(/\/account$/);
+  await page.goBack();
+  await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
+  await goal.fill("Guard a forward traversal");
+  accept = false;
+  await page.goForward();
+  await expect(goal).toHaveValue("Guard a forward traversal");
+  expect(dialogs).toBe(5);
+  accept = true;
+  await page.goForward();
+  await expect(page).toHaveURL(/\/account$/);
+  expect(dialogs).toBe(6);
+});

@@ -97,3 +97,26 @@ it.each([{ noVoice: true, message: /No active voice version/ }, { noProfiles: tr
   render(<CreatorSessionProvider session={mockSession}><ContentItemCreate /></CreatorSessionProvider>);
   expect(await screen.findByText(message)).toBeTruthy();
 });
+
+it("keeps selected project and profile when retrying a failed voice read", async () => {
+  let secondVoiceFails = true;
+  const fetch = vi.fn(async (url: string) => {
+    if (url.includes("projects")) return Response.json([{ id: "project-1", name: "First project" }, { id: "project-2", name: "Selected project" }]);
+    if (url.includes("brand-profiles")) return Response.json([{ id: "profile-1", workspaceId: "ws-1", name: "First profile" }, { id: "profile-2", workspaceId: "ws-1", name: "Selected profile" }]);
+    if (url.includes("brand_profile=profile-2") && secondVoiceFails) throw Error("voice read failed");
+    return Response.json([{ id: url.includes("profile-2") ? "voice-2" : "voice-1", brandProfileId: url.includes("profile-2") ? "profile-2" : "profile-1", isActive: true, version: 4, voiceSummary: "Warm and honest", tone: {}, claimBoundaries: [], preferredVocabulary: [], bannedPhrases: [], toneTags: [] }]);
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(<CreatorSessionProvider session={mockSession}><ContentItemCreate /></CreatorSessionProvider>);
+  await screen.findByText("Warm and honest");
+  const user = userEvent.setup();
+  await user.selectOptions(screen.getByLabelText("Project"), "project-2");
+  await user.selectOptions(screen.getByLabelText("Brand Profile"), "profile-2");
+  expect((await screen.findByRole("alert")).textContent).toContain("Brand Voice is unavailable");
+  secondVoiceFails = false;
+  await user.click(screen.getByRole("button", { name: "Try again" }));
+  await screen.findByText("Warm and honest");
+  await waitFor(() => expect((screen.getByLabelText("Brand Profile") as HTMLSelectElement).value).toBe("profile-2"));
+  expect((screen.getByLabelText("Project") as HTMLSelectElement).value).toBe("project-2");
+  expect(fetch.mock.calls.some(([url]) => url.includes("approve"))).toBe(false);
+});

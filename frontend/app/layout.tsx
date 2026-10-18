@@ -1,3 +1,4 @@
+import { CreatorNavigationGuard } from "@/features/creator/components/use-unsaved-changes";
 import type { Metadata } from "next";
 import { Inter, Libre_Caslon_Text } from "next/font/google";
 import "./globals.css";
@@ -26,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html className={`${inter.variable} ${libreCaslon.variable}`} lang="en">
-      <body>{children}</body>
+      <body><CreatorNavigationGuard />{children}</body>
     </html>
   );
 }

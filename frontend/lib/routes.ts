@@ -118,6 +118,8 @@ export const TOPBAR_LINKS: readonly TopbarLink[] = [
 export const CREATE_BRIEF_ROUTE = APP_ROUTES.create;
 
 export const APP_PAGE_LABELS: readonly NavigationChildItem[] = [
+  { href: APP_ROUTES.contentItemNew, label: "Create With Me" },
+  { href: APP_ROUTES.contentItems, label: "Single-Post Dashboard" },
   ...PRIMARY_NAV_ITEMS.flatMap((item) => [...(item.children ?? []), item]),
   ...SECONDARY_NAV_ITEMS,
   { href: APP_ROUTES.account, label: "Account" },
