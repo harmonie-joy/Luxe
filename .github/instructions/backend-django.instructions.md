@@ -1,3 +1,9 @@
+---
+applyTo: "backend/**"
+---
+
+> **Current scope:** Apply `backend/AGENTS.md`, `docs/02_DECISIONS.md`, the accepted issue and `docs/04_NEXT_ACTIONS.md` before older example endpoint lists below. Preserve IA-1 workspace authorization, explicit version-specific voice acceptance, revision conflicts and real data persistence. WorkOS remains a target, not an implicit authorization to migrate authentication.
+
 ## Backend Migration Rules
 
 - Explain every migration before creating it.
@@ -44,6 +50,7 @@ If a requested task needs new endpoints and serializers do not yet exist, propos
 
 Recommended endpoint style:
 
+- `/api/creator-context/`, `/api/projects/`, `/api/content-items/` and checkpoint routes (see current `backend/AGENTS.md` for the accepted IA-1 contract)
 - `/api/workspaces/`
 - `/api/brand-profiles/`
 - `/api/brand-assets/` or `/api/sample-content/`
