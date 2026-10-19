@@ -1,3 +1,9 @@
+---
+applyTo: "frontend/**"
+---
+
+> **Current scope:** Use `frontend/AGENTS.md`, `docs/04_NEXT_ACTIONS.md` and the approved issue when older examples below mention mock-only pages or the July navigation flow. Live creator workflows require real persistence and truthful error states.
+
 ## Frontend Theme and UI Rules
 
 - Use the centralized THE LUXE theme tokens.
@@ -17,7 +23,7 @@
 - Keep mock data in `frontend/data/mock-*.ts` aligned with backend-like API shapes.
 - Components should consume typed props.
 - Status values must match the canonical enums.
-- Routes should match the MVP flow: dashboard, brand voice, brief creation, drafting, compliance review, and calendar or approval.
+- Routes should follow the current approved Creator/CEO flow: authenticated Creator Home, accepted BrandVoice context, persisted Project/ContentItem, save/resume and one truthful next action. The historical dashboard/brief/draft/compliance/calendar sequence remains reusable but is not the current priority.
 - Frontend-only fields should be clearly marked or avoided.
 - Forms should collect all backend-required fields.
 - Mock data should look like realistic API responses, including IDs and ISO 8601 timestamps.
@@ -51,7 +57,7 @@ Mock data is stored as named TypeScript exports in `frontend/data/mock-*.ts` fil
 - **Named exports only** — export one or more named constants (e.g., `export const mockDashboard = { ... }`). Do not use default exports for mock data.
 - **Entity objects must include `id`, `workspaceId` (where applicable), `createdAt`, and `updatedAt`** as ISO 8601 strings. Do not omit these fields to keep the shape realistic.
 - **Enum field values must match the canonical enum strings** defined in the `copilot-instructions.md` (e.g., `status: "in_review"`, `channel: "linkedin"`).
-- **Page components pass mock data as props directly to feature components.** The feature component must accept the same shape that a real API response would return, so switching from mock to API requires only changing the data source in the page, not the component.
+- **Production page components must use real API data when representing saved creator work.** Mock fixtures are allowed in explicit demo/test modes only and must not masquerade as production persistence. The feature component must accept the same shape that a real API response would return, so switching from mock to API requires only changing the data source in the page, not the component.
 - **Do not use random or auto-generated placeholder values** (e.g., lorem ipsum, `Math.random()`). Mock data should resemble realistic content for the domain.
 
 ---
@@ -68,7 +74,7 @@ The project uses the **Next.js App Router**. All routes live under `frontend/app
 - **Active route detection** must use the `isActiveRoute` helper pattern (exact match for leaf routes, `startsWith` for parent routes with an `exact` flag).
 - **Do not use the Pages Router** (`frontend/pages/`). All new routes use the App Router.
 - **Dynamic and nested routes** should follow the App Router conventions: `[param]` for dynamic segments, `(group)` for route groups without URL impact, and nested `layout.tsx` files for scoped shells.
-- **MVP route order** follows the intended flow: `/dashboard` → `/brand-voice` → `/create` → `/drafts` → `/compliance` → `/calendar`.
+- **MVP route order** is defined by the scoped issue and `docs/04_NEXT_ACTIONS.md`, not by the legacy `/dashboard` → `/brand-voice` → `/create` → `/drafts` → `/compliance` → `/calendar` sequence.
 
 ---
 
