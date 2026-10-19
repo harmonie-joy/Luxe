@@ -1,281 +1,50 @@
-# THE LUXE Copilot Instructions
+# THE LUXE — Copilot instructions
 
-## Project Overview
+## Authoritative context (October 2026)
 
-THE LUXE is an AI-powered brand voice, workflow, and compliance cockpit for planning, drafting, reviewing, approving, and scheduling branded content.
+THE LUXE is a context-preserving Creator/CEO operating system. The approved immediate product path is **Creator Home → approved, version-specific Brand Voice/context → persisted Project/ContentItem → resume editing with a clear next action**, followed by the scoped LinkedIn-first caption/version/approval/export value loop. The historical Dashboard → Create Brief → Draft Studio → Compliance → Calendar flow remains reusable legacy functionality, **not** a mandate to implement that sequence first.
 
-The intended MVP flow is:
+This is a Django/DRF + PostgreSQL backend in `backend/`, Next.js 16/TypeScript frontend in `frontend/`, with GitHub Actions, Vitest and Playwright. Preserve existing architecture. Do not invent a parallel Organization model; Workspace is the tenant boundary.
 
-Dashboard -> Brand Voice Setup -> Create Brief -> Draft Studio -> Compliance Review -> Calendar / Approval
+Read before planning or coding, in this order:
+1. `AGENTS.md` and the relevant `backend/AGENTS.md` or `frontend/AGENTS.md`.
+2. `docs/00_PROJECT_BRIEF.md`, `docs/01_ARCHITECTURE.md`, `docs/02_DECISIONS.md`.
+3. `docs/04_NEXT_ACTIONS.md` (current best task), `docs/03_PROGRESS_LOG.md`, `docs/05_AI_WORK_LOG.md`.
+4. The **specific GitHub issue** and its accepted scope/acceptance criteria; for UX, also `docs/ux/UX_BASELINE.md` and `docs/ux/SCREEN_TRACEABILITY.md`.
+5. `docs/10_AI_TEAM_OPERATING_MODEL.md` and `docs/11_AGENT_HANDOFF_TEMPLATE.md` for agent roles and handoffs.
 
-This repository is a monorepo with:
+If older instructions contradict an explicit later approved decision or scoped issue, **report the conflict** and follow the approved baseline; do not silently expand scope or rewrite source-of-truth documents.
 
-- `backend/`: Django application code, data model evolution, admin, and API surfaces.
-- `frontend/`: Next.js application code for the product UI, route flow, typed domain objects, and mock-driven MVP screens.
+## Roles, approvals and scope
 
-Current repo state matters:
+- Management Agent scopes the issue and produces a handoff. Coding Agent implements only approved scope. QA Agent independently reviews. Do not pretend that one cloud run constitutes three independent reviews.
+- **L0–L1:** documentation or narrowly scoped safe fixes. **L2:** cross-module work needs a Management handoff. **L3–L4:** migrations, auth, security/privacy, AI providers, deployment or product/architecture decisions require explicit Founder/CTO approval before implementation.
+- Follow one issue/vertical slice per PR; include objective, non-goals, allowed files, acceptance criteria and verification in the task description.
+- Prefer small patches. Do not perform speculative refactors, change package versions, add agent frameworks/dependencies, introduce service providers, or change data models without explicit approval.
+- Do not implement unrelated backlog items found while coding. Report them as follow-up issues instead.
+- Do not add, update or merge a PR to `master` without human review. Never claim founder design acceptance, GDPR certification, or production readiness based only on tests.
 
-- Django REST Framework is installed in the backend, and API routes now cover most canonical MVP domains.
-- The frontend already contains shared types, route helpers, and mock data that should be treated as early contract signals.
-- The main product gap is frontend integration: most screens still use mocks and do not persist create/edit/review actions yet.
-- Some backend surfaces remain intentionally incomplete, including workspace/bootstrap APIs, dashboard aggregation, automatic audit logging, and real AI orchestration.
-- Workspace is the current tenant root for MVP (do not introduce a parallel Organization model unless explicitly requested).
+## Product invariants
 
-## Project Memory Read Order
+- Preserve Django models ↔ DRF serializers ↔ TypeScript types ↔ UI/API state alignment.
+- Always enforce Workspace isolation on backend reads and writes, including ID-based lookups. Keep auth, CSRF, authorization, error and revision-conflict behavior intact.
+- The current authenticated IA-1 workflow has persisted checkpoints and explicit human acceptance of an **exact BrandVoice version**; do not replace it with synthetic acceptance or silent latest-version binding.
+- Server acknowledgement is required before showing saved success. Loading, empty, unavailable, unauthorized, conflict and failure states must be truthful. Production and real-browser tests never fall back to mock success.
+- Preserve UX theme tokens, focused pages, keyboard/mobile/reduced-motion behaviors and the source-of-truth UX review process.
+- Treat source documents, real creator materials, API keys, database credentials and production data as private. Do not paste them into prompts, logs, PRs, screenshots or cloud sandboxes. Use synthetic-only fixtures and isolated test databases.
 
-Before suggesting implementation or architecture changes, use the repo memory docs as the source of truth:
+## Environment and verification
 
-1. `docs/00_PROJECT_BRIEF.md`
-2. `docs/01_ARCHITECTURE.md`
-3. `docs/02_DECISIONS.md`
-4. `docs/03_PROGRESS_LOG.md`
-5. `docs/04_NEXT_ACTIONS.md`
-6. `docs/05_AI_WORK_LOG.md`
+- Frontend: Node 20; from `frontend/` run `npm ci`, `npm run lint`, `npm run typecheck`, `npm run test`, and `npm run build` as applicable.
+- Backend: Python 3.12 and `backend/requirements/base.txt`; from `backend/` run `python manage.py check` and scoped `python manage.py test` with a disposable test DB.
+- `make check` is the repo-wide local verification entrypoint when `backend/.venv` exists. CI has separate frontend, backend and **real PostgreSQL/Next/Django Playwright** jobs at `.github/workflows/ci.yml`.
+- Never run destructive test fixtures against a shared, staging or production database. For real E2E follow `frontend/e2e-real/README.md` and its explicit isolated database guard.
+- The optional Copilot cloud environment setup only installs dependencies. **It is not a passing test result.** If commands were not run or fail, report exact commands, exit status and limitations; never invent output.
 
-If a change affects architecture, data model, scope, integrations, compliance approach, or workflow priority, suggest updates to the relevant memory docs.
+## Pull request handoff contract
 
-## Repository Structure
+Report: issue link, approved scope/non-goals, files changed, API/model/migration impact, behavior and edge cases, exact tests run and results, CI link/status when known, remaining risks, and QA/founder approvals still outstanding. Request human review; do not self-accept or auto-merge.
 
-Use the repository layout as the default source of truth.
+## Efficient AI usage
 
-### Backend
-
-`backend/` contains the Django project and app modules.
-
-Expected placement:
-
-- models: `backend/<app>/models.py`
-- migrations: `backend/<app>/migrations/`
-- admin registrations: `backend/<app>/admin.py`
-- views: `backend/<app>/views.py`
-- tests: `backend/<app>/tests.py`
-- app wiring: `backend/config/settings.py`, `backend/config/urls.py`
-
-When the project grows, serializers and app-level URL modules should stay inside the owning Django app.
-
-Current backend apps include:
-
-- `tenancy/` for workspace and membership concepts
-- `audit/` for audit history
-- `brand/` for brand profile and brand input entities
-- `content/` for briefs, drafts, channel outputs, and scheduling
-- `compliance/` for checks and issues
-- `llm/` for AI orchestration boundaries only when explicitly requested
-
-### Frontend
-
-`frontend/` contains the Next.js app router code and shared UI/domain modules.
-
-Expected placement:
-
-- app routes: `frontend/app/`
-- feature-specific UI and logic: `frontend/features/`
-- shared layout and UI building blocks: `frontend/components/`
-- shared domain types: `frontend/types/`
-- mock data shaped like future API responses: `frontend/data/`
-- route constants and navigation helpers: `frontend/lib/routes.ts`
-- app-wide styling: `frontend/app/globals.css`, `frontend/styles/`
-
-Do not create duplicate domain types inside feature folders when a shared type belongs in `frontend/types/`.
-
-## Development Principles
-
-- Inspect relevant files before editing.
-- Prefer small, safe patches over broad rewrites.
-- Do not rewrite large parts of the backend or frontend unless explicitly asked.
-- Keep backend models, API serializers, frontend shared types, and mock data aligned.
-- Preserve existing naming conventions unless there is a clear reason to change them.
-- Explain migrations before creating them.
-- Do not add real AI integrations, publishing integrations, or authentication unless explicitly requested.
-- Do not import from `temp/`, prototype exports, or other experimental folders unless explicitly instructed.
-- Treat `temp/` as design reference material only, not as production code.
-- If the frontend and backend disagree on a product concept, prefer clarifying the canonical domain model first and then patch the smallest number of files needed.
-
-## Canonical MVP Domain Model
-
-Use the following entities as the canonical MVP vocabulary for future work.
-
-### User
-
-Represents an authenticated person operating the product. MVP-required.
-
-### Workspace
-
-Tenant boundary for brand, drafting, compliance, calendar, and audit data. MVP-required.
-
-### BrandProfile
-
-Stores brand voice configuration such as audience, tone, vocabulary, and positioning guidance for content generation and review. MVP-required.
-
-### BrandAsset or SampleContent
-
-Stores uploaded source material, reference content, or curated examples used to shape brand voice and validate content style. MVP-required in at least one form.
-
-### ContentBrief
-
-Structured content request describing objective, channel, audience, angle, constraints, and campaign intent. MVP-required.
-
-### ContentDraft
-
-Generated or manually edited draft content tied to a brief and a channel. MVP-required.
-
-### ChannelOutput
-
-Optional separate entity for channel-specific renderings or transformations when a single draft produces distinct outputs per channel. Later or optional unless the implementation needs it.
-
-### ComplianceCheck
-
-Represents a compliance evaluation run for a draft, including status, timing, and summary outcome. MVP-required.
-
-### ComplianceIssue
-
-Represents a specific issue found during a compliance check, such as claims, consent, IP, or GDPR concerns. MVP-required.
-
-### Approval
-
-Represents a review or sign-off action on a draft by a user or role. MVP-required for approval workflow.
-
-### CalendarItem or ScheduledContent
-
-Represents an approved draft scheduled for publication or internal planning. MVP-required.
-
-### AuditLog
-
-Tracks important user and system actions for traceability across workspace activity. MVP-required.
-
-### Template
-
-Reusable brief, prompt, or workflow template. Later or optional.
-
-## Expected Entity Relationships
-
-Treat these relationships as the default source of truth unless a task explicitly redefines them.
-
-- User belongs to or owns one or more Workspaces.
-- Workspace has many BrandProfiles.
-- BrandProfile can have many BrandAssets or SampleContents.
-- Workspace has many ContentBriefs.
-- ContentBrief uses one BrandProfile.
-- ContentBrief generates many ContentDrafts.
-- ContentDraft belongs to one channel.
-- ContentDraft has one or more ComplianceChecks.
-- ComplianceCheck has many ComplianceIssues.
-- ContentDraft can have Approval records.
-- Approved ContentDraft can become a CalendarItem or ScheduledContent.
-- Important user actions should create AuditLog records.
-
-## Canonical Enums and Status Values
-
-These values are canonical across Django models, serializers, TypeScript types, mock data, and UI logic.
-
-### ComplianceStatus
-
-- `green`
-- `yellow`
-- `red`
-
-### DraftStatus
-
-- `draft`
-- `in_review`
-- `needs_changes`
-- `approved`
-- `scheduled`
-- `published`
-
-### Channel
-
-- `linkedin`
-- `instagram`
-- `blog`
-- `newsletter`
-- `x`
-- `short_video`
-
-### CampaignGoal
-
-- `educate`
-- `announce`
-- `promote`
-- `fundraise`
-- `thought_leadership`
-
-### ComplianceCategory
-
-- `gdpr`
-- `consent`
-- `ip`
-- `claims`
-
-### ComplianceSeverity
-
-- `low`
-- `medium`
-- `high`
-
-### WorkspaceRole
-
-- `owner`
-- `admin`
-- `editor`
-- `reviewer`
-- `viewer`
-
-Rule: any new enum value must be added consistently in backend models, serializers, frontend shared types, mock data, and UI logic in the same task.
-
-## Data Model Alignment Checklist
-
-Before adding or changing product features, check:
-
-- Backend model exists.
-- Serializer or API shape exists or is intentionally planned.
-- Frontend shared type exists.
-- Mock data matches the type.
-- Required and optional fields match.
-- Enum values match.
-- Relationships match.
-- Workspace scoping is preserved.
-- Timestamps are represented consistently.
-- Admin registration and tests are considered where relevant.
-
-## Safe Patch Workflow
-
-When asked to modify code, follow this order:
-
-1. Inspect relevant backend and frontend files.
-2. Summarize the current alignment or mismatch.
-3. Propose a small patch plan.
-4. Update shared types and enums first when needed.
-5. Update backend models or serializers only when necessary.
-6. Explain whether migrations are required.
-7. Update frontend mock data and consuming components.
-8. Add or update tests where practical.
-9. Avoid unrelated refactors.
-
-## Things Not To Do
-
-Copilot must not:
-
-- Rewrite the whole backend.
-- Rewrite the whole frontend.
-- Add authentication unless required by the requested task.
-- Add real AI provider integrations unless explicitly requested.
-- Add publishing integrations unless explicitly requested.
-- Create migrations without explaining why.
-- Rename major entities without a clear reason.
-- Invent frontend fields that cannot exist in the backend.
-- Ignore workspace scoping.
-- Use random UI-only mock data that does not resemble future API responses.
-- Import production code from `temp/` or other prototype-only folders.
-
-## Acceptance Criteria for Future Changes
-
-A change is acceptable only when:
-
-- The canonical model remains clear.
-- Backend and frontend types remain aligned.
-- Mock data can realistically be replaced by API data.
-- Workspace ownership and privacy are preserved.
-- Required fields, enums, IDs, and timestamps are consistent.
-- Any migration risk is explained.
-- The patch is small, focused, and relevant to the requested task.
+Use the existing docs and issue as task context, not the entire repository pasted into the prompt. Read relevant source before proposing edits. Use cost-appropriate models, limit exploratory turns and subagents, avoid repeated full-suite test runs during iteration, and rely on the existing CI acceptance gate for final comprehensive checks. Do not sacrifice required tests or safety to save credits.

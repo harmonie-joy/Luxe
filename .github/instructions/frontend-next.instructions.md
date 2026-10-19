@@ -1,3 +1,9 @@
+---
+applyTo: "frontend/**"
+---
+
+> **Current scope:** Use `frontend/AGENTS.md`, `docs/04_NEXT_ACTIONS.md` and the approved issue when older examples below mention mock-only pages or the July navigation flow. Live creator workflows require real persistence and truthful error states.
+
 ## Frontend Theme and UI Rules
 
 - Use the centralized THE LUXE theme tokens.
@@ -17,12 +23,12 @@
 - Keep mock data in `frontend/data/mock-*.ts` aligned with backend-like API shapes.
 - Components should consume typed props.
 - Status values must match the canonical enums.
-- Routes should match the MVP flow: dashboard, brand voice, brief creation, drafting, compliance review, and calendar or approval.
+- Routes should follow the current approved Creator/CEO flow: authenticated Creator Home, accepted BrandVoice context, persisted Project/ContentItem, save/resume and one truthful next action. The historical dashboard/brief/draft/compliance/calendar sequence remains reusable but is not the current priority.
 - Frontend-only fields should be clearly marked or avoided.
 - Forms should collect all backend-required fields.
 - Mock data should look like realistic API responses, including IDs and ISO 8601 timestamps.
 - Prefer using `frontend/lib/routes.ts` for shared route constants instead of hardcoding route strings repeatedly.
-- When a frontend screen models backend data, shape the UI state so it can later swap from mock data to API data without major refactoring.
+- When a frontend screen models persisted backend data, use the existing API client and domain types. Never fake successful writes or silently swap to mock content on an API error.
 
 ---
 
@@ -43,7 +49,7 @@ Styling is handled through a layered system: design tokens defined in `frontend/
 
 ### Mock Data Conventions
 
-Mock data is stored as named TypeScript exports in `frontend/data/mock-*.ts` files. There is no MSW, fixtures directory, or `__mocks__` folder. Pages import mock data directly and pass it as props to feature components, making it straightforward to replace with API calls later.
+Historical mock fixtures are named TypeScript exports in `frontend/data/mock-*.ts` files. Use them for tests or explicitly labeled demonstrations only. Persisted, authenticated creator routes must consume real API data and expose truthful loading/error states.
 
 - **All mock data files must live in `frontend/data/`** and follow the `mock-<feature>.ts` naming convention (e.g., `mock-dashboard.ts`, `mock-brand-profiles.ts`).
 - **Import and use types from `frontend/types/`** at the top of every mock file. Never define entity shapes inline inside mock files.
@@ -51,7 +57,7 @@ Mock data is stored as named TypeScript exports in `frontend/data/mock-*.ts` fil
 - **Named exports only** — export one or more named constants (e.g., `export const mockDashboard = { ... }`). Do not use default exports for mock data.
 - **Entity objects must include `id`, `workspaceId` (where applicable), `createdAt`, and `updatedAt`** as ISO 8601 strings. Do not omit these fields to keep the shape realistic.
 - **Enum field values must match the canonical enum strings** defined in the `copilot-instructions.md` (e.g., `status: "in_review"`, `channel: "linkedin"`).
-- **Page components pass mock data as props directly to feature components.** The feature component must accept the same shape that a real API response would return, so switching from mock to API requires only changing the data source in the page, not the component.
+- **Production page components must use real API data when representing saved creator work.** Mock fixtures are allowed in explicit demo/test modes only and must not masquerade as production persistence. The feature component must accept the same shape that a real API response would return, so switching from mock to API requires only changing the data source in the page, not the component.
 - **Do not use random or auto-generated placeholder values** (e.g., lorem ipsum, `Math.random()`). Mock data should resemble realistic content for the domain.
 
 ---
@@ -62,13 +68,13 @@ The project uses the **Next.js App Router**. All routes live under `frontend/app
 
 - **Use the `(app)` route group** for all product screens that require the sidebar/topbar shell. Add new pages as `frontend/app/(app)/<route>/page.tsx`. The group's `layout.tsx` applies `PageShell` and the product fonts.
 - **Root `app/layout.tsx`** is the minimal HTML shell. It must only contain the `<html>` and `<body>` tags with global CSS and base font variables. Do not add product chrome here.
-- **Page files must be thin.** A page component should only import mock data (or in future, fetch data) and pass it to the relevant feature component. Business logic, layout, and JSX must not live in `page.tsx` files.
+- **Page files must be thin.** Compose the approved UI with API-backed data for live routes, or explicitly labeled demo fixtures. Place feature business logic in feature modules, not `page.tsx`.
 - **All route path strings must be defined in `frontend/lib/routes.ts`** in the `APP_ROUTES` constant. Never hardcode a path string in a component or `<Link>`.
 - **Navigation structure** (primary nav items, footer nav items, topbar links) is also defined in `frontend/lib/routes.ts` as typed `readonly` constants. Do not scatter navigation config across layout components.
 - **Active route detection** must use the `isActiveRoute` helper pattern (exact match for leaf routes, `startsWith` for parent routes with an `exact` flag).
 - **Do not use the Pages Router** (`frontend/pages/`). All new routes use the App Router.
 - **Dynamic and nested routes** should follow the App Router conventions: `[param]` for dynamic segments, `(group)` for route groups without URL impact, and nested `layout.tsx` files for scoped shells.
-- **MVP route order** follows the intended flow: `/dashboard` → `/brand-voice` → `/create` → `/drafts` → `/compliance` → `/calendar`.
+- **MVP route order** is defined by the scoped issue and `docs/04_NEXT_ACTIONS.md`, not by the legacy `/dashboard` → `/brand-voice` → `/create` → `/drafts` → `/compliance` → `/calendar` sequence.
 
 ---
 
@@ -78,7 +84,7 @@ All shared domain types are maintained manually in `frontend/types/` as TypeScri
 
 - **All entity and enum types live in `frontend/types/`**, organised by domain concern (e.g., `brand-profile.ts`, `content.ts`, `compliance.ts`, `workspace.ts`). Never define a shared domain interface inside a feature folder.
 - **Enum values are declared as TypeScript union string literals** (e.g., `export type DraftStatus = "draft" | "in_review" | ...`), not as TypeScript `enum` objects. Union literals are easier to extend and serialise.
-- **Enum values must match the canonical backend strings** defined in `copilot-instructions.md` exactly. Any change must be applied in the backend model, the frontend type, and all mock data in the same task.
+- **Enum values must match the canonical backend strings** and current domain contracts exactly. Any change must be applied in the backend model, the frontend type, and all mock data in the same task.
 - **Entity types must include `id: string`, `workspaceId: string`, `createdAt: string`, and `updatedAt: string`** on top-level entities. Timestamps are always ISO 8601 strings, not `Date` objects.
 - **Use `readonly` arrays** for collections on entity types that should not be mutated client-side (e.g., `issues: readonly ComplianceIssue[]`).
 - **Mark optional backend fields with `?`** (e.g., `positioningNotes?: string`). Do not add fields that have no backend equivalent.
