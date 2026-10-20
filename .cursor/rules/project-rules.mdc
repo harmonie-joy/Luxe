@@ -1,60 +1,8 @@
 ---
-description: THE LUXE project-wide AI rules
+description: THE LUXE project rules adapter
 alwaysApply: true
 ---
 
-# THE LUXE Cursor Project Rules
+Use `AGENTS.md` as the shared project policy. Current product priorities come from `docs/04_NEXT_ACTIONS.md` and approved GitHub issues; decisions from `docs/02_DECISIONS.md`. Follow `docs/10_AI_TEAM_OPERATING_MODEL.md` and the same `.agents/skills/the-luxe-*` procedures used by Codex and Copilot.
 
-Read `AGENTS.md` and the project memory docs before making architecture or implementation decisions.
-
-## Required Context
-
-- `AGENTS.md`
-- `docs/00_PROJECT_BRIEF.md`
-- `docs/01_ARCHITECTURE.md`
-- `docs/02_DECISIONS.md`
-- `docs/03_PROGRESS_LOG.md`
-- `docs/04_NEXT_ACTIONS.md`
-- `docs/05_AI_WORK_LOG.md`
-- `README.md`
-
-Use area-specific instructions when relevant:
-
-- Backend: `backend/AGENTS.md`
-- Frontend: `frontend/AGENTS.md`
-
-## Core Product Focus
-
-Keep THE LUXE aligned with:
-
-- Brand-Voice Engine
-- Multi-channel drafting
-- Compliance traffic light
-- Publishing calendar
-- Approval flow
-- Audit trail
-- GDPR/IP/consent-aware review support
-
-## Rules
-
-- Prefer the smallest safe change.
-- Inspect existing code before generating new code.
-- Do not create duplicate systems.
-- Do not introduce new architecture without updating `docs/02_DECISIONS.md`.
-- Keep implementation aligned with `docs/04_NEXT_ACTIONS.md`.
-- Keep backend models, serializers, frontend shared types, mock data, and UI logic aligned.
-- Preserve Workspace as the MVP tenant root.
-- Do not add real AI, publishing, authentication, billing, or vector-memory infrastructure unless explicitly requested.
-- Do not import production code from `temp/`; use it only as design reference material.
-- Never store secrets, credentials, private customer data, or production tokens in docs.
-- Treat compliance features as checklist/review support, not legal advice or certification.
-
-## After Work
-
-After completing a meaningful task, suggest or apply updates for:
-
-- `docs/03_PROGRESS_LOG.md`
-- `docs/05_AI_WORK_LOG.md`
-- `docs/04_NEXT_ACTIONS.md`
-
-Update `docs/02_DECISIONS.md` when a task changes architecture, scope, tenant model, AI strategy, compliance approach, auth, deployment, or integration strategy.
+Do not privilege the historical Dashboard/Compliance/Calendar navigation over the accepted Creator Workspace scope. Preserve Workspace isolation, explicit human approval, real persistence, type/API contracts, verified UX and founder L3/L4 decisions. Keep changes small and report test results.
