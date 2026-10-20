@@ -1,6 +1,6 @@
 # Next Actions
 
-Updated 2026-10-18. This is the engineering handoff, not a substitute for GitHub Issues. The approved MVP planning baseline is the confidential `THE_LUXE_MVP_Technical_Feasibility_EU_Ready_Plan_FINAL_POLISHED.docx` (dated 2026-08-10, founder-confirmed 2026-10-16; SHA-256 `771ec02713b6a75a3015db06fd84018ac0181e40e60d98d4be912e1e0a8144ec`). The August 12 Technical Decision Record Revision 1.1 is a technical reference, not a later product approval.
+Updated 2026-10-20. This is the engineering handoff, not a substitute for GitHub Issues. The approved MVP planning baseline is the confidential `THE_LUXE_MVP_Technical_Feasibility_EU_Ready_Plan_FINAL_POLISHED.docx` (dated 2026-08-10, founder-confirmed 2026-10-16; SHA-256 `771ec02713b6a75a3015db06fd84018ac0181e40e60d98d4be912e1e0a8144ec`). The August 12 Technical Decision Record Revision 1.1 is a technical reference, not a later product approval.
 
 ## Current Project State
 
@@ -12,7 +12,9 @@ Updated 2026-10-18. This is the engineering handoff, not a substitute for GitHub
 
 ## Current Best Next Task
 
-After accepted #54 delivery, implement **#58 PR3: truthful company/public entry and controlled-preview readiness**, using its existing approved scope. Read #58 and the UX baseline before coding; maintain the distinction between public company information and the authenticated creator product. Do not deploy or treat preview readiness as authorization for production authentication, hosting or external integrations.
+The authorized public-homepage portion of #58 PR3 is a partial slice for independent review. It updates truthful Creator/CEO and current-alpha messaging, routes CTAs to the existing login path, and sets homepage-specific metadata/indexing. This does not complete PR3 or #58.
+
+Remaining PR3 requirements: login demo-credential cleanup; broader deployment/review instructions; environment and release gates; and screenshots. These are deliberately deferred under the homepage-only authorization. Do not claim public deployment, founder design acceptance, or wider release readiness. Keep #58 open.
 
 Founder Page9 typography/card density/mobile drawer acceptance and Page10A final design remain separate governance work. [UX baseline revision 1](ux/UX_BASELINE.md) and [screen traceability](ux/SCREEN_TRACEABILITY.md) retain that distinction. No Harmonie design approval is inferred.
 
@@ -32,4 +34,4 @@ Founder Page9 typography/card density/mobile drawer acceptance and Page10A final
 
 ## Best Next Task for AI
 
-Finish PR63's final evidence/CI/merge gates, then use a separate #58 PR3 assignment. Do not reopen #54 to implement CreatorDNAProposal, communication guides, caption/DraftVersion comparison, Gallery, Media Finalizer, WorkOS migration, LinkedIn publishing, production hosting or another state/agent framework. Keep #49/#58/milestone 4 open until their own acceptance.
+Review the partial #58 PR3 homepage slice, then scope the remaining PR3 gates separately: login demo-credential cleanup, deployment/review instructions, environment/release readiness and screenshots. Do not reopen #54 to implement CreatorDNAProposal, communication guides, caption/DraftVersion comparison, Gallery, Media Finalizer, WorkOS migration, LinkedIn publishing, production hosting or another state/agent framework. Keep #49/#58/milestone 4 open until their own acceptance.
