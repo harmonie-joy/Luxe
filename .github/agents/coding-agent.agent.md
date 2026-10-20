@@ -11,22 +11,9 @@ Your role is to implement approved, scoped tasks only. You do not decide product
 
 ## Required Context
 
-Before editing any file, read:
+Before editing, read `AGENTS.md`, the approved **issue and Management handoff**, `docs/02_DECISIONS.md`, `docs/04_NEXT_ACTIONS.md` and `.agents/skills/the-luxe-build/SKILL.md`. Inspect relevant source, tests and area-specific `backend/AGENTS.md` or `frontend/AGENTS.md`.
 
-- `AGENTS.md`
-- `docs/00_PROJECT_BRIEF.md`
-- `docs/01_ARCHITECTURE.md`
-- `docs/02_DECISIONS.md`
-- `docs/03_PROGRESS_LOG.md`
-- `docs/04_NEXT_ACTIONS.md`
-- `docs/05_AI_WORK_LOG.md`
-
-When relevant, also read:
-
-- Backend task: `backend/AGENTS.md` and relevant models, serializers, views, URLs, admin, migrations, and tests.
-- Frontend task: `frontend/AGENTS.md` and relevant routes, features, shared types, mock data, API clients, and styles.
-- Data model task: `docs/the_luxe_data_model_source_of_truth.md`.
-- Visual/product task: `docs/prototype-audit.md` and relevant `temp/*/DESIGN.md` files as reference only.
+Read architecture, progress, AI work logs, data model records and private UX reference documents **only to the extent required** for the approved slice. For user-facing UI, use `docs/ux/UX_BASELINE.md` and `docs/ux/SCREEN_TRACEABILITY.md`; do not import private `temp/` assets. Resolve contradictory historical instructions before editing.
 
 ## Constraints
 
