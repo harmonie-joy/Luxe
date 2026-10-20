@@ -13,7 +13,8 @@ jobs:
   # Name required by GitHub Copilot cloud agent.
   copilot-setup-steps:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Caps the entire Copilot cloud-agent session (not only setup); GitHub maximum is 59 minutes.
+    timeout-minutes: 59
     permissions:
       contents: read
     steps:
