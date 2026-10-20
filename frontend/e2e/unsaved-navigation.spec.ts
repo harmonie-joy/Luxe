@@ -1,7 +1,26 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+type HistoryWindow = Window & { __luxePopstateCount?: number };
+
+async function trackHistoryTraversal(page: Page) {
+  await page.addInitScript(() => {
+    const trackedWindow = window as HistoryWindow;
+    trackedWindow.__luxePopstateCount = 0;
+    window.addEventListener("popstate", () => {
+      trackedWindow.__luxePopstateCount = (trackedWindow.__luxePopstateCount ?? 0) + 1;
+    }, true);
+  });
+}
+
+async function waitForCanceledTraversalRestore(page: Page, traverse: () => Promise<unknown>) {
+  const initialCount = await page.evaluate(() => (window as HistoryWindow).__luxePopstateCount ?? 0);
+  await traverse();
+  await expect.poll(() => page.evaluate(() => (window as HistoryWindow).__luxePopstateCount ?? 0)).toBe(initialCount + 2);
+}
 
 // Synthetic HTTP fixture; #54 separately verifies real backend persistence.
 test("Back and Forward protect edits across repeated save and dirty cycles", async ({ page }) => {
+  await trackHistoryTraversal(page);
   const item = { id: "navigation-post", projectId: "navigation-project", title: "Navigation checkpoint", goal: "Initial goal", workflowStage: "idea", nextAction: "Write next", decisions: [], openQuestions: [], revision: 1, createdAt: "2026-10-18T10:00:00Z", updatedAt: "2026-10-18T10:00:00Z" };
   let context = { item, checkpoint: { id: "checkpoint-1", revision: 1, createdAt: item.createdAt }, brandVoice: { id: "voice-1", version: 1, isApproved: true } };
   await page.route("**/api/**", async (route) => {
@@ -34,7 +53,7 @@ test("Back and Forward protect edits across repeated save and dirty cycles", asy
   await page.goBack();
   await expect(goal).toHaveValue("Newest local goal");
   expect(dialogs).toBe(0);
-  await page.goBack();
+  await waitForCanceledTraversalRestore(page, () => page.goBack());
   await expect(goal).toHaveValue("Newest local goal");
   expect(dialogs).toBe(1);
   accept = true;
@@ -47,7 +66,7 @@ test("Back and Forward protect edits across repeated save and dirty cycles", asy
   await expect(goal).toHaveValue("Saved second");
   await goal.fill("Forward restored edit");
   accept = false;
-  await page.goBack();
+  await waitForCanceledTraversalRestore(page, () => page.goBack());
   await expect(goal).toHaveValue("Forward restored edit");
   expect(dialogs).toBe(3);
   accept = true;
@@ -61,7 +80,7 @@ test("Back and Forward protect edits across repeated save and dirty cycles", asy
   await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
   await goal.fill("Guard a forward traversal");
   accept = false;
-  await page.goForward();
+  await waitForCanceledTraversalRestore(page, () => page.goForward());
   await expect(goal).toHaveValue("Guard a forward traversal");
   expect(dialogs).toBe(5);
   accept = true;
@@ -71,6 +90,7 @@ test("Back and Forward protect edits across repeated save and dirty cycles", asy
 });
 
 test("canceling a multi-entry Back jump across a native hash restores the same post and edits", async ({ page }) => {
+  await trackHistoryTraversal(page);
   const item = (id: string) => ({ id, projectId: "project-1", title: id, goal: "Saved goal", workflowStage: "idea", nextAction: "Write next", decisions: [], openQuestions: [], revision: 1, updatedAt: "2026-10-18T10:00:00Z" });
   await page.route("**/api/**", (route) => {
     const path = new URL(route.request().url()).pathname;
@@ -94,7 +114,7 @@ test("canceling a multi-entry Back jump across a native hash restores the same p
   await goal.fill("Newest edits belong to post two");
   const dialogs: string[] = [];
   page.on("dialog", async (dialog) => { dialogs.push(dialog.type()); await dialog.dismiss(); });
-  await page.evaluate(() => history.go(-3));
+  await waitForCanceledTraversalRestore(page, () => page.evaluate(() => history.go(-3)));
   await expect.poll(() => dialogs.length).toBeGreaterThan(0);
   await expect(page).toHaveURL(/\/content-items\/post-two$/);
   await expect(page.getByRole("heading", { name: "post-two", exact: true })).toBeVisible();
