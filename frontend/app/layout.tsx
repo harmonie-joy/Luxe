@@ -15,9 +15,13 @@ const libreCaslon = Libre_Caslon_Text({
 });
 
 export const metadata: Metadata = {
-  title: "THE LUXE | Brand Voice Content Cockpit",
+  title: "THE LUXE | Creator Workspace",
   description:
-    "AI-powered brand voice, workflow, and compliance cockpit for planning, drafting, reviewing, and scheduling branded content.",
+    "THE LUXE is an Internal Alpha workspace for Creators and CEOs, with a bounded flow to create and resume content.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

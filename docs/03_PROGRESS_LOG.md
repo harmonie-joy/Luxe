@@ -1,5 +1,12 @@
 # Progress Log
 
+### 2026-10-20 - #58 PR3 public-homepage slice
+
+- Implemented only the authorized public homepage portion: Creator/CEO audience, context preservation and finishing the current piece of work; the Internal Alpha is explicitly limited to accepting the exact BrandVoice version and saving/resuming post checkpoint state in idea/drafting. Build → Scale → Automate is framed as vision, with Scale and Automate marked future/planned.
+- Public calls to action route only to the existing `/login`; removed dead Stories/Pricing navigation and both remote illustrative images. Homepage title/description are updated; root metadata defaults to `noindex,nofollow`, with the public homepage explicitly `index,follow`.
+- Focused homepage tests passed 5/5; full frontend tests passed 108/108; `npm run lint` and `npm run typecheck` passed. `npm run build` was attempted and failed because Next.js could not fetch existing Google-hosted fonts in `app/layout.tsx`; no font, architecture or dependency changes were made.
+- This is a partial #58 PR3 slice for independent review, not a full PR3 or release. Login demo-credential cleanup, broader deployment/review instructions, environment/release gates and screenshots remain required PR3 work. No public deployment, #58 completion, founder design acceptance or broader release gate is claimed.
+
 ### 2026-10-18 - Stage 3E / #54 real full-stack verification
 
 - [PR #63](https://github.com/harmonie-joy/Luxe/pull/63) delivers seven Playwright cases against actual Next.js, Django session/CSRF authorization and PostgreSQL 16.12. The primary creator journey explicitly accepts version 2, creates Project/ContentItem, commits every checkpoint field, refreshes, logs out, logs in with a fresh browser context and resumes the exact checkpoint/pinned version even after version 3 activation. Separate ORM reads prove persisted state.

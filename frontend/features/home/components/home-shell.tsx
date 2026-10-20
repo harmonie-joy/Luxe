@@ -2,217 +2,130 @@ import Link from "next/link";
 
 import { APP_ROUTES } from "@/lib/routes";
 
-const spotlightImage =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuC9Y6euzDW2q25wVAscRy9movrxyYpzco7ucyzjT4Dnnce2SBK_HplEaml84BHMCv-YqM9XPEyT2J5Vq6VRHO40yRPWgT1NUliPAEF2o_RuQTKjjDPKk4g76yHn7_UJNG2RW18MSnhlETVf5LKEIxZuEPUuSrj_VojA99zVM6ClmpqPXVfOeFNmbMxjj8HwGVPUX9qLdo3ygM-RAwE4fRlmgzkIZb6LmRro8ul3obu8OI2Se63KRVopytSfUx8QRQHlqEdae2A8b58D";
-
-const silkImage =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAc1RfRgIDd1uNPYfiA-Pkwbqe45Z_STM3DhufVQkMwDmGOb3CwNauJZ6jEAB3kVahvoelzQjoAuk2LzVMjmZf3IAcqHlAXtZwa4pshRj8187JAWTykMmi6fEN1T2h4A43-fJEmK7AYhz296hhJRse3J1KKCKFnQhIKlWszzyP5YXKv5ag3SeVhRVtSOF1MjwI4Z2etNSH1X18q26v2ViHvBSB09NiZ0oqvIFEFdMPVv0fLQxmjAs21z2257g5xKu3QzWI_di4iBQ9_";
-
-const features = [
-  {
-    number: "01",
-    title: "Strategic Voice",
-    body: "Craft a signature persona that travels across channels while preserving brand voice, audience fit, and editorial control.",
-  },
-  {
-    number: "02",
-    title: "Fast Drafting",
-    body: "Move from brief to channel-ready drafts with the right structure, tone, and campaign intent already in place.",
-  },
-  {
-    number: "03",
-    title: "Compliance Review",
-    body: "Review GDPR, consent, IP, and claims risks before content moves into approval and scheduling.",
-  },
+const alphaCapabilities = [
+  "Start a post in the idea or drafting stage, or resume a saved post.",
+  "Review and explicitly accept the exact BrandVoice version for a new post.",
+  "Save and resume the post's checkpoint state.",
 ] as const;
 
 export function HomeShell() {
   return (
     <div
-      className="h-screen overflow-y-auto bg-[var(--color-background)] text-[var(--color-text-primary)]"
+      className="min-h-screen bg-[var(--color-background)] text-[var(--color-text-primary)]"
       data-theme="dark"
     >
-      <header className="sticky top-0 z-40 border-b border-[var(--color-border-subtle)] bg-[color-mix(in_srgb,var(--color-background)_88%,transparent)] backdrop-blur">
-        <nav className="mx-auto flex h-20 max-w-[var(--layout-container-max)] items-center justify-between px-5 md:px-16">
+      <header className="border-b border-[var(--color-border-subtle)]">
+        <nav
+          aria-label="Main navigation"
+          className="mx-auto flex min-h-20 max-w-[var(--layout-container-max)] items-center justify-between gap-6 px-5 py-4 md:px-16"
+        >
           <Link
             className="luxe-focus-ring rounded-sm font-[var(--font-luxe-serif)] text-3xl leading-none tracking-[-0.04em] text-[var(--color-brand)]"
             href={APP_ROUTES.home}
           >
             THE LUXE
           </Link>
-          <div className="hidden items-center gap-10 md:flex">
-            <a className="luxe-eyebrow text-[var(--color-brand)]" href="#platform">
-              Platform
-            </a>
-            <a className="luxe-eyebrow" href="#stories">
-              Success Stories
-            </a>
-            <a className="luxe-eyebrow" href="#pricing">
-              Pricing
-            </a>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              className="luxe-focus-ring hidden rounded-sm px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-secondary)] sm:block"
-              href={APP_ROUTES.login}
-            >
-              Sign In
-            </Link>
-            <Link
-              className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em]"
-              href={APP_ROUTES.signup}
-            >
-              Start Creating
-            </Link>
-          </div>
+          <Link
+            className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em]"
+            href={APP_ROUTES.login}
+          >
+            Sign in
+          </Link>
         </nav>
       </header>
 
-      <main>
-        <section className="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-[var(--layout-container-max)] flex-col items-center justify-center overflow-hidden px-5 py-24 text-center md:px-16">
-          <div className="absolute inset-x-10 top-20 h-64 bg-[radial-gradient(circle,var(--color-brand-soft),transparent_65%)] opacity-30 blur-3xl" />
-          <div className="relative z-10 max-w-5xl space-y-9">
-            <div className="inline-flex items-center border border-[var(--color-border-subtle)] bg-[var(--color-surface)] px-4 py-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--color-text-muted)]">
-                Elevate Your Narrative
-              </span>
-            </div>
-            <h1 className="font-[var(--font-luxe-serif)] text-5xl uppercase leading-[0.95] tracking-[-0.04em] md:text-8xl">
-              Going viral
-              <br />
-              <span className="italic text-[var(--color-brand)]">made easy.</span>
-            </h1>
-            <p className="mx-auto max-w-2xl text-base leading-8 text-[var(--color-text-secondary)] md:text-lg">
-              The content cockpit for creators and teams who need brand voice,
-              workflow, compliance review, and approval in one focused product flow.
-            </p>
-            <div className="flex flex-col items-center justify-center gap-4 pt-4 sm:flex-row">
-              <Link
-                className="luxe-primary-action luxe-focus-ring w-full rounded-sm px-10 py-4 text-sm font-semibold uppercase tracking-[0.18em] sm:w-auto"
-                href={APP_ROUTES.signup}
-              >
-                Start Creating
-              </Link>
-              <a
-                className="luxe-secondary-action luxe-focus-ring w-full rounded-sm px-10 py-4 text-sm font-semibold uppercase tracking-[0.18em] sm:w-auto"
-                href="#platform"
-              >
-                The Manifesto
-              </a>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-[var(--layout-container-max)] px-5 py-12 md:px-16">
-          <div className="relative h-[58vh] min-h-96 overflow-hidden border border-[var(--color-border-subtle)] grayscale transition duration-700 hover:grayscale-0">
-            <div
-              aria-label="High contrast city architecture at night"
-              className="h-full w-full bg-cover bg-center"
-              role="img"
-              style={{ backgroundImage: `url(${spotlightImage})` }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-background)] via-transparent to-transparent" />
-            <p className="luxe-eyebrow absolute bottom-8 left-8 text-[var(--color-text-secondary)]">
-              Visual Identity v1.0
-            </p>
-          </div>
-        </section>
-
+      <main className="mx-auto max-w-[var(--layout-container-max)] px-5 md:px-16">
         <section
-          className="mx-auto grid max-w-[var(--layout-container-max)] gap-6 px-5 py-24 md:grid-cols-3 md:px-16"
-          id="platform"
-        >
-          {features.map((feature) => (
-            <article
-              className="group flex min-h-96 flex-col justify-between border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-8 transition duration-300 hover:-translate-y-1 hover:border-[var(--color-brand)]"
-              key={feature.number}
-            >
-              <div>
-                <div className="mb-12 flex items-start justify-between">
-                  <span className="text-4xl text-[var(--color-brand)]">+</span>
-                  <span className="luxe-eyebrow opacity-50">{feature.number}</span>
-                </div>
-                <h2 className="font-[var(--font-luxe-serif)] text-3xl uppercase leading-tight">
-                  {feature.title}
-                </h2>
-                <p className="mt-5 text-sm leading-7 text-[var(--color-text-secondary)]">
-                  {feature.body}
-                </p>
-              </div>
-              <div className="mt-8 flex items-center justify-between border-t border-[var(--color-border-subtle)] pt-5 opacity-70">
-                <span className="luxe-eyebrow text-[var(--color-brand)]">Explore</span>
-                <svg
-                  aria-hidden
-                  className="h-5 w-5 text-[var(--color-brand)]"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.7"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M5 12h14" />
-                  <path d="m13 6 6 6-6 6" />
-                </svg>
-              </div>
-            </article>
-          ))}
-        </section>
-
-        <section
-          className="relative overflow-hidden bg-[var(--color-surface-muted)] px-5 py-28 text-center md:px-16"
-          id="pricing"
+          aria-labelledby="home-title"
+          className="relative isolate flex min-h-[min(42rem,calc(100svh-5rem))] flex-col justify-center gap-8 overflow-hidden py-20 md:py-28"
         >
           <div
-            aria-hidden
-            className="absolute inset-0 bg-cover bg-center opacity-10"
-            style={{ backgroundImage: `url(${silkImage})` }}
+            aria-hidden="true"
+            className="absolute -inset-x-10 top-10 -z-10 h-72 bg-[radial-gradient(circle,var(--color-brand-soft),transparent_65%)] opacity-30 blur-3xl"
           />
-          <div className="relative z-10 mx-auto max-w-4xl space-y-9">
-            <h2 className="font-[var(--font-luxe-serif)] text-5xl uppercase leading-none tracking-[-0.04em] md:text-7xl">
-              Own the
-              <br />
-              narrative.
-            </h2>
-            <p className="mx-auto max-w-xl text-lg italic leading-8 text-[var(--color-text-secondary)]">
-              Influence is not about being everywhere. It is about making every
-              draft worth approving.
-            </p>
+          <p className="luxe-eyebrow text-[var(--color-brand)]">
+            For Creators and CEOs
+          </p>
+          <h1
+            className="max-w-5xl font-[var(--font-luxe-serif)] text-5xl leading-[1.05] tracking-[-0.04em] md:text-7xl"
+            id="home-title"
+          >
+            Keep your context. Finish the work in front of you.
+          </h1>
+          <p className="max-w-2xl text-base leading-8 text-[var(--color-text-secondary)] md:text-lg">
+            THE LUXE is being built to help Creators and CEOs carry their context
+            into the next piece of work—and pick up where they left off.
+          </p>
+          <div className="flex flex-col gap-4 pt-2 sm:flex-row">
             <Link
-              className="luxe-primary-action luxe-focus-ring inline-flex rounded-sm px-12 py-5 text-sm font-semibold uppercase tracking-[0.18em]"
-              href={APP_ROUTES.signup}
+              className="luxe-primary-action luxe-focus-ring inline-flex min-h-12 items-center justify-center rounded-sm px-8 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
+              href={APP_ROUTES.login}
             >
-              Request Access
+              Sign in
             </Link>
           </div>
         </section>
+
+        <section
+          aria-labelledby="alpha-title"
+          className="grid gap-8 border-t border-[var(--color-border-subtle)] py-16 md:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] md:gap-16 md:py-20"
+        >
+          <div>
+            <p className="luxe-eyebrow text-[var(--color-brand)]">Current state</p>
+            <h2
+              className="mt-4 font-[var(--font-luxe-serif)] text-3xl leading-tight md:text-4xl"
+              id="alpha-title"
+            >
+              Internal Alpha
+            </h2>
+            <p className="mt-5 max-w-lg leading-7 text-[var(--color-text-secondary)]">
+              The current alpha is a narrow create-and-resume flow, limited to
+              the idea and drafting stages.
+            </p>
+          </div>
+          <ul className="m-0 grid list-none gap-4 p-0">
+            {alphaCapabilities.map((capability) => (
+              <li
+                className="border border-[var(--color-border-subtle)] bg-[var(--color-surface)] p-5 leading-7 text-[var(--color-text-secondary)] md:p-6"
+                key={capability}
+              >
+                {capability}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section
+          aria-labelledby="vision-title"
+          className="border-t border-[var(--color-border-subtle)] py-16 md:py-20"
+        >
+          <p className="luxe-eyebrow text-[var(--color-brand)]">Longer-term vision</p>
+          <h2
+            className="mt-4 font-[var(--font-luxe-serif)] text-3xl leading-tight md:text-4xl"
+            id="vision-title"
+          >
+            Build → Scale → Automate
+          </h2>
+          <p className="mt-5 max-w-2xl leading-7 text-[var(--color-text-secondary)]">
+            Build → Scale → Automate is the longer-term vision. The Internal Alpha
+            above is the current limited functionality. Scale and Automate are
+            future, planned stages—not capabilities available in this alpha.
+          </p>
+          <Link
+            className="luxe-primary-action luxe-focus-ring mt-8 inline-flex min-h-12 items-center justify-center rounded-sm px-8 py-4 text-sm font-semibold uppercase tracking-[0.18em]"
+            href={APP_ROUTES.login}
+          >
+            Sign in
+          </Link>
+        </section>
       </main>
 
-      <footer
-        className="border-t border-[var(--color-border-subtle)] bg-[var(--color-background)]"
-        id="stories"
-      >
-        <div className="mx-auto grid max-w-[var(--layout-container-max)] gap-10 px-5 py-16 md:grid-cols-2 md:px-16">
-          <div>
-            <p className="font-[var(--font-luxe-serif)] text-4xl uppercase tracking-[-0.04em]">
-              THE LUXE
-            </p>
-            <div className="mt-8 flex flex-wrap gap-6">
-              {["Platform", "Success Stories", "Pricing", "Privacy Policy"].map((item) => (
-                <span className="luxe-eyebrow" key={item}>
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-5 md:text-right">
-            <p className="luxe-eyebrow">Workspace Access</p>
-            <p className="text-sm leading-7 text-[var(--color-text-secondary)]">
-              Local prototype flow: homepage, signup, login, workspace bootstrap,
-              and dashboard entry.
-            </p>
-            <p className="luxe-eyebrow opacity-70">© 2026 THE LUXE</p>
-          </div>
+      <footer className="border-t border-[var(--color-border-subtle)]">
+        <div className="mx-auto flex max-w-[var(--layout-container-max)] flex-col gap-4 px-5 py-8 text-sm text-[var(--color-text-secondary)] md:flex-row md:items-center md:justify-between md:px-16">
+          <p className="font-[var(--font-luxe-serif)] text-2xl text-[var(--color-text-primary)]">
+            THE LUXE
+          </p>
+          <p>Internal Alpha status and planned stages are stated separately.</p>
         </div>
       </footer>
     </div>

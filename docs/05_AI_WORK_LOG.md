@@ -1,5 +1,12 @@
 # AI Work Log
 
+### 2026-10-20 - Codex - #58 PR3 public-homepage slice
+
+- Direct user authorization was limited to the public homepage. Rewrote `HomeShell` for accurate Creator/CEO audience and context-preservation messaging; described verified Internal Alpha behavior only (exact BrandVoice-version acceptance, post checkpoint save/resume, idea/drafting) and separated Build vision from future/planned Scale and Automate.
+- Replaced homepage calls to action with `APP_ROUTES.login`, removed dead Stories/Pricing links and the two Google-hosted illustrative images, added page-level title/description/index-follow metadata and root noindex-nofollow defaults. No auth, backend, deployment, dependency or private-source work.
+- Added focused tests for audience/current work, alpha vs planned copy, CTA destinations, dead/prohibited links, remote assets and metadata. Focused suite passed 5/5; full `npm test` passed 108/108; `npm run lint` and `npm run typecheck` passed. `npm run build` failed because network access could not fetch the existing Google fonts; this environmental limitation was not changed.
+- Updated progress, next actions and screen traceability for this partial slice. The remaining PR3 login demo-credential cleanup, broader deployment/review instructions, environment/release gates and screenshots are explicitly deferred. This PR is for independent review; no public deployment, #58 completion, founder design acceptance or broader release readiness is claimed.
+
 ### 2026-10-18 - Codex - #54 real-service browser verification and QA
 
 - User-authorized Stage3E L2 verification: implement-spec/implement/TDD/Ponytail, separate implementer and merger, independent Standards/Spec QA, repository PR template. Browser UI, actual HTTP authorization and independent PostgreSQL reads were explicitly requested seams. One integration branch/worktree preserved original master, other worktrees and private references; upstream documentation advance c5acdeb→f5f1205 was reconciled without application changes.
