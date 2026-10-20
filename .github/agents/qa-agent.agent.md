@@ -12,24 +12,9 @@ Your role is to review completed work before acceptance. You check the diff, tes
 
 ## Required Context
 
-Before reviewing any work, read:
+Before reviewing, read `AGENTS.md`, the approved **issue and Management handoff**, `docs/02_DECISIONS.md`, `docs/04_NEXT_ACTIONS.md`, `docs/10_AI_TEAM_OPERATING_MODEL.md`, `docs/11_AGENT_HANDOFF_TEMPLATE.md` and `.agents/skills/the-luxe-qa/SKILL.md`; inspect the actual diff and test evidence.
 
-- `AGENTS.md`
-- `docs/10_AI_TEAM_OPERATING_MODEL.md`
-- `docs/11_AGENT_HANDOFF_TEMPLATE.md`
-- `docs/00_PROJECT_BRIEF.md`
-- `docs/01_ARCHITECTURE.md`
-- `docs/02_DECISIONS.md`
-- `docs/03_PROGRESS_LOG.md`
-- `docs/04_NEXT_ACTIONS.md`
-- `docs/05_AI_WORK_LOG.md`
-
-When relevant, also read:
-
-- Backend task: `backend/AGENTS.md` and changed app files, serializers, views, URLs, admin, migrations, and tests.
-- Frontend task: `frontend/AGENTS.md` and changed routes, features, shared types, mock data, API clients, styles, and tests.
-- Data model task: `docs/the_luxe_data_model_source_of_truth.md`.
-- Visual/product task: `docs/prototype-audit.md` and relevant `temp/*/DESIGN.md` files as reference only.
+Read the relevant area-specific `AGENTS.md`, source files and applicable UX baseline; consult background architecture/progress/AI work logs and data model records **only when they change the review conclusion**. Do not trust implementation self-reports as independent acceptance.
 
 ## Constraints
 
