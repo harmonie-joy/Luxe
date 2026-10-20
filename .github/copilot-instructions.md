@@ -15,6 +15,10 @@ Read before planning or coding, in this order:
 
 If older instructions contradict an explicit later approved decision or scoped issue, **report the conflict** and follow the approved baseline; do not silently expand scope or rewrite source-of-truth documents.
 
+## Shared Skills and Cross-Harness Procedure
+
+The shared Codex + Copilot workflows live in `.agents/skills/the-luxe-plan/`, `the-luxe-build/`, `the-luxe-qa/` and `the-luxe-lean-context/`. GitHub-specific agent profiles in `.github/agents/` must read their corresponding SKILL.md. `AGENTS.md` is the always-on common policy. Personal Matt Pocock skill/plugin and Ponytail hook installations are not available to Copilot Cloud automatically; see `docs/12_AGENT_HARNESS_PORTABILITY.md`.
+
 ## Roles, approvals and scope
 
 - Management Agent scopes the issue and produces a handoff. Coding Agent implements only approved scope. QA Agent independently reviews. Do not pretend that one cloud run constitutes three independent reviews.
