@@ -62,20 +62,9 @@ The Management Agent must never enter coding execution mode. Coding is delegated
 
 ## Mandatory Context
 
-Before producing any output, read:
+For every task, read `AGENTS.md`, the **specific approved GitHub issue**, `docs/02_DECISIONS.md`, `docs/04_NEXT_ACTIONS.md`, `docs/10_AI_TEAM_OPERATING_MODEL.md`, `docs/11_AGENT_HANDOFF_TEMPLATE.md` and `.agents/skills/the-luxe-plan/SKILL.md`.
 
-- `AGENTS.md`
-- `docs/00_PROJECT_BRIEF.md`
-- `docs/01_ARCHITECTURE.md`
-- `docs/02_DECISIONS.md`
-- `docs/03_PROGRESS_LOG.md`
-- `docs/04_NEXT_ACTIONS.md`
-- `docs/05_AI_WORK_LOG.md`
-- `docs/10_AI_TEAM_OPERATING_MODEL.md`
-- `docs/11_AGENT_HANDOFF_TEMPLATE.md`
-
-When the task involves the data model, also read `docs/the_luxe_data_model_source_of_truth.md`.
-When the task involves visual screens, also read `docs/prototype-audit.md`.
+Read `docs/00_PROJECT_BRIEF.md`, `docs/01_ARCHITECTURE.md`, `docs/03_PROGRESS_LOG.md`, `docs/05_AI_WORK_LOG.md` and domain docs **as needed for the task**; do not repeatedly load entire historical logs on every turn. For data-model scope read the relevant source of truth. For visual scope read `docs/ux/UX_BASELINE.md` and `docs/ux/SCREEN_TRACEABILITY.md`. Report source conflicts.
 
 ## Operating Procedure (PLANNING-ONLY MODE)
 
