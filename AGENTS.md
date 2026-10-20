@@ -1,40 +1,29 @@
-# THE LUXE Codex Instructions
+# THE LUXE — Shared Agent Policy (Codex + Copilot)
 
-## Project Overview
+> This `AGENTS.md` is the **same repository-wide entry point** for local Codex, Copilot in VS Code, and GitHub Copilot Cloud. Product details below are historical vocabulary and engineering rules, **not authorization to prioritize the old Dashboard/Brief/Calendar flow**. The current approved requirements, decisions and scoped issue govern implementation.
 
-THE LUXE is an AI-powered brand voice, workflow, and compliance cockpit for planning, drafting, reviewing, approving, and scheduling branded content.
+## Current Product Baseline — October 2026
 
-The intended MVP flow is:
+THE LUXE is a context-preserving Creator/CEO operating system. Prioritize the **Creator Home → explicitly accepted BrandVoice version → persisted Project/ContentItem → saved decisions/checkpoint/resume → next action** workflow, then the approved **Sandra LinkedIn-first caption/version/approval/export** loop. Historic Brand Voice/Brief/Draft/Compliance/Calendar modules remain reusable, but old mock-driven screens do not define the current MVP.
 
-Dashboard -> Brand Voice Setup -> Create Brief -> Draft Studio -> Compliance Review -> Calendar / Approval
+- Backend: Django/DRF/PostgreSQL; frontend: Next.js/TypeScript; Workspace is the tenant/authorization boundary.
+- Persisted IA-1 create/save/refresh/fresh-login/resume and version-specific human acceptance are verified foundations, not proof that full Creator DNA, media finalization or production release are implemented.
+- No production success may be faked by mock fallback. Preserve CSRF, tenant checks, revisions/conflicts, explicit approvals, truthful errors and reviewable version history.
+- Do not expose confidential product documents, real creator data, secrets or session credentials to cloud agents, screenshots, logs or PRs. Use synthetic-only test fixtures.
+- WorkOS authentication is an approved **target**, not permission for an auth migration. Production hosting, providers, privacy posture, DB schema/migrations and other L3/L4 changes require explicit Founder/CTO scope approval.
 
-This repository is a monorepo with:
+## Single Cross-Harness Workflow
 
-- `backend/`: Django application code, data model evolution, admin, and API surfaces.
-- `frontend/`: Next.js application code for the product UI, route flow, typed domain objects, and mock-driven MVP screens.
+1. Read `docs/02_DECISIONS.md` and `docs/04_NEXT_ACTIONS.md`; inspect the **specific approved GitHub issue**. Consult `docs/00_PROJECT_BRIEF.md`, `docs/01_ARCHITECTURE.md`, `docs/03_PROGRESS_LOG.md` and `docs/05_AI_WORK_LOG.md` only to the depth needed for the task.
+2. Review relevant `backend/AGENTS.md` or `frontend/AGENTS.md`, implementation files and tests. For UX, also read `docs/ux/UX_BASELINE.md` and `docs/ux/SCREEN_TRACEABILITY.md`.
+3. Follow `docs/10_AI_TEAM_OPERATING_MODEL.md` and the handoff format in `docs/11_AGENT_HANDOFF_TEMPLATE.md`: **Management scopes → Founder approves L3/L4 → Coding implements a single vertical slice → independent QA reviews → human merges → Management updates project memory**.
+4. The shared skill entry points live in `.agents/skills/`: `the-luxe-plan`, `the-luxe-build`, `the-luxe-qa`, and `the-luxe-lean-context`. Codex can invoke them explicitly as `$the-luxe-plan`, etc.; Copilot uses the corresponding cloud profiles in `.github/agents/` or detects the skills by description.
+5. Only implement approved scope, with explicit non-goals and acceptance tests. No implicit migrations, new architecture/agents, auth, AI-provider, deployment or publishing integration. If requirements conflict, stop and report the discrepancy.
+6. Prefer narrow tests while coding; require applicable GitHub Actions gates and independent verification before merge. Never claim a test ran when it did not. Keep PRs reviewable; **no agent merges into `master`**.
 
-Current repo state matters:
+## Product and Documentation Precedence
 
-- Django REST Framework is installed in the backend, and API routes now cover most canonical MVP domains.
-- The frontend already contains shared types, route helpers, and mock data that should be treated as early contract signals.
-- The main product gap is frontend integration: most screens still use mocks and do not persist create/edit/review actions yet.
-- Some backend surfaces remain intentionally incomplete, including workspace/bootstrap APIs, dashboard aggregation, automatic audit logging, and real AI orchestration.
-- Workspace is the current tenant root for MVP (do not introduce a parallel Organization model unless explicitly requested).
-
-## Project Memory Read Order
-
-Before making implementation or architecture changes, inspect the relevant source files and read the repo memory docs:
-
-1. `docs/00_PROJECT_BRIEF.md`
-2. `docs/01_ARCHITECTURE.md`
-3. `docs/02_DECISIONS.md`
-4. `docs/03_PROGRESS_LOG.md`
-5. `docs/04_NEXT_ACTIONS.md`
-6. `docs/05_AI_WORK_LOG.md`
-
-Use `prompts/management-agent.md` when the task is about planning, auditing, coordinating AI work, or updating project memory.
-
-When implementing a new feature, follow the vertical slice template in `docs/06_FEATURE_SLICE_GUIDE.md` and verify with `make check` before handing off to QA.
+Current founder-approved source/spec and explicit issue acceptance criteria → current recorded decisions / UX baseline → these shared safeguards and domain invariants → older feature guides, prompts and mock examples. Report any conflicting requirements rather than silently overwriting one. Do not treat old examples in `docs/06_FEATURE_SLICE_GUIDE.md` or `.github/prompts/` as new feature authorization.
 
 ## Repository Structure
 
@@ -264,7 +253,7 @@ When asked to modify code, follow this order:
 
 ## Things Not To Do
 
-Codex must not:
+All agents must not:
 
 - Rewrite the whole backend.
 - Rewrite the whole frontend.
