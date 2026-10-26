@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "capacity": 1,
+  "approver_ids": [],
+  "controller_user_id": 0,
+  "qa_reviewer_ids": [],
+  "excluded_issues": [58],
+  "max_repairs": 0
+}

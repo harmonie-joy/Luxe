@@ -1,0 +1,48 @@
+name: Autonomous Development Controller
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+  issues:
+    types: [opened, edited, labeled, unlabeled, assigned, unassigned, closed, reopened]
+  issue_comment:
+    types: [created, edited, deleted]
+  pull_request_target:
+    branches: [master]
+    types: [opened, synchronize, reopened, edited, closed, review_requested]
+  workflow_run:
+    workflows: [CI, Autonomous QA Signal]
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
+concurrency:
+  group: luxe-autonomous-controller
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    # No live job or privileged credential is wired in this implementation.
+    if: >-
+      github.repository == 'harmonie-joy/Luxe' &&
+      github.ref == 'refs/heads/master' &&
+      (github.event_name == 'workflow_dispatch' || vars.LUXE_AUTONOMY_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Reconcile without GitHub writes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python .github/scripts/autonomous_development.py --dry-run

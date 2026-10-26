@@ -1,0 +1,16 @@
+name: Autonomous QA Signal
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+jobs:
+  signal:
+    if: vars.LUXE_AUTONOMY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      # No checkout, secrets, PR code or artifacts. The controller re-reads GitHub.
+      - run: ':'
