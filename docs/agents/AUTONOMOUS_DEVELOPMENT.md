@@ -10,6 +10,8 @@ creation, live Copilot assignment and merging. Base: `039e7833` on `master`.
 GitHub Issues remain the work queue. A deterministic Actions reconciler can
 reserve approved native leaf issues, assign the existing cloud Coding Agent,
 request independent Copilot Code Review, and reconcile current CI/QA evidence.
+Bot review is advisory; a trusted independent human account must attest the
+substantive evidence before acceptance or repair eligibility can be established.
 Workspace, frontend, backend, database and product behavior do not change.
 No database, LangGraph, external service or self-hosted orchestrator is added.
 
@@ -110,6 +112,17 @@ Dispatch additionally requires:
   Changes invalidate the approval. Dependency completion does not change the
   declaration. Approval comment removal or editing revokes the approval.
 
+The explicit sensitive rules are `SENSITIVE_NAMES`, `SENSITIVE_DIRS`, and
+`SENSITIVE_PATHS` in the controller, plus instruction/profile suffixes and the
+UX-governance prefix. They protect AGENTS/CLAUDE/GEMINI/REVIEW/SKILL files at
+any depth, agent overrides, `.agent.md`/`.instructions.md`/`.prompt.md` files,
+agent/skill/prompt/instruction/policy directories, the numbered project-memory
+and governance contracts, the controller handoff and `docs/ux/`. In particular,
+`frontend/AGENTS.md`, `backend/AGENTS.md` and
+`docs/11_AGENT_HANDOFF_TEMPLATE.md` cannot dispatch as ordinary L0/L1 work.
+Ordinary documentation such as `docs/qa/PREVIEW_REVIEW_CHECKLIST.md` and
+`docs/help/resume.md` remains eligible when the rest of the contract is met.
+
 Author IDs are configured only through human-reviewed changes. The controller
 identity cannot be an approver or QA reviewer. No identity is inferred from a
 display name, association, readiness label or copied comment. Approving L3/L4
@@ -131,6 +144,13 @@ Reservations, coding, CI, QA and uncertain outcomes occupy a slot. Two scopes
 cannot concurrently touch the same allowed path. Unknown Copilot assignments,
 open PRs or active tasks block new dispatch. A missing session/tasks API
 permission is a blocker, not proof of idle capacity.
+
+Missing or ambiguous PR links retain the entire reserved file scope, including
+at capacity two and after a lost assignment response. Reconstruction requires
+the current issue's full scope digest to match its original reservation. A
+changed/damaged scope blocks new dispatch globally; the controller never guesses
+which original files are free. A reconstructable, nonoverlapping reservation
+still leaves the second slot available when no other blocker exists.
 
 `reserved` is appended and its authenticated response confirmed before issue
 assignment. `qa-reserved` precedes a review request; `repair-reserved` precedes
@@ -159,19 +179,33 @@ the current PR head and current `master` base. The latest matching run must
 succeed with all four jobs: frontend, backend, real-e2e and autonomous-controller.
 Missing, skipped, failed, stale or misleadingly named checks cannot accept work.
 
-Independent review is requested separately from the coding session. The pinned
-reviewer ID must differ from the PR author. Only a COMMENT review for the
-current head, submitted after its QA reservation, with the complete structured
-protocol in `.github/instructions/autonomous-qa.instructions.md` can count.
+Independent Copilot review is requested separately from the coding session and
+provides advisory feedback. Only a COMMENT review from an allowlisted human
+account (`type: User`) can attest substantive QA. Its ID must differ from the PR
+author; it must review the current head, follow its QA reservation and use the
+complete protocol in `.github/instructions/autonomous-qa.instructions.md`.
 The JSON must bind the reservation comment ID, head and base. Every check
-needs evidence. Accepted verdicts with failed checks, Blocker or Major findings
-do not pass. A later malformed or dismissed review invalidates an older pass.
+needs evidence. Acceptance requires applicable, passing scope, correctness,
+verification/tests and security/privacy checks; other checks may be N/A with
+an explanation. Empty, punctuation-only or known placeholder-only evidence
+cannot pass. Accepted verdicts with failed checks, Blocker or Major findings do
+not pass. A later malformed or dismissed review invalidates an older pass.
 No review text is interpreted as a GitHub approval.
+
+These are structural and placeholder checks, not automated semantic verification.
+Long or well-formatted text is not proof of sufficient review. Confidence rests
+on the independent human account's explicit attestation; bot-only or uncertain
+evidence stays `needs-human`. This does not prove physical human presence behind
+an account or verify every evidence assertion. Reviewer identity/provenance and
+the usable human-review process must be verified before activation.
 
 Default repairs are zero. After separate approval, the dormant planner permits
 at most one scoped repair for structured correctness/test findings, with
 successful current CI and confirmed coding completion. Security/scope findings,
 CI failures, infrastructure errors and missing QA require a human. The repair
+also requires passing, evidenced scope and security/privacy checks from the
+human report. Failed, missing, N/A or unverifiable safety checks cannot be
+overridden by categorizing findings as correctness/tests. The repair
 reservation survives replays, pushes, label changes and reopenings. The limit
 bounds additional requests; Copilot's internal iterations remain subject to
 its own session timeout. The existing setup workflow's 59-minute cap is unchanged.
@@ -203,13 +237,21 @@ Activation is blocked until a separate Founder-approved change verifies:
   also require reading the repository kill-switch variable on every operation.
 - [ ] Copilot-authored CI behavior is reviewed. GitHub's human workflow-run
   approval requirement is not disabled by this implementation.
-- [ ] Independent reviewer identity and structured output are demonstrated in
-  the intended review harness. If it cannot supply the evidence, keep human QA.
+- [ ] Independent human reviewer identity, evidence attestation and the advisory
+  Code Review response are demonstrated. Review-request success does not prove
+  rubric execution, structured output or reconciliation with inline findings.
+  Automated acceptance based only on bot text is unsupported.
 - [ ] Founder approves the exact trial child, paths, approval, cost allowance
   and one-shot dispatch boundary. No generic production-enabled CLI is added
   merely by flipping a variable in this implementation.
 - [ ] Live wiring, configuration validation, kill-switch behavior and trial
   allowance are independently reviewed in that separate activation change.
+
+The documented Task API field names match the implementation, but issue-assigned
+task visibility through the chosen user token, archived/default task coverage
+and branch-name-only matching to the intended current task/session remain
+activation blockers. No mocked response or previous read-only queue scan proves
+those live capabilities. No credential or live-task change is included here.
 
 The dormant executor rechecks the environment flag and current remote variable
 before every POST. Errors or values other than exactly `true` stop writes.

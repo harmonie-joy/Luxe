@@ -15,6 +15,19 @@ REPO = "harmonie-joy/Luxe"
 ROOT = f"/repos/{REPO}"
 CHECKS = {"scope", "correctness", "contracts", "errors", "tests", "regressions",
           "security_privacy", "documentation", "decisions", "ux"}
+SAFETY_CHECKS = {"scope", "security_privacy"}
+MANDATORY_QA_CHECKS = SAFETY_CHECKS | {"correctness", "tests"}
+SENSITIVE_NAMES = {"agents.md", "agents.override.md", "claude.md", "gemini.md", "review.md", "skill.md",
+                   "codeowners", "copilot-instructions.md"}
+SENSITIVE_DIRS = {".github", ".agents", ".codex", "agents", "skills", "prompts",
+                  "instructions", "policies", "governance"}
+SENSITIVE_PATHS = {
+    "docs/00_project_brief.md", "docs/01_architecture.md", "docs/02_decisions.md",
+    "docs/03_progress_log.md", "docs/04_next_actions.md", "docs/05_ai_work_log.md",
+    "docs/10_ai_team_operating_model.md", "docs/11_agent_handoff_template.md",
+    "docs/12_agent_harness_portability.md", "docs/the_luxe_data_model_source_of_truth.md",
+    "docs/qa/autonomous_controller_handoff.md",
+}
 REQUIRED_JOBS = {"frontend", "backend", "real-e2e", "autonomous-controller"}
 EVENTS = {"reserved", "dispatched", "qa-reserved", "qa-requested",
           "repair-reserved", "repair-requested", "awaiting-human"}
@@ -51,14 +64,16 @@ def forbidden(path):
     return (
         not parts or path != str(PurePosixPath(path)) or path.startswith(("/", "."))
         or ".." in parts or "\\" in path or any(c in path for c in "*?[]\n\r")
+        or parts[-1].casefold() in SENSITIVE_NAMES
+        or parts[-1].casefold().endswith((".agent.md", ".instructions.md", ".prompt.md"))
+        or any(part.casefold() in SENSITIVE_DIRS for part in parts[:-1])
+        or path.casefold() in SENSITIVE_PATHS or path.casefold().startswith("docs/ux/")
         or any(part in {"migrations", "temp", "node_modules"} for part in parts)
         or path.startswith(("backend/config/", "backend/tenancy/", "backend/llm/",
                             "backend/compliance/", "backend/requirements/", "frontend/features/auth/",
                             "frontend/app/login/", "frontend/app/signup/", "frontend/lib/api/auth"))
         or parts[-1] in {"models.py", "package.json", "package-lock.json", "pnpm-lock.yaml",
                          "requirements.txt", "yarn.lock", "Dockerfile", "compose.yml"}
-        or path in {"AGENTS.md", "CLAUDE.md", "docs/02_DECISIONS.md",
-                    "docs/04_NEXT_ACTIONS.md", "docs/10_AI_TEAM_OPERATING_MODEL.md"}
     )
 
 
@@ -248,8 +263,23 @@ def collect(api, settings):
     return facts
 
 
+def has_review_evidence(value):
+    if not isinstance(value, str):
+        return False
+    normalized = re.sub(r"[\W_]+", " ", value.casefold())
+    remaining = re.sub(
+        r"\b(?:not applicable|not checked|not verified|not available|no evidence|synthetic evidence|"
+        r"not assessed|not reviewed|not tested|not run|unverified|unverifiable|unchecked|unavailable|"
+        r"skipped|uncertain|n a|na|none|null|nil|tbd|todo|pending|unknown|lgtm|ok|pass|passed|yes|true|false|and|or)\b",
+        "", normalized,
+    )
+    return any(character.isalpha() for character in remaining)
+
+
 def report_for(review, pr, reservation, settings):
     if (review.get("user", {}).get("id") not in settings["qa_reviewer_ids"]
+            # Text checks reject placeholders; a trusted human attests substantive review.
+            or review.get("user", {}).get("type") != "User"
             or review.get("user", {}).get("id") == pr["user"]["id"]
             or review.get("state") != "COMMENTED" or review.get("commit_id") != pr["head"]["sha"]
             or not review.get("submitted_at") or review["submitted_at"] < reservation["created_at"]):
@@ -263,7 +293,7 @@ def report_for(review, pr, reservation, settings):
                 or set(value["checks"]) != CHECKS or not isinstance(value.get("findings"), list)):
             return None
         if any(not isinstance(check, dict) or check.get("status") not in {"pass", "fail", "not-applicable"}
-               or not isinstance(check.get("evidence"), str) or not check["evidence"].strip()
+               or not has_review_evidence(check.get("evidence"))
                for check in value["checks"].values()):
             return None
         if any(not isinstance(finding, dict) or finding.get("severity") not in {"Blocker", "Major", "Minor", "Note"}
@@ -319,6 +349,9 @@ def reconcile(api, settings):
         links = [pr for pr in facts["pulls"] if pr["number"] in detail["links"]]
         known_pulls.update(pr["number"] for pr in links)
         if len(links) != 1:
+            if events[0]["digest"] != scope_digest(item):
+                raise Blocked("cannot reconstruct reserved file scope; hold new dispatch")
+            occupied_files.update(scope["allowed_files"])
             reasons[number] = "needs-human: reservation has no unique PR; never redispatch"
             continue
         pr = api.request("GET", f"{ROOT}/pulls/{links[0]['number']}")
@@ -328,9 +361,10 @@ def reconcile(api, settings):
         if pr.get("merged_at"):
             occupied -= 1
             continue
+        if events[0]["digest"] != scope_digest(item):
+            raise Blocked("cannot reconstruct reserved file scope; hold new dispatch")
         occupied_files.update(scope["allowed_files"])
-        if (pr["state"] != "open" or events[0]["digest"] != scope_digest(item)
-                or not approved(item, detail["comments"], settings)):
+        if pr["state"] != "open" or not approved(item, detail["comments"], settings):
             reasons[number] = "needs-human: closed PR or changed/revoked scope"
             continue
         files = api.pages(f"{ROOT}/pulls/{pr['number']}/files")
@@ -362,13 +396,16 @@ def reconcile(api, settings):
             continue
         if report["verdict"] in {"Accepted", "Accepted with Notes"} and not any(
             finding["severity"] in {"Blocker", "Major"} for finding in report["findings"]
-        ) and all(check["status"] != "fail" for check in report["checks"].values()):
+        ) and all(check["status"] != "fail" for check in report["checks"].values()) and all(
+            report["checks"][key]["status"] == "pass" for key in MANDATORY_QA_CHECKS
+        ):
             occupied -= 1
             backlog += 1
             if not any(event["event"] == "awaiting-human" and event.get("head") == head
                        and event.get("base") == base for event in events):
                 actions.append({**common, "kind": "awaiting-human"})
         elif (report["verdict"] == "Changes Required" and settings.get("max_repairs", 0) == 1
+              and all(report["checks"][key]["status"] == "pass" for key in SAFETY_CHECKS)
               and not any(event["event"] == "repair-reserved" for event in events)
               and report["findings"] and all(
                   finding["severity"] in {"Major", "Minor"}

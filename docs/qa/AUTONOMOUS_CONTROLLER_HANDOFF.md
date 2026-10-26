@@ -88,7 +88,7 @@ git diff --check
 python .github/scripts/autonomous_development.py --dry-run
 ```
 
-Observed during implementation:
+Observed during original implementation at `8899623` (not independent acceptance):
 
 - 48 synthetic standard-library unit tests passed. These mock every write and
   cover approvals, sensitive scope, native dependencies/parent, capacity one/two,
@@ -109,6 +109,45 @@ Observed during implementation:
 Application tests/build/browser suites were not rerun locally because no
 application behavior changed. Their existing CI jobs remain required. A dry-run
 is not proof of live Copilot assignment, CI approval behavior or QA capability.
+
+## Four-finding correction handoff
+
+Founder authorized corrections on PR #68's existing branch after independent
+QA returned **Changes Required** for `8899623373d6304cf9420b08adc625b53ca9eaf7`.
+This authorization retains the disabled/read-only boundary and excludes scope
+expansion, activation, credentials, security settings and product changes.
+
+| QA finding | Implementation | Regression evidence |
+| --- | --- | --- |
+| QA acceptance without substantive evidence | Acceptance requires applicable, passing scope/correctness/tests/security checks. Placeholder-only evidence is rejected. An allowlisted independent human account must attest the report; bot output is advisory. Text filtering does not prove semantic correctness. | Exact all-N/A/n-a and all-pass/punctuation bypasses; individual mandatory N/A checks; placeholder variants; detailed bot/untyped reports; existing current human-report positive case. |
+| Sensitive policies eligible as L0/L1 | Explicit sensitive filename, directory, suffix and governance-contract rules apply at nested depths. Ordinary review/help documentation stays eligible. | Matching approvals for frontend/backend AGENTS and the handoff template; nested CLAUDE/GEMINI/SKILL/override/profile files; legitimate docs positive cases. |
+| Uncertain reservation loses file ownership | Missing/ambiguous PRs retain every approved file. Scope reconstruction requires the original digest; uncertain reconstruction blocks new dispatch. | Capacity two, missing and ambiguous PRs, overlapping paths, lost assignment response, changed scope and a nonoverlapping second-slot positive case. |
+| Safety failures permit automatic repair | Repair requires passing, evidenced scope and security/privacy checks from the human attestation. Existing issue-wide repair reservation remains authoritative. | Exact failed-security/correctness-finding bypass plus failed scope, missing/N/A/placeholder safety evidence; revised-head/replay exhaustion. |
+
+Verification of the corrections:
+
+- Added regression tests before the fixes: 61 tests ran with 37 failing
+  assertions/subtests reproducing the defects and their variants.
+- After the fixes and one additional nonoverlap positive case: **62 tests pass**
+  with `PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s .github/scripts
+  -p 'test_autonomous_development.py'`.
+- `git diff --check` passes. No workflows, configuration, dependencies or
+  application files change in this correction.
+- GitHub CI on the new commit and fresh independent QA must be verified after
+  pushing. Prior CI success is not evidence for the corrected head.
+
+Fresh reviewer: invoke `$the-luxe-qa` in a new session against the corrected
+PR head, rerun all controller tests, reproduce the four original attacks and
+verify all four current CI jobs. Do not infer acceptance from this Coding
+summary. Keep PR #68 in draft pending independent acceptance.
+
+Activation blockers remain: actual issue-assigned Task API visibility, archived
+task coverage and association with the intended current task/session; reviewer
+identity and whether Code Review supplies usable structured/inline evidence.
+None is established by synthetic fixtures or the original read-only queue scan.
+The controller verifies attesting account identity, not physical human presence
+or the truth of every evidence assertion. Substantive confidence requires human
+QA; no automated semantic verification capability is claimed.
 
 ## Manual Verification
 - [x] No UI journey or supporting product API changed; responsive screenshots
@@ -132,8 +171,13 @@ The implementation session must not supply its own acceptance verdict.
 - [ ] Verify approval identities, exact scope digests and unedited comments.
 - [ ] Confirm capacity two allows known work but rejects unknown tasks/PRs.
 - [ ] Confirm missing, malformed, stale, dismissed or self-authored QA cannot pass.
+- [ ] Confirm mandatory checks cannot be N/A and bot/placeholder evidence cannot
+  authorize acceptance or repair; inspect the documented human attestation limit.
 - [ ] Confirm CI provenance/revisions and all four required jobs are validated.
 - [ ] Confirm zero repair requests by default and at most one when explicitly configured.
+- [ ] Confirm uncertain reservations retain their original file ownership at
+  capacity two and changed/unrecoverable scope blocks new dispatch.
+- [ ] Confirm failed or unverifiable scope/security evidence cannot authorize repair.
 - [ ] Confirm GITHUB_TOKEN/write-denying CLI separation and disabled configuration.
 - [ ] Read activation prerequisites and manual rollback/reconciliation limits.
 - [ ] Record actual GitHub CI status; do not infer it from local unit tests.

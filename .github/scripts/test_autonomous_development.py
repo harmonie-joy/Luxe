@@ -174,9 +174,10 @@ class FakeGitHub(controller.GitHub):
         self.with_pr()
         reservation = self.add_event("qa-reserved", head="h" * 40, base="b" * 40, pr=80)
         report = {"head": "h" * 40, "base": "b" * 40, "reservation_id": reservation["id"],
-                  "verdict": verdict, "checks": {key: {"status": "pass", "evidence": "Synthetic evidence"}
+                  "verdict": verdict, "checks": {key: {"status": "pass", "evidence":
+                      f"Reviewed {key} against issue 70 requirements and current CI run 9"}
                                                  for key in controller.CHECKS}, "findings": []}
-        self.reviews = [{"id": 200, "user": {"id": 33}, "commit_id": "h" * 40, "state": "COMMENTED",
+        self.reviews = [{"id": 200, "user": {"id": 33, "type": "User"}, "commit_id": "h" * 40, "state": "COMMENTED",
                          "submitted_at": "2026-10-26T11:00:00Z", "body": controller.encode("qa", report)}]
         return self
 
@@ -588,6 +589,165 @@ class ExecutionTests(unittest.TestCase):
         self.assertIn("--dry-run", workflow)
         self.assertNotIn("secrets.", workflow)
         self.assertIn("cancel-in-progress: false", workflow)
+
+
+class QACorrectionTests(unittest.TestCase):
+    def replace_report(self, api, edit):
+        report = controller.decode(api.reviews[0]["body"], "qa")
+        edit(report)
+        api.reviews[0]["body"] = controller.encode("qa", report)
+
+    def repair_report(self):
+        api = FakeGitHub().with_review("Changes Required")
+        self.replace_report(api, lambda report: report.update(findings=[{
+            "severity": "Major", "file": "docs/qa/trial-70.md",
+            "category": "correctness", "reason": "Checklist omits the required private review gate",
+        }]))
+        return api
+
+    def test_reported_blanket_na_and_punctuation_acceptance_bypasses(self):
+        for status, evidence in (("not-applicable", "n/a"), ("pass", ".")):
+            with self.subTest(status=status, evidence=evidence):
+                api = FakeGitHub([issue(70), issue(71)]).with_review()
+                self.replace_report(api, lambda report: report.update(checks={
+                    key: {"status": status, "evidence": evidence} for key in controller.CHECKS
+                }))
+                self.assertEqual(controller.reconcile(api, config())["actions"], [])
+
+    def test_mandatory_checks_cannot_be_not_applicable(self):
+        for key in ("scope", "correctness", "tests", "security_privacy"):
+            with self.subTest(check=key):
+                api = FakeGitHub().with_review()
+                self.replace_report(api, lambda report: report["checks"][key].update(
+                    status="not-applicable", evidence="Reviewer inspected the change but declined this check"))
+                self.assertEqual(controller.reconcile(api, config())["actions"], [])
+
+    def test_placeholder_only_evidence_is_not_a_review(self):
+        for evidence in ("", "...", "N/A", "N_A", "n/a and n/a", "TBD", "LGTM", "pass", "not verified", "unverifiable"):
+            with self.subTest(evidence=evidence):
+                api = FakeGitHub().with_review()
+                self.replace_report(api, lambda report: report["checks"]["scope"].update(evidence=evidence))
+                self.assertEqual(controller.reconcile(api, config())["actions"], [])
+
+    def test_bot_or_untyped_report_requires_human_qa_even_with_detailed_text(self):
+        for actor_type in ("Bot", None):
+            with self.subTest(actor_type=actor_type):
+                api = FakeGitHub().with_review()
+                api.reviews[0]["user"]["type"] = actor_type
+                self.replace_report(api, lambda report: report.update(checks={
+                    key: {"status": "pass", "evidence": "Purports to inspect every requirement and CI result"}
+                    for key in controller.CHECKS
+                }))
+                self.assertEqual(controller.reconcile(api, config())["actions"], [])
+
+    def test_sensitive_policies_cannot_dispatch_with_matching_scope_approval(self):
+        paths = (
+            "frontend/AGENTS.md", "backend/AGENTS.md", "docs/11_AGENT_HANDOFF_TEMPLATE.md",
+            "frontend/features/editor/AGENTS.md", "backend/content/CLAUDE.md",
+            "frontend/GEMINI.md", "docs/reference/SKILL.md",
+            "frontend/AGENTS.override.md", "backend/review.agent.md", "frontend/local.instructions.md",
+            "backend/.agents/skills/example/check.py", "docs/agents/triage-labels.md",
+            "docs/10_AI_TEAM_OPERATING_MODEL.md", "docs/12_AGENT_HARNESS_PORTABILITY.md",
+            "docs/qa/AUTONOMOUS_CONTROLLER_HANDOFF.md", "docs/ux/UX_BASELINE.md",
+        )
+        for path in paths:
+            with self.subTest(path=path):
+                item = issue()
+                scope = controller.handoff(item)
+                scope.update(risk="L0" if path.startswith("docs/") else "L1",
+                             allowed_files=[path], forbidden_files=["temp/"])
+                item["body"] = controller.encode("handoff", scope)
+                approval = comment("approval", {"issue": 70, "digest": controller.scope_digest(item),
+                    "risk": scope["risk"], "allowed_files": [path], "verification": scope["verification"]})
+                self.assertIsNotNone(controller.ineligible(item, [approval], [], [], config()))
+
+    def test_legitimate_documentation_stays_eligible(self):
+        for path in ("docs/qa/PREVIEW_REVIEW_CHECKLIST.md", "docs/help/resume.md"):
+            item = issue()
+            scope = controller.handoff(item)
+            scope["allowed_files"] = [path]
+            item["body"] = controller.encode("handoff", scope)
+            self.assertIsNone(controller.ineligible(item, [approved(item)], [], [], config()))
+
+    def test_capacity_two_missing_pr_keeps_reserved_file_scope(self):
+        first, second = issue(70), issue(71)
+        second["body"] = first["body"]
+        api = FakeGitHub([first, second])
+        api.add_event("reserved")
+        plan = controller.reconcile(api, {**config(), "capacity": 2})
+        self.assertEqual(plan["actions"], [])
+        self.assertIn("overlapping", plan["reasons"][71])
+
+    def test_ambiguous_pr_keeps_reserved_file_scope(self):
+        first, second = issue(70), issue(71)
+        second["body"] = first["body"]
+        api = FakeGitHub([first, second]).with_pr()
+        api.pulls.append({**copy.deepcopy(api.pulls[0]), "number": 81})
+        reference = copy.deepcopy(api.timelines[70][0])
+        reference["source"]["issue"]["number"] = 81
+        api.timelines[70].append(reference)
+        self.assertEqual(controller.reconcile(api, {**config(), "capacity": 2})["actions"], [])
+
+    def test_reconstructable_nonoverlapping_reservation_keeps_second_slot_available(self):
+        api = FakeGitHub([issue(70), issue(71)])
+        api.add_event("reserved")
+        actions = controller.reconcile(api, {**config(), "capacity": 2})["actions"]
+        self.assertEqual([(action["kind"], action["issue"]) for action in actions], [("dispatch", 71)])
+
+    def test_unreconstructable_reservation_scope_blocks_dispatch(self):
+        api = FakeGitHub([issue(70), issue(71)])
+        api.add_event("reserved")
+        api.issues[0]["title"] = "Changed after reservation; original scope is uncertain"
+        with self.assertRaises(controller.Blocked):
+            controller.reconcile(api, {**config(), "capacity": 2})
+
+    def test_lost_assignment_response_keeps_scope_at_capacity_two(self):
+        first, second = issue(70), issue(71)
+        second["body"] = first["body"]
+        api = FakeGitHub([first, second], dry_run=False)
+        def lost_response(route, data):
+            if route.endswith("/assignees"):
+                raise controller.Blocked("lost assignment response")
+        api.after_write = lost_response
+        with patch.dict(os.environ, {"LUXE_AUTONOMY_ENABLED": "true"}), self.assertRaises(controller.Blocked):
+            controller.execute(api, {**config(), "enabled": True, "capacity": 2}, run_url="synthetic-run")
+        self.assertEqual(controller.reconcile(api, {**config(), "capacity": 2})["actions"], [])
+        self.assertEqual(sum(path.endswith("/assignees") for _, path, _ in api.writes), 1)
+
+    def test_failed_scope_or_security_check_blocks_repair_despite_correctness_finding(self):
+        for key in ("scope", "security_privacy"):
+            with self.subTest(check=key):
+                api = self.repair_report()
+                self.replace_report(api, lambda report: report["checks"][key].update(status="fail"))
+                self.assertEqual(controller.reconcile(api, {**config(), "max_repairs": 1})["actions"], [])
+
+    def test_missing_na_or_placeholder_safety_evidence_requires_human(self):
+        for key in ("scope", "security_privacy"):
+            for change in ("missing", "na", "placeholder"):
+                with self.subTest(check=key, change=change):
+                    api = self.repair_report()
+                    def invalidate(report):
+                        if change == "missing":
+                            del report["checks"][key]
+                        elif change == "na":
+                            report["checks"][key]["status"] = "not-applicable"
+                        else:
+                            report["checks"][key]["evidence"] = "n/a"
+                    self.replace_report(api, invalidate)
+                    self.assertEqual(controller.reconcile(api, {**config(), "max_repairs": 1})["actions"], [])
+
+    def test_revised_head_and_replay_cannot_reset_repair_allowance(self):
+        api = self.repair_report()
+        api.add_event("repair-reserved")
+        new_head = "j" * 40
+        api.pulls[0]["head"]["sha"] = new_head
+        api.runs[0]["head_sha"] = new_head
+        api.runs[0]["pull_requests"][0]["head"]["sha"] = new_head
+        reservation = api.add_event("qa-reserved", head=new_head, base="b" * 40, pr=80)
+        api.reviews[0]["commit_id"] = new_head
+        self.replace_report(api, lambda report: report.update(head=new_head, reservation_id=reservation["id"]))
+        for _ in range(2):
+            self.assertEqual(controller.reconcile(api, {**config(), "max_repairs": 1})["actions"], [])
 
 
 if __name__ == "__main__":
