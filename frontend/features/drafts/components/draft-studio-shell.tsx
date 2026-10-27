@@ -76,6 +76,12 @@ function updateDraftById(
   );
 }
 
+function getPersistedDraftContents(
+  drafts: readonly ContentDraft[],
+): Record<string, string> {
+  return Object.fromEntries(drafts.map((draft) => [draft.id, draft.content]));
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
@@ -106,6 +112,9 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const [briefs, setBriefs] = useState<ContentBrief[]>([data.brief]);
   const [brief, setBrief] = useState<ContentBrief>(data.brief);
   const [drafts, setDrafts] = useState<ContentDraft[]>([...data.drafts]);
+  const [persistedDraftContents, setPersistedDraftContents] = useState<
+    Record<string, string>
+  >({});
   const [activeDraftId, setActiveDraftId] = useState(data.drafts[0]?.id ?? "");
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<DataSource>("loading");
@@ -115,6 +124,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const [generationMessage, setGenerationMessage] = useState("");
   const [saveStatus, setSaveStatus] = useState<RequestStatus>("idle");
   const [saveMessage, setSaveMessage] = useState("");
+  const [copyStatus, setCopyStatus] = useState<RequestStatus>("idle");
+  const [copyMessage, setCopyMessage] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<RequestStatus>("idle");
   const [deleteMessage, setDeleteMessage] = useState("");
@@ -150,6 +161,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
         setBriefs(availableBriefs);
         setBrief(selectedBrief);
         setDrafts(selectedDrafts);
+        setPersistedDraftContents(getPersistedDraftContents(selectedDrafts));
         setActiveDraftId(selectedDrafts[0]?.id ?? "");
         setDataSource("api");
         setLoadMessage(
@@ -198,12 +210,15 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
 
     setBrief(selectedBrief);
     setDrafts([]);
+    setPersistedDraftContents({});
     setActiveDraftId("");
     setSavedDraftId(null);
     setGenerationStatus("idle");
     setGenerationMessage("");
     setSaveStatus("idle");
     setSaveMessage("");
+    setCopyStatus("idle");
+    setCopyMessage("");
     setDeleteStatus("idle");
     setDeleteMessage("");
     router.replace(draftStudioRoute(selectedBrief.id));
@@ -218,6 +233,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     try {
       const selectedDrafts = await getContentDrafts(selectedBrief.id);
       setDrafts(selectedDrafts);
+      setPersistedDraftContents(getPersistedDraftContents(selectedDrafts));
       setActiveDraftId(selectedDrafts[0]?.id ?? "");
       setLoadMessage(
         selectedDrafts.length > 0
@@ -226,6 +242,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       );
     } catch (error) {
       setDataSource("mock");
+      setPersistedDraftContents({});
       setLoadMessage(errorMessage(error));
     }
   }
@@ -246,6 +263,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
 
       setBriefs(remainingBriefs);
       setDrafts([]);
+      setPersistedDraftContents({});
       setActiveDraftId("");
       setSavedDraftId(null);
       setDeleteDialogOpen(false);
@@ -257,6 +275,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       setGenerationMessage("");
       setSaveStatus("idle");
       setSaveMessage("");
+      setCopyStatus("idle");
+      setCopyMessage("");
 
       if (!nextBrief) {
         router.push(APP_ROUTES.create);
@@ -273,6 +293,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
 
       const nextDrafts = await getContentDrafts(nextBrief.id);
       setDrafts(nextDrafts);
+      setPersistedDraftContents(getPersistedDraftContents(nextDrafts));
       setActiveDraftId(nextDrafts[0]?.id ?? "");
       setLoadMessage(
         nextDrafts.length > 0
@@ -290,6 +311,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     setSavedDraftId(null);
     setSaveStatus("idle");
     setSaveMessage("");
+    setCopyStatus("idle");
+    setCopyMessage("");
   }
 
   async function handleGenerateDrafts() {
@@ -311,6 +334,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     setGenerationMessage("Generating channel drafts.");
     setSaveStatus("idle");
     setSaveMessage("");
+    setCopyStatus("idle");
+    setCopyMessage("");
 
     try {
       const response = await generateDrafts({
@@ -327,6 +352,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
             );
 
       setDrafts(nextDrafts);
+      setPersistedDraftContents(getPersistedDraftContents(persistedDrafts));
       setActiveDraftId(response.drafts[0]?.id ?? nextDrafts[0]?.id ?? "");
       setSavedDraftId(null);
       setGenerationStatus("success");
@@ -367,6 +393,10 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       setDrafts((currentDrafts) =>
         updateDraftById(currentDrafts, currentDraft.id, savedDraft),
       );
+      setPersistedDraftContents((currentContents) => ({
+        ...currentContents,
+        [savedDraft.id]: savedDraft.content,
+      }));
       setSavedDraftId(savedDraft.id);
       setSaveStatus("success");
       setSaveMessage("Draft saved.");
@@ -375,6 +405,54 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       setSaveMessage(errorMessage(error));
     }
   }
+
+  const persistedCurrentContent = currentDraft
+    ? persistedDraftContents[currentDraft.id]
+    : undefined;
+  const canCopyDraft =
+    dataSource === "api" &&
+    currentDraft?.channel === "linkedin" &&
+    currentDraft.content.trim().length > 0 &&
+    persistedCurrentContent === currentDraft.content;
+
+  async function handleCopyDraft() {
+    if (!currentDraft || !canCopyDraft) return;
+
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      setCopyStatus("error");
+      setCopyMessage(
+        "Clipboard access is unavailable in this browser. Select and copy the draft text manually.",
+      );
+      return;
+    }
+
+    setCopyStatus("loading");
+    setCopyMessage("Copying draft text.");
+
+    try {
+      await navigator.clipboard.writeText(currentDraft.content);
+      setCopyStatus("success");
+      setCopyMessage(
+        "Draft text copied. This does not approve or publish it or indicate final export readiness.",
+      );
+    } catch {
+      setCopyStatus("error");
+      setCopyMessage(
+        "Could not copy draft text. Check browser clipboard permissions and try again.",
+      );
+    }
+  }
+
+  const copyUnavailableMessage =
+    currentDraft?.channel !== "linkedin"
+      ? ""
+      : dataSource !== "api"
+        ? "Copy is available only for a persisted LinkedIn draft."
+        : persistedCurrentContent !== currentDraft.content
+          ? "Save this draft before copying its persisted text."
+          : currentDraft.content.trim().length === 0
+            ? "Add draft text before copying."
+            : "";
 
   return (
     <div className="flex min-h-full flex-col gap-8">
@@ -557,6 +635,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
                         setSavedDraftId(null);
                         setSaveStatus("idle");
                         setSaveMessage("");
+                        setCopyStatus("idle");
+                        setCopyMessage("");
                       }}
                       role="tab"
                       type="button"
@@ -639,6 +719,18 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
                   >
                     Review this Draft
                   </Link>
+                  {currentDraft.channel === "linkedin" ? (
+                    <button
+                      className="luxe-secondary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={!canCopyDraft || copyStatus === "loading"}
+                      onClick={() => {
+                        void handleCopyDraft();
+                      }}
+                      type="button"
+                    >
+                      Copy LinkedIn draft
+                    </button>
+                  ) : null}
                   <button
                     className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                     disabled={saveStatus === "loading"}
@@ -648,6 +740,20 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
                   </button>
                 </div>
               </div>
+              {currentDraft.channel === "linkedin" ? (
+                <p
+                  aria-live={copyStatus === "error" ? "assertive" : "polite"}
+                  className={
+                    copyStatus === "error"
+                      ? "text-sm font-medium text-(--color-danger)"
+                      : "luxe-form-help"
+                  }
+                  role={copyStatus === "error" ? "alert" : "status"}
+                >
+                  {copyMessage ||
+                    (!canCopyDraft ? copyUnavailableMessage : "")}
+                </p>
+              ) : null}
             </form>
           ) : (
             <div className="luxe-preview-stat space-y-3 p-4">

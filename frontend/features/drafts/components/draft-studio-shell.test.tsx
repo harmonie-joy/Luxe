@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { mockDraftStudioPage } from "@/data/mock-drafts";
 import { DraftStudioShell } from "@/features/drafts/components/draft-studio-shell";
@@ -15,6 +15,11 @@ vi.mock("@/lib/api/ai");
 vi.mock("@/lib/api/auth");
 vi.mock("@/lib/api/content-briefs");
 vi.mock("@/lib/api/content-drafts");
+
+const originalClipboardDescriptor = Object.getOwnPropertyDescriptor(
+  navigator,
+  "clipboard",
+);
 
 const briefA: ContentBrief = {
   ...mockDraftStudioPage.brief,
@@ -32,6 +37,12 @@ const draftA: ContentDraft = {
   id: "draft-a",
   briefId: "brief-a",
 };
+const linkedinDraft: ContentDraft = {
+  ...draftA,
+  title: "Persisted LinkedIn title",
+  content: "Persisted LinkedIn copy only.",
+  channel: "linkedin",
+};
 
 function mockLiveLoad() {
   vi.mocked(authApi.getSession).mockResolvedValue(mockSession);
@@ -43,14 +54,212 @@ function mockLiveLoad() {
 }
 
 beforeEach(mockLiveLoad);
+afterEach(() => {
+  if (originalClipboardDescriptor) {
+    Object.defineProperty(navigator, "clipboard", originalClipboardDescriptor);
+  } else {
+    Reflect.deleteProperty(navigator, "clipboard");
+  }
+});
 
-async function renderLive() {
+async function renderLive(drafts: ContentDraft[] = [draftA]) {
+  vi.mocked(contentDraftsApi.getContentDrafts).mockResolvedValue(drafts);
   render(<DraftStudioShell data={mockDraftStudioPage} />);
   // loadMessage is hidden once a draft is active; the source badge flips to Live.
   await screen.findByText("Live");
 }
 
 describe("DraftStudioShell", () => {
+  it("copies the persisted LinkedIn draft text without its title", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    await renderLive([linkedinDraft]);
+
+    await user.click(screen.getByRole("button", { name: "Copy LinkedIn draft" }));
+
+    expect(writeText).toHaveBeenCalledWith("Persisted LinkedIn copy only.");
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Draft text copied. This does not approve or publish it or indicate final export readiness.",
+    );
+  });
+
+  it("reports clipboard permission failures without claiming success", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
+    });
+    await renderLive([linkedinDraft]);
+
+    await user.click(screen.getByRole("button", { name: "Copy LinkedIn draft" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Could not copy draft text. Check browser clipboard permissions and try again.",
+    );
+    expect(
+      screen.queryByText(/Draft text copied\./),
+    ).toBeNull();
+  });
+
+  it("explains when clipboard access is unsupported", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: undefined,
+    });
+    await renderLive([linkedinDraft]);
+
+    await user.click(screen.getByRole("button", { name: "Copy LinkedIn draft" }));
+
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Clipboard access is unavailable in this browser. Select and copy the draft text manually.",
+    );
+  });
+
+  it("does not offer copying for non-LinkedIn drafts", async () => {
+    await renderLive([{ ...linkedinDraft, channel: "newsletter" }]);
+
+    expect(
+      screen.queryByRole("button", { name: "Copy LinkedIn draft" }),
+    ).toBeNull();
+  });
+
+  it("keeps copying unavailable while persisted data is loading", () => {
+    vi.mocked(authApi.getSession).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    render(
+      <DraftStudioShell
+        data={{ ...mockDraftStudioPage, drafts: [linkedinDraft] }}
+      />,
+    );
+
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+  });
+
+  it("keeps copying unavailable for demo drafts", async () => {
+    vi.mocked(authApi.getSession).mockRejectedValue(new Error("offline"));
+    render(
+      <DraftStudioShell
+        data={{ ...mockDraftStudioPage, drafts: [linkedinDraft] }}
+      />,
+    );
+    await screen.findByText("Demo");
+
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("Copy is available only for a persisted LinkedIn draft."),
+    ).toBeTruthy();
+  });
+
+  it("keeps copying unavailable when the persisted LinkedIn text is empty", async () => {
+    await renderLive([{ ...linkedinDraft, content: " \n " }]);
+
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+    expect(screen.getByText("Add draft text before copying.")).toBeTruthy();
+  });
+
+  it("requires saved content before copying edits", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    vi.mocked(contentDraftsApi.updateContentDraft).mockResolvedValue({
+      ...linkedinDraft,
+      content: "Updated persisted LinkedIn copy.",
+    });
+    await renderLive([linkedinDraft]);
+
+    fireEvent.change(screen.getByLabelText("Draft content"), {
+      target: { value: "Updated persisted LinkedIn copy." },
+    });
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("Save this draft before copying its persisted text."),
+    ).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
+    await screen.findByText("Draft saved.");
+    await user.click(screen.getByRole("button", { name: "Copy LinkedIn draft" }));
+
+    expect(writeText).toHaveBeenCalledWith("Updated persisted LinkedIn copy.");
+  });
+
+  it("keeps copying unavailable when saving edited content fails", async () => {
+    const user = userEvent.setup();
+    vi.mocked(contentDraftsApi.updateContentDraft).mockRejectedValue(
+      new Error("Save failed"),
+    );
+    await renderLive([linkedinDraft]);
+
+    fireEvent.change(screen.getByLabelText("Draft content"), {
+      target: { value: "Unsaved LinkedIn copy." },
+    });
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
+
+    expect(await screen.findByText("Save failed")).toBeTruthy();
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+  });
+
+  it("does not treat generated local fallback drafts as persisted", async () => {
+    vi.mocked(contentDraftsApi.getContentDrafts)
+      .mockResolvedValueOnce([linkedinDraft])
+      .mockResolvedValueOnce([]);
+    vi.mocked(aiApi.generateDrafts).mockResolvedValue({
+      aiRunIds: ["run-linkedin"],
+      drafts: [
+        {
+          id: "generated-linkedin",
+          brief: "brief-a",
+          channel: "linkedin",
+          title: "Generated",
+          content: "Generated LinkedIn copy.",
+          status: "draft",
+        },
+      ],
+    });
+    const user = userEvent.setup();
+    await renderLive();
+
+    await user.click(screen.getByRole("button", { name: "Generate Drafts" }));
+    await screen.findByText("Generated 1 draft. AI runs: run-linkedin.");
+
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+    expect(
+      screen.getByText("Save this draft before copying its persisted text."),
+    ).toBeTruthy();
+  });
+
   it("loads persisted drafts for the active workspace", async () => {
     await renderLive();
 
