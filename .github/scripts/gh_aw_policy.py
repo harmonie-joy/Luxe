@@ -21,6 +21,7 @@ POLICY = Path(__file__).resolve().parents[1] / "gh-aw-policy.json"
 JOBS = {"frontend", "backend", "real-e2e", "autonomous-controller"}
 SHA = re.compile(r"[0-9a-f]{40}")
 QA_ENVELOPE = "luxe-autonomy-gh-aw-qa-v1"
+ADVISORY_QA_ENVELOPE = "luxe-autonomous-qa-advisory-v1"
 
 
 def require(condition, reason):
@@ -166,26 +167,53 @@ def encode_qa(report):
 
 
 def decode_qa(body):
+    report = decode_report(body)
+    require(report.get("protocol") == QA_ENVELOPE, "missing or invalid QA protocol")
+    return report
+
+
+def decode_report(body):
     matches = re.findall(r"(?m)^```json[ \t]*\r?\n([\s\S]*?)^```[ \t]*$", body or "")
     require(len(matches) == 1, "missing or ambiguous QA report")
     try:
         report = json.loads(matches[0])
     except (ValueError, TypeError) as exc:
         raise Blocked("invalid QA JSON") from exc
-    require(isinstance(report, dict) and report.get("protocol") == QA_ENVELOPE,
-            "missing or invalid QA protocol")
+    require(isinstance(report, dict), "invalid QA report")
     return report
+
+
+def advisory_qa_record(review, pr_number):
+    try:
+        report = decode_report(review.get("body"))
+    except Blocked:
+        return False
+    if report.get("protocol") != ADVISORY_QA_ENVELOPE:
+        return False
+    require(set(report) == {"protocol", "pr", "head", "base", "run_id"}
+            and report.get("pr") == pr_number
+            and isinstance(report.get("head"), str) and SHA.fullmatch(report["head"])
+            and isinstance(report.get("base"), str) and SHA.fullmatch(report["base"])
+            and positive_int(report.get("run_id")), "malformed advisory QA evidence")
+    return True
 
 
 def qa_preflight(data, policy):
     require(bool(policy["approver_ids"]) and bool(policy["qa_bot_ids"]), "QA identities not configured")
     binding = data["binding"]
     key = fingerprint(binding)
-    records = [r for r in data["reviews"] if r.get("user", {}).get("type") == "Bot"
-               and r["user"].get("id") in policy["qa_bot_ids"]]
+    bot_reviews = [r for r in data["reviews"] if r.get("user", {}).get("type") == "Bot"
+                   and r["user"].get("id") in policy["qa_bot_ids"]]
+    records = []
+    for review in bot_reviews:
+        if advisory_qa_record(review, binding["pr"]):
+            continue
+        record = qa_record(review)
+        require(record is not None, "malformed previous QA evidence")
+        records.append(record)
     require(len(records) < policy["max_qa_reviews_per_pr"], "QA review budget exhausted; require human QA")
-    require(all(qa_record(r) is not None for r in records), "malformed previous QA evidence")
-    require(not any(qa_record(r).get("key") == key for r in records), "duplicate QA evidence; not replaying")
+    require(not any(record.get("key") == key for record in records),
+            "duplicate QA evidence; not replaying")
     return {**binding, "key": key}
 
 

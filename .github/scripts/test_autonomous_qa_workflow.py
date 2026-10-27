@@ -14,6 +14,8 @@ class QAWorkflowTests(unittest.TestCase):
             self.assertIn(event, source)
         self.assertIn("branches: [master]", source)
         self.assertIn("bots: [Copilot, copilot-swe-agent]", source)
+        self.assertIn("vars.LUXE_GH_AW_QA_ENABLED == 'true'", source)
+        self.assertIn("github.event.pull_request.head.repo.full_name == 'harmonie-joy/Luxe'", source)
         self.assertIn("group: luxe-independent-qa-${{ github.event.pull_request.number }}", source)
         self.assertIn("cancel-in-progress: true", source)
         self.assertIn('test "$current" = "$EXPECTED_HEAD $EXPECTED_BASE open"', source)
@@ -22,6 +24,26 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertIn("Refuse changed revision before review publication", source)
         self.assertIn("Refuse stale review before processing", source)
         self.assertIn("if: needs.agent.result == 'success'", source)
+
+    def test_both_qa_activation_gates_precede_inference_and_publication(self):
+        source = Path(".github/workflows/autonomous-qa.md").read_text()
+        compiled = Path(".github/workflows/autonomous-qa.lock.yml").read_text()
+        for content in (source, compiled):
+            self.assertIn('test "$QA_ENABLED" = "true"', content)
+            self.assertIn(".github/gh-aw-policy.json?ref=$EXPECTED_BASE", content)
+            self.assertIn("jq -e '.qa_enabled == true'", content)
+        self.assertLess(source.index("Require QA activation gates before inference"),
+                        source.index("Allow current PR CI to finish"))
+        self.assertLess(source.index("Require QA activation gates before publication"),
+                        source.index("Refuse changed revision before review publication"))
+        self.assertEqual(source.count('test "$QA_ENABLED" = "true"'), 2)
+
+    def test_advisory_review_uses_separate_evidence_envelope(self):
+        source = Path(".github/workflows/autonomous-qa.md").read_text()
+        policy = Path(".github/scripts/gh_aw_policy.py").read_text()
+        self.assertIn('"protocol":"luxe-autonomous-qa-advisory-v1"', source)
+        self.assertIn("ADVISORY_QA_ENVELOPE = \"luxe-autonomous-qa-advisory-v1\"", policy)
+        self.assertIn("if advisory_qa_record(review, binding[\"pr\"]):", policy)
 
     def test_compiled_permissions_and_read_only_review(self):
         source = Path(".github/workflows/autonomous-qa.md").read_text()
@@ -38,6 +60,7 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertNotIn("pull-requests: write", agent_permissions)
         self.assertNotIn("issues: write", agent_permissions)
         self.assertIn("pull-requests: write", output_permissions)
+        self.assertIn("contents: read", output_permissions)
         self.assertIn("copilot-requests: write", compiled)
         self.assertIn("needs.agent.result == 'success'", compiled)
         compiled_safe_outputs = compiled.split("  safe_outputs:\n", 1)[1]
