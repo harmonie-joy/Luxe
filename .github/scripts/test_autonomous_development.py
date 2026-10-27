@@ -545,6 +545,16 @@ class ExecutionTests(unittest.TestCase):
         self.execute(api)
         self.assertEqual(sum(path.endswith("/requested_reviewers") for _, path, _ in api.writes), 1)
 
+    def test_unverified_repair_dispatch_is_blocked_without_a_write(self):
+        api = FakeGitHub(dry_run=False).with_review("Changes Required")
+        report = controller.decode(api.reviews[0]["body"], "qa")
+        report["findings"] = [{"severity": "Major", "file": "docs/qa/trial-70.md",
+                               "reason": "Synthetic omission", "category": "correctness"}]
+        api.reviews[0]["body"] = controller.encode("qa", report)
+        with patch.dict(os.environ, {"LUXE_AUTONOMY_ENABLED": "true"}), self.assertRaises(controller.Blocked):
+            controller.execute(api, {**config(), "enabled": True, "max_repairs": 1}, run_url="synthetic-run")
+        self.assertEqual(api.writes, [])
+
     def test_main_always_dry_run_even_when_environment_enabled(self):
         api = FakeGitHub()
         output = io.StringIO()
