@@ -1,16 +1,27 @@
 """Synthetic evidence only; no live dispatch or credentials."""
 
 import copy
+import json
+import re
 import unittest
 
 from autonomous_development import Blocked, ROOT, REPO, encode, scope_digest
-from gh_aw_policy import CHECKS, ci_evidence, event_pr, fingerprint, protected, qa_preflight, snapshot, validate_review
+from gh_aw_policy import (
+    CHECKS, QA_ENVELOPE, ci_evidence, decode_qa, encode_qa, event_pr, fingerprint,
+    protected, qa_preflight, snapshot, validate_review,
+)
 
 
 HEAD, BASE = "a" * 40, "b" * 40
 FILE = "docs/help/resume.md"
 POLICY = {"approver_ids": [10], "qa_reviewer_ids": [20], "qa_bot_ids": [30],
           "repair_bot_id": 40, "max_qa_reviews_per_pr": 6}
+
+
+def sanitize_safe_output(text):
+    text = re.sub(r"<!--[\s\S]*?-->", "", text)
+    text = re.sub(r"</?[A-Za-z][^>]*>", "", text)
+    return re.sub(r"\{\{[\s\S]*?\}\}", "", text).strip()
 
 
 def fixture():
@@ -124,11 +135,14 @@ class PolicyTests(unittest.TestCase):
     def test_duplicate_triggers_and_qa_circuit_breaker(self):
         data = self.read()
         key = qa_preflight(data, POLICY)["key"]
-        record = {"user": {"id": 30, "type": "Bot"}, "body": encode("gh-aw-qa", {"key": key})}
+        record = {"user": {"id": 30, "type": "Bot"}, "body": encode_qa({"key": key})}
         data["reviews"] = [record]
         with self.assertRaises(Blocked):
             qa_preflight(data, POLICY)
-        data["reviews"] = [{**record, "body": encode("gh-aw-qa", {"key": str(i)})} for i in range(6)]
+        data["reviews"] = [{**record, "body": encode_qa({"key": str(i)})} for i in range(6)]
+        with self.assertRaises(Blocked):
+            qa_preflight(data, POLICY)
+        data["reviews"] = [{**record, "body": "A sanitized legacy QA review without its marker."}]
         with self.assertRaises(Blocked):
             qa_preflight(data, POLICY)
 
@@ -197,7 +211,7 @@ class PolicyTests(unittest.TestCase):
                        "checks": {key: {"status": "pass", "evidence": "Observed current synthetic CI and source"}
                                   for key in CHECKS}})
         output = {"items": [{"type": "submit_pull_request_review", "event": "COMMENT",
-                             "body": encode("gh-aw-qa", report)}]}
+                             "body": encode_qa(report)}]}
         self.assertEqual(validate_review(output, binding, 300)["verdict"], "Accepted")
         for change in ("approval", "stale", "ci", "safety", "placeholder", "duplicate", "retarget"):
             with self.subTest(change=change):
@@ -219,9 +233,33 @@ class PolicyTests(unittest.TestCase):
                     altered["items"].append(altered["items"][0])
                 else:
                     altered["items"][0]["pull_request_number"] = 92
-                altered["items"][0]["body"] = encode("gh-aw-qa", changed_report)
+                altered["items"][0]["body"] = encode_qa(changed_report)
                 with self.assertRaises(Blocked):
                     validate_review(altered, changed_binding, 300)
+
+    def test_sanitized_collected_and_published_qa_keeps_protocol_for_replay_gate(self):
+        binding = qa_preflight(self.read(), POLICY)
+        report = {key: binding[key] for key in ("key", "head", "base", "issue", "digest", "ci")}
+        report.update({"run_id": 300, "verdict": "Changes Required", "findings": [],
+                       "checks": {key: {"status": "pass", "evidence": "Observed current synthetic CI and source"}
+                                  for key in CHECKS}})
+        output = {"items": [{"type": "submit_pull_request_review", "event": "COMMENT",
+                             "body": encode_qa(report)}]}
+        collected = sanitize_safe_output(json.dumps(output))
+        collected_output = json.loads(collected)
+        self.assertIn(QA_ENVELOPE, collected_output["items"][0]["body"])
+        self.assertEqual(validate_review(collected_output, binding, 300)["protocol"], QA_ENVELOPE)
+
+        published_body = sanitize_safe_output(collected_output["items"][0]["body"])
+        published = {"user": {"id": 30, "type": "Bot"}, "body": published_body}
+        self.assertEqual(decode_qa(published_body)["key"], binding["key"])
+        data = self.read()
+        data["reviews"] = [published]
+        with self.assertRaises(Blocked):
+            qa_preflight(data, POLICY)
+        legacy = sanitize_safe_output("Review summary.\n" + encode("gh-aw-qa", report))
+        with self.assertRaises(Blocked):
+            decode_qa(legacy)
 
 
 if __name__ == "__main__":

@@ -66,8 +66,8 @@ safe-outputs:
           description: The exact single approved file path from the evidence binding; no globs.
           type: string
           required: true
-        content:
-          description: Complete replacement UTF-8 text, at most 32768 bytes; no other edits.
+        content_base64:
+          description: Canonical base64 of the complete replacement UTF-8 text, at most 32768 decoded bytes; no other edits.
           type: string
           required: true
       steps:
@@ -152,7 +152,10 @@ binary/executable files, multi-file edits, shell, test execution or installation
 Use read-only GitHub tools to inspect nearby source/tests and determine the
 smallest complete textual correction. Do not claim tests ran in this session.
 
-Call `propose_repair` once with the exact JSON binding, path and complete corrected content.
+Call `propose_repair` once with the exact JSON binding, path and canonical
+`content_base64` of the complete corrected UTF-8 file contents. Do not send
+replacement text directly; the collector sanitizes string inputs before the
+trusted handler reads them.
 This only proposes data; the separately credentialed gh-aw safe-output job
 enforces the exact-file policy, protected-file block and issue-wide one-attempt
 reservation again. It uses GitHub's atomic expected-head commit API and never

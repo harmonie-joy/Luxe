@@ -124,6 +124,7 @@ jobs:
         run: python3 .github/scripts/gh_aw_policy.py --validate-output
   safe_outputs:
     needs: [preflight, validate_qa]
+    if: (!cancelled()) && needs.agent.result != 'skipped' && needs.detection.result == 'success' && needs.validate_qa.result == 'success'
 ---
 
 # Independent QA, not acceptance
@@ -159,8 +160,8 @@ advisory AI QA: independent allowlisted human attestation and human merge remain
 required. This workflow does not emit the dormant controller's reservation/QA
 protocol or claim its acceptance.
 
-Append exactly one JSON object in a fenced block preceded by
-`<!-- luxe-autonomy:gh-aw-qa:v1 -->`, containing the binding's `key`, `head`,
+Append exactly one JSON object in a fenced block containing
+`"protocol": "luxe-autonomy-gh-aw-qa-v1"` and the binding's `key`, `head`,
 `base`, `issue`, `digest`, `ci`, plus numeric `run_id` = ${{ github.run_id }},
 `verdict` (Accepted, Accepted with Notes, Changes Required, Blocked), `checks`
 with exactly scope, correctness, contracts, errors, tests, regressions,

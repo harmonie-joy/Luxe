@@ -3,6 +3,7 @@
 import base64
 import copy
 import hashlib
+import json
 import os
 import sys
 import unittest
@@ -10,9 +11,10 @@ from unittest.mock import patch
 import urllib.error
 
 from autonomous_development import Blocked, ROOT, REPO, encode
-from gh_aw_policy import CHECKS, QA_PATH, snapshot
+from gh_aw_policy import CHECKS, QA_PATH, encode_qa, snapshot
 from test_gh_aw_policy import API, BASE, FILE, HEAD, POLICY
-from gh_aw_repair import COMMIT, SafeOutputGitHub, apply_repair, main, repair_binding
+from gh_aw_repair import COMMIT, SafeOutputGitHub, apply_repair, main, proposal_content, repair_binding
+from test_gh_aw_policy import sanitize_safe_output
 
 
 class RepairAPI(API):
@@ -40,7 +42,7 @@ class RepairAPI(API):
                           "reason": "The resume instructions omit the saved-work navigation."}],
         })
         report["checks"]["correctness"]["status"] = "fail"
-        qa_body = encode("gh-aw-qa", report)
+        qa_body = encode_qa(report)
         self.report = report
         self.qa = {"id": 400, "user": {"id": 30, "type": "Bot"}, "state": "COMMENTED",
                    "commit_id": HEAD, "submitted_at": "2026-10-27T01:00:00Z", "body": qa_body}
@@ -96,7 +98,10 @@ class RepairTests(unittest.TestCase):
         self.api = RepairAPI()
         self.data = snapshot(self.api, 91, HEAD, POLICY)
         self.binding = repair_binding(self.api, self.data, POLICY)
-        self.proposal = {"type": "propose_repair", "path": FILE, "content": "Corrected synthetic help.\n"}
+        self.proposal = {
+            "type": "propose_repair", "path": FILE,
+            "content_base64": base64.b64encode(b"Corrected synthetic help.\n").decode(),
+        }
 
     def apply(self):
         return apply_repair(self.api, self.binding, self.proposal, POLICY, run_id=600)
@@ -111,6 +116,10 @@ class RepairTests(unittest.TestCase):
         self.assertEqual(variables["expectedHeadOid"], HEAD)
         self.assertEqual(variables["branch"], {"repositoryNameWithOwner": REPO, "branchName": "luxe-pilot/90"})
         self.assertEqual(variables["fileChanges"]["additions"][0]["path"], FILE)
+        self.assertEqual(
+            base64.b64decode(variables["fileChanges"]["additions"][0]["contents"], validate=True),
+            b"Corrected synthetic help.\n",
+        )
         self.assertNotIn("deletions", variables["fileChanges"])
 
     def test_stale_head_and_review_edit_block(self):
@@ -178,8 +187,10 @@ class RepairTests(unittest.TestCase):
             {"path": "frontend/features/auth/login.tsx"},
             {"path": "docs/help/other.md"},
             {"path": ".github/workflows/ci.yml"},
-            {"content": "x" * 32769},
-            {"content": "bad\x00content"},
+            {"content_base64": base64.b64encode(b"x" * 32769).decode()},
+            {"content_base64": base64.b64encode(b"bad\x00content").decode()},
+            {"content_base64": base64.b64encode(b"\xff").decode()},
+            {"content_base64": "not-base64"},
             {"repo": "outside/repo"},
             {"type": "push_to_pull_request_branch"},
         ):
@@ -189,6 +200,29 @@ class RepairTests(unittest.TestCase):
                 with self.assertRaises(Blocked):
                     self.apply()
                 self.assertFalse(any(c[0] == "POST" for c in self.api.calls))
+
+    def test_collector_to_handler_repair_content_round_trip(self):
+        samples = (
+            " \nconst Card = () => <Card title=\"{{title}}\">ok</Card>;\r\n ",
+            "<!-- preserve this comment -->\nconst visible = true;\n",
+            "const template = `value: ${item}: {{replacement}}`;\n",
+        )
+        for text in samples:
+            with self.subTest(text=text):
+                self.assertNotEqual(sanitize_safe_output(text), text)
+                content = text.encode("utf-8")
+                proposal = {
+                    "type": "propose_repair", "path": FILE,
+                    "content_base64": base64.b64encode(content).decode(),
+                }
+                safe_output = json.dumps({"items": [{
+                    "type": "propose_repair", "binding": json.dumps(self.binding),
+                    "path": FILE, "content_base64": proposal["content_base64"],
+                }]})
+                transported = json.loads(sanitize_safe_output(safe_output))["items"][0]
+                proposal["content_base64"] = transported["content_base64"]
+                result = proposal_content(self.api, self.binding, proposal)
+                self.assertEqual(base64.b64decode(result, validate=True), content)
 
     def test_bot_self_attestation_author_and_latest_malformed_review_rejected(self):
         for change in ("bot", "author", "dismissed", "missing", "later"):

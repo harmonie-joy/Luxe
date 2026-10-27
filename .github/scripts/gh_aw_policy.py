@@ -20,6 +20,7 @@ SIGNAL_PATH = ".github/workflows/luxe-repair-signal.yml"
 POLICY = Path(__file__).resolve().parents[1] / "gh-aw-policy.json"
 JOBS = {"frontend", "backend", "real-e2e", "autonomous-controller"}
 SHA = re.compile(r"[0-9a-f]{40}")
+QA_ENVELOPE = "luxe-autonomy-gh-aw-qa-v1"
 
 
 def require(condition, reason):
@@ -154,9 +155,26 @@ def snapshot(api, pr_number, expected_head, policy):
 
 def qa_record(review):
     try:
-        return decode(review.get("body"), "gh-aw-qa")
+        return decode_qa(review.get("body"))
     except Blocked:
         return None
+
+
+def encode_qa(report):
+    require(isinstance(report, dict) and "protocol" not in report, "invalid QA report")
+    return f"```json\n{json.dumps({**report, 'protocol': QA_ENVELOPE}, sort_keys=True)}\n```"
+
+
+def decode_qa(body):
+    matches = re.findall(r"(?m)^```json[ \t]*\r?\n([\s\S]*?)^```[ \t]*$", body or "")
+    require(len(matches) == 1, "missing or ambiguous QA report")
+    try:
+        report = json.loads(matches[0])
+    except (ValueError, TypeError) as exc:
+        raise Blocked("invalid QA JSON") from exc
+    require(isinstance(report, dict) and report.get("protocol") == QA_ENVELOPE,
+            "missing or invalid QA protocol")
+    return report
 
 
 def qa_preflight(data, policy):
@@ -164,8 +182,7 @@ def qa_preflight(data, policy):
     binding = data["binding"]
     key = fingerprint(binding)
     records = [r for r in data["reviews"] if r.get("user", {}).get("type") == "Bot"
-               and r["user"].get("id") in policy["qa_bot_ids"]
-               and "<!-- luxe-autonomy:gh-aw-qa:v1 -->" in (r.get("body") or "")]
+               and r["user"].get("id") in policy["qa_bot_ids"]]
     require(len(records) < policy["max_qa_reviews_per_pr"], "QA review budget exhausted; require human QA")
     require(all(qa_record(r) is not None for r in records), "malformed previous QA evidence")
     require(not any(qa_record(r).get("key") == key for r in records), "duplicate QA evidence; not replaying")
@@ -192,7 +209,7 @@ def validate_review(output, binding, run_id):
             "QA output may not override trusted target or add inline effects")
     if "pull_request_number" in item:
         require(item["pull_request_number"] == binding["pr"], "QA output retargeted PR")
-    report = decode(item.get("body"), "gh-aw-qa")
+    report = decode_qa(item.get("body"))
     require(all(report.get(k) == binding[k] for k in ("key", "head", "base", "issue", "digest", "ci"))
             and report.get("run_id") == run_id, "QA output evidence binding changed")
     require(report.get("verdict") in {"Accepted", "Accepted with Notes", "Changes Required", "Blocked"},

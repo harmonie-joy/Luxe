@@ -51,6 +51,23 @@ class WorkflowTests(unittest.TestCase):
     def test_comment_only_and_post_agent_validation(self):
         text = (WORKFLOWS / "luxe-independent-qa.lock.yml").read_text()
         native = job(text, "safe_outputs")
+        source = (WORKFLOWS / "luxe-independent-qa.md").read_text()
+        source_condition = re.search(r"^    if: (.+)$", job(source, "safe_outputs"), re.M)[1]
+        lock_condition = re.search(r"^    if: >\n((?:      .+\n?)+)", native, re.M)[1]
+        self.assertIn("needs.validate_qa.result == 'success'", source_condition)
+        self.assertIn("needs.validate_qa.result == 'success'", lock_condition)
+
+        def may_publish(statuses):
+            return (
+                statuses["agent"] != "skipped"
+                and statuses["detection"] == "success"
+                and statuses["validate_qa"] == "success"
+            )
+
+        for validator_result in ("failure", "skipped"):
+            statuses = {"agent": "success", "detection": "success", "validate_qa": validator_result}
+            self.assertFalse(may_publish(statuses), f"validator={validator_result}")
+        self.assertTrue(may_publish({"agent": "success", "detection": "success", "validate_qa": "success"}))
         self.assertIn("- validate_qa", native)
         config_line = re.search(r'^          GH_AW_SAFE_OUTPUTS_HANDLER_CONFIG: (".*")$', native, re.M)[1]
         config = json.loads(json.loads(config_line))["submit_pull_request_review"]
@@ -81,6 +98,10 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn("push_to_pull_request_branch", text)
         self.assertNotIn("assign_copilot", text)
         self.assertNotIn("merge_pull_request", text)
+        agent = job(text, "agent")
+        config_line = re.search(r'^          GH_AW_SAFE_OUTPUTS_CONFIG: (".*")$', agent, re.M)[1]
+        inputs = json.loads(json.loads(config_line))["propose-repair"]["inputs"]
+        self.assertEqual(set(inputs), {"binding", "content_base64", "path"})
 
     def test_default_policy_remains_disabled(self):
         policy = json.loads((ROOT / ".github/gh-aw-policy.json").read_text())

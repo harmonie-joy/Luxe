@@ -57,6 +57,9 @@ inference/publication. Uncertain CI can only produce a Blocked advisory report.
 An additional live recheck precedes publishing. The native safe output pins the
 review to the inspected commit and permits **COMMENT only**, never APPROVE,
 REQUEST_CHANGES, dismissal, merge or code writes.
+The machine report's fenced JSON carries the
+`"protocol": "luxe-autonomy-gh-aw-qa-v1"` field inside the sanitized body;
+readers require this envelope for duplicate accounting and repair eligibility.
 
 Duplicate bindings (issue digest, head/base, exact allowlist, CI run/attempt/
 outcome) are not reviewed again; concurrency serializes QA. At most six
@@ -110,7 +113,8 @@ the approved head as an atomic expected-head parameter. That is insufficient
 for this pilot's exact-revision contract.
 
 Instead, `propose_repair` accepts **data only**: the evidence binding, one exact
-path and replacement text. The trusted safe-output handler:
+path and canonical base64 replacement content. The trusted safe-output handler
+decodes and validates the bounded UTF-8 text:
 
 1. Re-reads the source workflow, PR, issue, unedited scope approval, native
    parent/dependencies/leaf status, changed files, latest QA and current CI.

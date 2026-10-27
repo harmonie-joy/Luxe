@@ -109,12 +109,20 @@ def repair_binding(api, data, policy, *, allow_reservation=None):
 
 
 def proposal_content(api, binding, proposal):
-    require(isinstance(proposal, dict) and set(proposal) == {"type", "path", "content"}
+    require(isinstance(proposal, dict) and set(proposal) == {"type", "path", "content_base64"}
             and proposal["type"] == "propose_repair" and proposal["path"] == binding["file"]
             and not protected(proposal["path"]), "unsafe safe-output file or fields")
-    content = proposal["content"]
-    require(isinstance(content, str) and 0 < len(content.encode()) <= MAX_BYTES
-            and "\x00" not in content and "\r" not in content, "invalid or oversized repair content")
+    content_base64 = proposal["content_base64"]
+    require(isinstance(content_base64, str) and 0 < len(content_base64) <= 4 * ((MAX_BYTES + 2) // 3),
+            "invalid or oversized encoded repair content")
+    try:
+        content = base64.b64decode(content_base64, validate=True)
+        require(base64.b64encode(content).decode() == content_base64, "non-canonical repair content encoding")
+        text = content.decode("utf-8")
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise Blocked("repair content must be canonical base64-encoded UTF-8") from exc
+    require(0 < len(content) <= MAX_BYTES and b"\x00" not in content,
+            "invalid or oversized repair content")
     tree = api.request("GET", f"{ROOT}/git/trees/{binding['head']}?recursive=1")
     require(tree.get("truncated") is False and isinstance(tree.get("tree"), list), "incomplete source tree")
     matches = [f for f in tree["tree"] if f.get("path") == binding["file"]]
@@ -126,8 +134,8 @@ def proposal_content(api, binding, proposal):
     original = base64.b64decode(blob["content"].replace("\n", ""), validate=True)
     require(len(original) <= MAX_BYTES and b"\x00" not in original, "original is not bounded text")
     original.decode("utf-8")
-    require(original != content.encode(), "repair has no changes")
-    return base64.b64encode(content.encode()).decode()
+    require(original != content, "repair has no changes")
+    return base64.b64encode(text.encode("utf-8")).decode()
 
 
 def confirmed_reservation(record, expected_body, bot_id):
@@ -144,7 +152,8 @@ def apply_repair(api, expected, proposal, policy, *, run_id):
     content = proposal_content(api, expected, proposal)
     run_url = f"https://github.com/{REPO}/actions/runs/{run_id}"
     body = encode("gh-aw-repair", {
-        "attempt": 1, "binding": expected, "content_sha256": hashlib.sha256(proposal["content"].encode()).hexdigest(),
+        "attempt": 1, "binding": expected,
+        "content_sha256": hashlib.sha256(base64.b64decode(content, validate=True)).hexdigest(),
         "run_id": run_id,
     }) + f"\n\nReserved by [THE LUXE gh-aw bounded repair]({run_url}). Never retry automatically."
     # Reserve before committing. A lost response consumes the allowance.
