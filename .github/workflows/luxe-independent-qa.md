@@ -9,6 +9,7 @@ on:
     workflows: [CI]
     types: [completed]
     branches: ['luxe-pilot/**']
+  bots: ["${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}"]
   roles: [admin, maintainer, write]
   reaction: none
   github-token: ${{ secrets.GITHUB_TOKEN }}

@@ -134,12 +134,19 @@ decodes and validates the bounded UTF-8 text:
 5. Writes and confirms an issue-wide `gh-aw-repair` reservation **before** the
    commit. Any prior reservation (including malformed records or legacy
    `repair-reserved` records) consumes the allowance across reruns, new heads,
-   changed issue text, closed/reopened or replacement PRs. Ambiguity is a hold.
+   changed issue text, closed/reopened or replacement PRs. A stable workflow run
+   title binds each attempt to `luxe-pilot/<issue-number>`; before inference and
+   before reserving, the handler checks prior matching runs and their
+   `propose_repair` job. A started, failed, or incomplete prior job is a human
+   hold even when its reservation POST left no comment. Only an explicitly
+   skipped proposal job is not an attempt.
 6. Revalidates after reserving, then calls `createCommitOnBranch` with
    `expectedHeadOid` equal to the attested head. GitHub atomically rejects
    intervening head changes; no force push, rebasing, retry or fallback PR.
    A failed/lost comment response, GraphQL error, timeout or unconfirmed commit
-   never authorizes another attempt.
+   never authorizes another attempt. If the reservation comment is absent, the
+   Actions run/job evidence still consumes the allowance; incomplete history
+   blocks rather than resetting it.
 
 The repair agent has no checkout/shell/tests or privileged token. Only the
 default-branch safe-output job mints a short-lived repository-scoped GitHub App
@@ -192,10 +199,14 @@ No commands in this section were executed by the implementation session.
 | Engine and repository audit | Keyless Copilot inference, read-only GitHub tools, strict detector | Confirm organization `copilot-requests` support/billing, allowed pinned Actions, and workflow approval policies; do not weaken security settings |
 | Secrets isolation | Generated read tools/reviews explicitly use ephemeral `GITHUB_TOKEN` | Inventory repo/org/environment secrets manually: this session's secret-name API returned **403**, so isolation is unverified |
 | First trial | QA evaluates one synthetic approved L0 leaf PR on `luxe-pilot/issue-N` | Use an appropriate open parent (not an unresolved closed tracker); declare exact existing help file, acceptance/verification and unedited Founder scope approval |
-| Stage B setup | Nothing while either switch is off | Separate approved activation PR sets `repair_enabled` and reviewer/App bot IDs; Founder creates/configures the App/environment/key and `LUXE_REPAIR_APP_CLIENT_ID` only under explicit authorization |
+| Stage B setup | Nothing while either switch is off | Separate approved activation PR sets `repair_enabled` and reviewer/App bot IDs; Founder creates/configures the App/environment/key, `LUXE_REPAIR_APP_CLIENT_ID` and exact `LUXE_REPAIR_APP_BOT_LOGIN` only under explicit authorization |
 | Branch repair | One reserved, atomic, single-file commit; normal CI and fresh QA | Verify and COMMENT-attest exact findings; authorize one-issue pilot and its cost |
 | Final result | Evidence remains visible; no automatic second repair | Independent final QA, review all required CI, Founder manual merge; no deploy |
 | Stop / rollback | Subsequent gated jobs stop | Clear both repository variables, revert reviewed policy switches, cancel in-flight runs and revoke App installation/key if needed; never delete reservation history |
+
+`LUXE_REPAIR_APP_BOT_LOGIN` must identify the same installed App as the numeric
+`repair_bot_id`. The gh-aw role and bot-installation checks remain enabled, and
+the trusted preflight still re-reads the exact PR and source-run provenance.
 
 Environment `luxe-gh-aw-repair` must be restricted to the reviewed master
 workflow; verify required reviewers and prevent self-review as appropriate.

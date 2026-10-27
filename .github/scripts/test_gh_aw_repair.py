@@ -5,13 +5,14 @@ import copy
 import hashlib
 import json
 import os
+import re
 import sys
 import unittest
 from unittest.mock import patch
 import urllib.error
 
 from autonomous_development import Blocked, ROOT, REPO, encode
-from gh_aw_policy import CHECKS, QA_PATH, encode_qa, snapshot
+from gh_aw_policy import CHECKS, QA_PATH, REPAIR_PATH, encode_qa, snapshot
 from test_gh_aw_policy import API, BASE, FILE, HEAD, POLICY
 from gh_aw_repair import (
     COMMIT, SafeOutputGitHub, apply_repair, main, proposal_content, repair_binding, repair_proposal,
@@ -23,9 +24,12 @@ class RepairAPI(API):
     def __init__(self):
         super().__init__()
         self.fail_comment = False
+        self.persist_failed_comment = True
         self.fail_commit = False
         self.uncertain_commit = False
         self.advance_after_reservation = False
+        self.run_history = []
+        self.run_jobs = {}
         self.data[f"{ROOT}/git/trees/{HEAD}?recursive=1"] = {
             "truncated": False, "tree": [{"path": FILE, "mode": "100644", "type": "blob",
                                          "sha": "d" * 40, "size": 20}]}
@@ -67,6 +71,34 @@ class RepairAPI(API):
         }
         self.calls.clear()
 
+    def pages(self, path, key=None):
+        if path.startswith(f"{ROOT}/actions/workflows/luxe-bounded-repair.lock.yml/runs"):
+            return copy.deepcopy(self.run_history)
+        match = re.fullmatch(
+            rf"{ROOT}/actions/runs/([1-9][0-9]*)/attempts/([1-9][0-9]*)/jobs\?filter=latest",
+            path,
+        )
+        if match:
+            return copy.deepcopy(self.run_jobs.get((int(match.group(1)), int(match.group(2))), []))
+        return super().pages(path, key)
+
+    def add_run(self, run_id, *, run_attempt=1, conclusion=None):
+        title = f"THE LUXE Bounded Repair for {self.data[f'{ROOT}/pulls/91']['head']['ref']}"
+        record = next((run for run in self.run_history if run.get("id") == run_id), None)
+        if record is None:
+            record = {"id": run_id}
+            self.run_history.append(record)
+        record.update({"display_title": title, "run_attempt": run_attempt})
+        self.data[f"{ROOT}/actions/runs/{run_id}"] = {
+            "id": run_id, "path": REPAIR_PATH, "event": "workflow_run",
+            "display_title": title, "run_attempt": run_attempt,
+        }
+        self.run_jobs[(run_id, run_attempt)] = [{
+            "name": "propose_repair",
+            "status": "in_progress" if conclusion is None else "completed",
+            "conclusion": conclusion,
+        }]
+
     def request(self, method, path, data=None):
         if method == "GET":
             return super().request(method, path, data)
@@ -74,9 +106,10 @@ class RepairAPI(API):
         if method == "POST" and path == f"{ROOT}/issues/90/comments":
             if self.fail_comment:
                 # The server may have persisted the write before the response was lost.
-                self.data[path].append({
-                    "id": 500, "user": {"id": 40, "type": "Bot"},
-                    "body": data["body"], "created_at": "now", "updated_at": "now"})
+                if self.persist_failed_comment:
+                    self.data[path].append({
+                        "id": 500, "user": {"id": 40, "type": "Bot"},
+                        "body": data["body"], "created_at": "now", "updated_at": "now"})
                 raise Blocked("uncertain reservation")
             record = {"id": 500, "user": {"id": 40, "type": "Bot"},
                       "body": data["body"], "created_at": "now", "updated_at": "now"}
@@ -99,14 +132,18 @@ class RepairTests(unittest.TestCase):
     def setUp(self):
         self.api = RepairAPI()
         self.data = snapshot(self.api, 91, HEAD, POLICY)
-        self.binding = repair_binding(self.api, self.data, POLICY)
+        self.api.add_run(600)
+        self.binding = repair_binding(self.api, self.data, POLICY, run_id=600)
         self.proposal = {
             "type": "propose_repair", "path": FILE,
             "content_base64": base64.b64encode(b"Corrected synthetic help.\n").decode(),
         }
 
-    def apply(self):
-        return apply_repair(self.api, self.binding, self.proposal, POLICY, run_id=600)
+    def apply(self, run_id=600, run_attempt=1):
+        current = next((run for run in self.api.run_history if run.get("id") == run_id), None)
+        if current is None or current.get("run_attempt") != run_attempt:
+            self.api.add_run(run_id, run_attempt=run_attempt)
+        return apply_repair(self.api, self.binding, self.proposal, POLICY, run_id=run_id)
 
     def test_one_reserved_atomic_commit(self):
         result = self.apply()
@@ -149,7 +186,9 @@ class RepairTests(unittest.TestCase):
                 self.api.data[f"{ROOT}/issues/90/comments"].append(
                     {"user": {"id": 40, "type": "Bot"}, "body": body})
                 with self.assertRaises(Blocked):
-                    repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY)
+                    repair_binding(
+                        self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY, run_id=600,
+                    )
 
     def test_duplicate_triggers_and_reruns_never_replay(self):
         self.api.fail_commit = True
@@ -164,11 +203,51 @@ class RepairTests(unittest.TestCase):
     def test_uncertain_reservation_never_dispatches_or_retries(self):
         self.api.fail_comment = True
         with self.assertRaises(Blocked):
-            self.apply()
+            self.apply(600)
         self.assertFalse(any(c[1] == "/graphql" for c in self.api.calls))
+        self.api.run_jobs[(600, 1)][0].update({"status": "completed", "conclusion": "failure"})
         with self.assertRaises(Blocked):
-            self.apply()
+            self.apply(601)
         self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+
+    def test_uncertain_reservation_without_persisted_comment_consumes_attempt(self):
+        self.api.fail_comment = True
+        self.api.persist_failed_comment = False
+        with self.assertRaises(Blocked):
+            self.apply(600)
+        self.assertEqual(self.api.data[f"{ROOT}/issues/90/comments"], self.data["comments"])
+        self.api.run_jobs[(600, 1)][0].update({"status": "completed", "conclusion": "failure"})
+
+        with self.assertRaisesRegex(Blocked, "previous repair attempt"):
+            self.apply(601)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+
+    def test_uncertain_reservation_same_workflow_rerun_consumes_attempt(self):
+        self.api.fail_comment = True
+        self.api.persist_failed_comment = False
+        with self.assertRaises(Blocked):
+            self.apply(600, 1)
+        self.api.run_jobs[(600, 1)][0].update({"status": "completed", "conclusion": "failure"})
+
+        with self.assertRaisesRegex(Blocked, "previous repair attempt"):
+            self.apply(600, 2)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+
+    def test_skipped_safe_output_job_does_not_consume_attempt(self):
+        self.api.add_run(550, conclusion="skipped")
+        self.assertEqual(self.apply(), "e" * 40)
+
+    def test_incomplete_prior_run_evidence_blocks_before_reservation(self):
+        title = f"THE LUXE Bounded Repair for {self.api.data[f'{ROOT}/pulls/91']['head']['ref']}"
+        self.api.run_history.append({"id": 550, "display_title": title, "run_attempt": 1})
+        with self.assertRaisesRegex(Blocked, "incomplete prior repair run evidence"):
+            repair_binding(self.api, self.data, POLICY, run_id=600)
+        self.assertFalse(any(call[0] != "GET" for call in self.api.calls))
+
+    def test_repair_branch_must_encode_the_approved_issue(self):
+        self.api.data[f"{ROOT}/pulls/91"]["head"]["ref"] = "luxe-pilot/92"
+        with self.assertRaisesRegex(Blocked, "does not identify its issue"):
+            repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY, run_id=600)
 
     def test_uncertain_graphql_response_consumes_attempt(self):
         self.api.uncertain_commit = True
@@ -238,7 +317,9 @@ class RepairTests(unittest.TestCase):
                 else:
                     self.api.data[f"{ROOT}/pulls/91/reviews"].append({**self.api.human, "id": 402, "body": "LGTM"})
                 with self.assertRaises(Blocked):
-                    repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY)
+                    repair_binding(
+                        self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY, run_id=600,
+                    )
 
     def test_sensitive_or_unverified_qa_not_repairable(self):
         for change in ("security", "missing-safety", "placeholder", "category", "file", "blocked", "run"):
@@ -263,7 +344,9 @@ class RepairTests(unittest.TestCase):
                 self.api.attestation["qa_sha256"] = hashlib.sha256(self.api.qa["body"].encode()).hexdigest()
                 self.api.human["body"] = encode("gh-aw-repair-attestation", self.api.attestation)
                 with self.assertRaises(Blocked):
-                    repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY)
+                    repair_binding(
+                        self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY, run_id=600,
+                    )
 
     def test_symlink_tree_truncation_creation_and_noop_block(self):
         for change in ("symlink", "truncated", "missing", "noop"):

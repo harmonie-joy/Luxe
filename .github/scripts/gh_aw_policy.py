@@ -48,11 +48,15 @@ def settings():
 
 def protected(path):
     # The existing controller policy remains unchanged; the pilot is stricter.
+    allowed_pair = (
+        path.startswith("docs/help/") and path.endswith(".md")
+        or path.startswith("frontend/features/") and path.endswith((".ts", ".tsx"))
+    )
     return (
         forbidden(path)
         or not re.fullmatch(r"[A-Za-z0-9_./-]+\.(md|ts|tsx)", path)
         or any(part.startswith(".") for part in path.split("/"))
-        or not path.startswith(("docs/help/", "frontend/features/"))
+        or not allowed_pair
         or any(word in path.casefold() for word in
                ("auth", "tenan", "security", "privacy", "compliance", "schema",
                 "permission", "session", "credential", "secret", "token", "governance", "dependenc"))

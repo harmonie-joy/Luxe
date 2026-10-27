@@ -79,6 +79,21 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn("pull-requests: write", validator)
         self.assertIn("needs.detection.result == 'success'", validator)
 
+    def test_repair_app_can_trigger_only_the_trusted_qa_paths(self):
+        source = (WORKFLOWS / "luxe-independent-qa.md").read_text()
+        lock = (WORKFLOWS / "luxe-independent-qa.lock.yml").read_text()
+        self.assertIn('bots: ["${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}"]', source)
+        self.assertIn("types: [opened, reopened, synchronize]", source)
+        self.assertIn("workflows: [CI]", source)
+        self.assertIn('GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}"', lock)
+        pre_activation = job(lock, "pre_activation")
+        self.assertIn("GH_AW_REQUIRED_ROLES: \"admin,maintainer,write\"", pre_activation)
+        self.assertIn("GH_AW_ALLOWED_BOTS: \"${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}\"", pre_activation)
+        self.assertIn("check_membership.cjs", pre_activation)
+        activation = job(lock, "activation")
+        self.assertIn("github.event.workflow_run.repository.id == github.repository_id", activation)
+        self.assertIn("!(github.event.workflow_run.repository.fork)", activation)
+
     def test_repair_secret_only_in_safe_output_and_no_extra_mutations(self):
         text = (WORKFLOWS / "luxe-bounded-repair.lock.yml").read_text()
         safe = job(text, "propose_repair")
@@ -98,6 +113,15 @@ class WorkflowTests(unittest.TestCase):
         self.assertNotIn("push_to_pull_request_branch", text)
         self.assertNotIn("assign_copilot", text)
         self.assertNotIn("merge_pull_request", text)
+        source = (WORKFLOWS / "luxe-bounded-repair.md").read_text()
+        self.assertIn(
+            "run-name: THE LUXE Bounded Repair for ${{ github.event.workflow_run.head_branch }}",
+            source,
+        )
+        self.assertIn(
+            "run-name: THE LUXE Bounded Repair for ${{ github.event.workflow_run.head_branch }}",
+            text,
+        )
         agent = job(text, "agent")
         config_line = re.search(r'^          GH_AW_SAFE_OUTPUTS_CONFIG: (".*")$', agent, re.M)[1]
         inputs = json.loads(json.loads(config_line))["propose-repair"]["inputs"]
