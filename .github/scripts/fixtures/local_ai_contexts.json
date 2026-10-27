@@ -1,0 +1,21 @@
+{
+  "fixture_version": 2,
+  "context_sufficiency": "Scenario labels are evaluation expectations, not a production evidence classifier.",
+  "contexts": {
+    "draft": {
+      "brand_profile": {"name": "Synthetic Workshop"},
+      "channel": "linkedin",
+      "brief": {"content_objective": "Explain how to save a writing checkpoint in under 80 words", "constraints": "No invented metrics or outcome guarantees"},
+      "voice": {"sentence_style": "Short declaratives, one concrete next action."}
+    },
+    "voice": {
+      "brand_profile": {"name": "Synthetic Workshop", "category": "editorial planning"},
+      "assets": [{"status": "ready", "content": "Open with the decision. Explain one concrete next action. Never promise outcomes."}]
+    },
+    "missing-context": {"brand_profile": {}, "assets": []},
+    "insufficient-context": {
+      "brand_profile": {"name": "Synthetic Workshop"},
+      "assets": [{"status": "ready", "content": "Hello."}]
+    }
+  }
+}

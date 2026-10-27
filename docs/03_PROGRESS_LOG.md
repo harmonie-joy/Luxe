@@ -1,5 +1,19 @@
 # Progress Log
 
+### 2026-10-28 - #92 synthetic Ollama missing-context investigation
+
+- Separate follow-up branch to PR#90; independent Standards/Spec reviews found no blocker in its preparation scope. All four hosted gates, inert runner template and production provider/prompt/schema/settings remain unchanged; no registration, paid AI, migration or roadmap change.
+- Reproduced invalid JSON on installed gemma4:12b. Seed4/budget768 hit the limit; budget1536 still stopped with the same unterminated JSON. Prompt schema-grounding alone also failed. Existing prefix parsing can accept trailing non-JSON data, while the schema accepts unsupported certainty/defaults. These are distinct from the production schema's inability to express unknown tone.
+- Evaluator now reports strict/prefix JSON, completion metadata, schema NOT_RUN/ACCEPTED/REJECTED, bounded semantic checks and uncertainty separately. Added canonical synthetic v2/insufficient-context fixtures and deterministic regressions. No repaired/fabricated output: low-context cases remain nonzero/NOT_ESTABLISHED.
+- 20 focused/118 automation tests and43 backend LLM tests pass. Final seeded four-case model benchmark honestly FAILS:3 malformed generations,1 schema-valid but semantically unsupported insufficient-context result. [Diagnosis, controls, benchmark and QA handoff](ci/OLLAMA_MISSING_CONTEXT.md) record limits; independent QA Accepted with Notes. Current hosted checks/human review remain required; product abstention/runtime fixes need separate scope.
+
+### 2026-10-27 - #89 trusted local CI preparation (activation blocked)
+
+- Verified actual remote `harmonie-joy/Luxe`, protected `master`, public visibility and zero runners; isolated `feat/trusted-local-ci` worktree preserves existing work. Audited Windows/WSL2/Docker/GPU/Ollama and current workflows. Host isolation and organization group enforcement remain unverified; no registration, host/security/settings changes or production access.
+- Preserved four required hosted CI jobs; pinned Actions SHAs, disabled checkout credential persistence, set read permissions, bounded timeouts and superseded-run concurrency. Added diagnostic, disposable PostgreSQL/backend/browser validation, advisory synthetic Ollama evaluation and failure/cleanup tests; local workflow stays outside executable workflows.
+- Initial real validation:180 PostgreSQL tests pass twice,7 real-service browser tests pass; draft and voice evaluation schema-valid, missing-context evaluation honestly fails. Current billed Actions savings$0; exact timings/results/security limits and runbook are in [audit](ci/RUNNER_AUDIT.md). Independent QA found startup-interruption cleanup and inherited-netrc boundaries; localized fixes/regressions pass re-review.
+- Independent QA Accepted with Notes for preparation; final110 automation tests and post-hardening180 PostgreSQL tests pass, with no owned-resource leftovers. Human review/current GitHub gates remain required. Live-runner smoke/failed-check/restart/removal NOT VERIFIED. No application/provider/schema/dependency or MVP roadmap changes; next infrastructure step is an approved isolation/access decision.
+
 ### 2026-10-20 - #58 PR3 public-homepage slice
 
 - Implemented only the authorized public homepage portion: Creator/CEO audience, context preservation and finishing the current piece of work; the Internal Alpha is explicitly limited to accepting the exact BrandVoice version and saving/resuming post checkpoint state in idea/drafting. Build → Scale → Automate is framed as vision, with Scale and Automate marked future/planned.
