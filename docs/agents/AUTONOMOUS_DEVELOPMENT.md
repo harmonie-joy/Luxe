@@ -37,6 +37,14 @@ workaround. Configure the organization entitlement and Founder identity first,
 then run one synthetic L0 PR pilot. Public-repository content is visible to the agent; keep
 NDA-restricted designs, creator data and secrets out of issues and PRs.
 
+The first run on the workflow's own draft PR (#80) failed safely in gh-aw
+activation because its source Markdown is absent from the current `master` base
+commit. gh-aw intentionally loads PR workflow configuration from the base,
+so the new workflow can be exercised on a later PR only after the Founder
+reviews and merges this draft. Do not change activation to load untrusted PR
+head files. [Run 40578956565](https://github.com/harmonie-joy/Luxe/actions/runs/40578956565)
+records the exact bootstrap failure; no agent or safe-output job ran.
+
 **Repair remains disabled:** `.github/autonomy.json` has `enabled: false` and
 `max_repairs: 0`. The existing planner tests exact scope, current human QA,
 current CI, safety checks, one repair reservation and replay persistence. Its
