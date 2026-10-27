@@ -143,15 +143,19 @@ class WorkflowTests(unittest.TestCase):
         inputs = json.loads(json.loads(config_line))["propose-repair"]["inputs"]
         self.assertEqual(set(inputs), {"binding", "content_base64", "path"})
 
-    def test_default_policy_remains_disabled(self):
+    def test_stage_a_policy_enables_only_independent_qa(self):
         policy = json.loads((ROOT / ".github/gh-aw-policy.json").read_text())
-        self.assertIs(policy["qa_enabled"], False)
-        self.assertIs(policy["repair_enabled"], False)
-        self.assertEqual(policy["approver_ids"], [])
+        self.assertIs(policy["qa_enabled"], True)
+        self.assertEqual(policy["approver_ids"], [57563103])
+        self.assertEqual(policy["qa_bot_ids"], [41898282])
         self.assertEqual(policy["qa_reviewer_ids"], [])
-        self.assertEqual(policy["qa_bot_ids"], [])
+        self.assertIs(policy["repair_enabled"], False)
         self.assertIsNone(policy["repair_bot_id"])
         self.assertLessEqual(policy["max_qa_reviews_per_pr"], 6)
+        source = (WORKFLOWS / "luxe-independent-qa.md").read_text()
+        self.assertIn("max-ai-credits: 30", source)
+        self.assertIn("max-daily-ai-credits: 30", source)
+        self.assertIn("max-ai-credits: 10", source.split("threat-detection:", 1)[1])
         controller = json.loads((ROOT / ".github/autonomy.json").read_text())
         self.assertIs(controller["enabled"], False)
         self.assertEqual(controller["max_repairs"], 0)

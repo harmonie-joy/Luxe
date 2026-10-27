@@ -1,9 +1,11 @@
 # gh-aw QA / repair pilot
 
-Status: implementation only; both switches remain **false**. The Founder's
-2026-10-27 request authorizes an L3 implementation and draft PR, not activation,
-credentials, repository settings, acceptance or merge. This is separate from
-issue #69's disabled controller and PR #79's unfinished reconciliation changes.
+Status: Stage A policy/identity readiness is proposed for review; the repository
+variable remains unset/false. Stage B and the dispatcher remain **disabled**.
+This draft does not activate workflows, create credentials, change repository
+settings, accept work or merge. The 2026-10-28 Founder request explicitly scopes
+this L3 activation-readiness PR. This remains separate from issue #69's disabled
+controller and PRs #80/#91; neither open branch is overwritten.
 
 ## Bounded handoff and review stages
 
@@ -58,20 +60,31 @@ The numeric example is synthetic, not an instruction to dispatch issue 90.
 The agent reads source by exact SHA through read-only GitHub tools. It has no
 PR checkout, shell, dependency install or code execution. Trusted gate scripts
 are checked out from the base/default revision, never the PR. Missing approval,
-API errors, incomplete pagination/source, stale evidence and forks block before
-inference/publication. Uncertain CI can only produce a Blocked advisory report.
+API errors, incomplete pagination/source, stale evidence, forks and current CI
+that has not passed all four required jobs block before inference/publication;
+pending/failed CI produces no model-generated advisory review.
 An additional live recheck precedes publishing. The native safe output pins the
 review to the inspected commit and permits **COMMENT only**, never APPROVE,
 REQUEST_CHANGES, dismissal, merge or code writes.
 The machine report's fenced JSON carries the
 `"protocol": "luxe-autonomy-gh-aw-qa-v1"` field inside the sanitized body;
 readers require this envelope for duplicate accounting and repair eligibility.
+Identity values in the activation policy were checked through GitHub's REST
+user API on 2026-10-28: `mario-ah-salamanca` is User ID `57563103`, and
+`github-actions[bot]` is Bot ID `41898282`. The review list for PR #80 separately
+shows `copilot-pull-request-reviewer[bot]` ID `175728472`; that code-review bot
+is distinct from this workflow's `GITHUB_TOKEN` safe-output author and is not
+used for Stage A duplicate accounting.
 
 Duplicate bindings (issue digest, head/base, exact allowlist, CI run/attempt/
 outcome) are not reviewed again; concurrency serializes QA. At most six
 recognized QA reviews per PR prevent an unbounded update loop. Budget exhaustion
-requires human QA. Interrupted runs without a published review can be rerun;
-the daily inference guardrail remains the cost backstop.
+requires human QA. Preflight blocks before agent inference unless all four
+required CI jobs passed for this exact head/base; trusted `workflow_run` wakes
+the pilot on `luxe-pilot/**` after CI completes. Interrupted runs without a
+published review can be rerun. Stage A is capped at 30 AI credits per run and
+per day, with 10 credits for threat detection; these are pilot ceilings, not
+invoice estimates.
 
 ## Dependencies and verification
 
@@ -209,7 +222,7 @@ No commands in this section were executed by the implementation session.
 | Step | Automatic after approved setup | Human / Founder gate |
 | --- | --- | --- |
 | Review and merge implementation | Validation workflow runs synthetic tests and strict compilation | Independent QA of exact head; human merge; not activation |
-| Stage A setup | PR open/reopen/push and pilot CI completion reconcile and publish COMMENT QA | Separate activation PR sets `qa_enabled`, numeric approver/QA bot IDs; Founder sets `LUXE_GH_AW_QA_ENABLED=true` and approves cost ceiling |
+| Stage A setup | PR open/reopen/push and pilot CI completion reconcile and publish COMMENT QA | Merge the reviewed activation PR; confirm Copilot CLI and organization-billed CLI policies; set repository variable `LUXE_GH_AW_QA_ENABLED=true` and approve the 30-credit run/day ceiling |
 | Engine and repository audit | Keyless Copilot inference, read-only GitHub tools, strict detector | Confirm organization `copilot-requests` support/billing, allowed pinned Actions, and workflow approval policies; do not weaken security settings |
 | Secrets isolation | Generated read tools/reviews explicitly use ephemeral `GITHUB_TOKEN` | Inventory repo/org/environment secrets manually: this session's secret-name API returned **403**, so isolation is unverified |
 | First trial | QA evaluates one synthetic approved L0 leaf PR on `luxe-pilot/issue-N` | Use an appropriate open parent (not an unresolved closed tracker); declare exact existing help file, acceptance/verification and unedited Founder scope approval |
@@ -238,6 +251,56 @@ versions of those secrets are available to PR workflows.** Remove/restrict
 them only via a separately authorized settings change, or keep the pilot
 blocked. No custom MCP server or credential-bearing prompt is introduced.
 Inference and detection jobs do not receive the repair environment or App key.
+
+### Stage A activation and one-shot pilot instructions
+
+Do these steps only after independent QA of the activation PR and a human
+merge. Before setting the variable, keep PR #80's older `autonomous-qa` workflow
+unmerged or close it as superseded: it uses the same variable and would create a
+second AI review path if merged. PR #91 concerns Stage B repair hardening; it is
+not needed for this Stage A pilot and remains unchanged.
+
+1. An organization owner visits
+   `https://github.com/organizations/harmonie-joy/settings/copilot/policies`
+   and confirms **Copilot CLI** and **Allow use of Copilot CLI billed to the
+   organization** are enabled ([GitHub billing setup](https://docs.github.com/en/copilot/how-tos/github-agentic-workflows/creating-github-agentic-workflows#using-the-built-in-github_token)). The read-only organization billing API check on
+   2026-10-28 returned plan `business`, seat management `unconfigured` and zero
+   seats. That does not prove Actions inference is available: configure only
+   through the organization owner and confirm the organization usage/billing
+   view before a live call. This workflow uses Actions `GITHUB_TOKEN` with
+   `copilot-requests: write`; it needs no PAT or new credential. If access or
+   billing cannot be confirmed, leave the repository variable false.
+2. In the repository, open **Settings → Secrets and variables → Actions →
+   Variables → New repository variable** ([GitHub Actions instructions](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#creating-configuration-variables-for-a-repository)). Set **Name** to
+   `LUXE_GH_AW_QA_ENABLED` and **Value** to `true`, then save. This is a
+   non-secret variable; do not create or alter any secret. The checked-in policy
+   must also have `qa_enabled: true` and numeric Founder/bot IDs. Stage B stays
+   off because `repair_enabled` remains false and no repair identity or App
+   credential is configured.
+3. Use one synthetic L0 leaf issue under an open parent, with the structured
+   Management handoff and an unedited Founder approval for exactly one existing
+   allowed file. Create a same-repository PR to current `master` from
+   `luxe-pilot/<issue-number>` and include both the unique issue JSON marker and
+   `Refs #<issue-number>`. Do not include private, customer or creator material.
+4. Wait for all four ruleset checks (`frontend`, `backend`, `real-e2e`,
+   `autonomous-controller`) to pass on that exact PR head and current master
+   base. Preflight must block inference before then. On `luxe-pilot/**`, CI
+   completion wakes QA. Verify exactly one Stage A workflow run and one
+   `COMMENT` review, bound to current head/base, issue digest and CI run/attempt.
+   Confirm the review actor is `github-actions[bot]` ID `41898282`; this ID is
+   verified through GitHub's user API and follows the workflow's `GITHUB_TOKEN`
+   publication path. Live author identity has not yet been observed and must be
+   verified in this first pilot. The result is advisory and never approves or
+   merges.
+5. Record the gh-aw run/credit usage and organization billing evidence. Limits
+   are 30 credits per run, 30 per day and 10 for threat detection; credits are
+   estimates, not invoice values. After the trial, set the variable back to
+   `false`, then inspect the diff, four checks, advisory, run logs and usage. Do
+   not repeat the pilot without a separate decision.
+
+To disable Stage A immediately, set `LUXE_GH_AW_QA_ENABLED=false`. This stops
+future eligible inference; cancel in-flight runs separately. No repository or
+organization settings were changed during this PR preparation.
 
 Pilot evidence must observe real COMMENT commit binding, exact User/App IDs,
 source-run PR associations, role authorization, one reservation/one App commit,

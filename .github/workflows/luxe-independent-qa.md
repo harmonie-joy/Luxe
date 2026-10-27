@@ -28,8 +28,8 @@ concurrency:
 engine: copilot
 timeout-minutes: 10
 max-turns: 20
-max-ai-credits: 100
-max-daily-ai-credits: 300
+max-ai-credits: 30
+max-daily-ai-credits: 30
 checkout: false
 network: defaults
 observability:
@@ -59,7 +59,7 @@ safe-outputs:
   threat-detection:
     continue-on-error: false
     report-as-issue: false
-    max-ai-credits: 50
+    max-ai-credits: 10
     max-turns: 10
     engine-timeout: 3m
     retries: 0
