@@ -26,8 +26,8 @@ function getErrorMessage(error: unknown): string {
 export function AuthShell({ mode }: AuthShellProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState(mode === "login" ? "demo@theluxe.local" : "");
-  const [password, setPassword] = useState(mode === "login" ? "theluxe-demo" : "");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isSignup = mode === "signup";
@@ -74,7 +74,7 @@ export function AuthShell({ mode }: AuthShellProps) {
               <p className="max-w-xl text-base leading-7 text-luxe-text-secondary md:text-lg">
                 {isSignup
                   ? "Create a workspace, shape your brand voice, and move from homepage to working product flow."
-                  : "Use the demo account or your own credentials to enter the THE LUXE workspace."}
+                  : "Sign in to your own account to enter the THE LUXE workspace."}
               </p>
             </div>
           </section>
