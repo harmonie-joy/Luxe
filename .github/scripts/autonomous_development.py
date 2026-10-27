@@ -304,6 +304,8 @@ def verified_assignment_completion(api, detail, pulls, tasks):
         sessions = observed.get("sessions")
         if not isinstance(state, str) or not state or not isinstance(sessions, list) or not sessions:
             raise Blocked("Agent Task completion or session evidence is missing")
+        if task_state != state:
+            raise Blocked("Agent Task list/detail states disagree")
         refs = []
         for session in sessions:
             if not isinstance(session, dict) or not isinstance(session.get("head_ref"), str) or not session["head_ref"]:
