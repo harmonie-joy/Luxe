@@ -244,6 +244,17 @@ class MockAIServiceTests(TestCase):
         profile = BrandProfile.objects.create(
             workspace=self.workspace,
             name="Prompt Voice",
+            category="editorial studio",
+            key_benefit="turn brand direction into clear stories",
+        )
+        ChannelStyle.objects.create(
+            brand_profile=profile,
+            channel=ContentBrief.Channel.LINKEDIN,
+            target_length="80-150 words",
+            structure_norms="Hook, one useful point, soft invitation.",
+            emoji_policy="no emoji characters",
+            hashtag_policy="only #BrandDirection",
+            cta_style="invite readers to share their perspective",
         )
         AudienceSegment.objects.create(
             brand_profile=profile,
@@ -290,7 +301,14 @@ class MockAIServiceTests(TestCase):
         self.assertIn("Announce a private preview.", provider.prompt)
         self.assertIn("linkedin", provider.prompt)
         self.assertIn("Prompt Voice", provider.prompt)
+        self.assertIn("editorial studio", provider.prompt)
+        self.assertIn("turn brand direction into clear stories", provider.prompt)
         self.assertIn("Premium founders", provider.prompt)
+        self.assertIn("80-150 words", provider.prompt)
+        self.assertIn("Hook, one useful point, soft invitation.", provider.prompt)
+        self.assertIn("no emoji characters", provider.prompt)
+        self.assertIn("only #BrandDirection", provider.prompt)
+        self.assertIn("invite readers to share their perspective", provider.prompt)
         self.assertIn("clientele", provider.prompt)
         self.assertIn("cheap", provider.prompt)
         self.assertIn("We prepared three considered options.", provider.prompt)
@@ -300,6 +318,25 @@ class MockAIServiceTests(TestCase):
             "Announce a private preview.",
         )
         self.assertEqual(run.input_data["channel"], ContentBrief.Channel.LINKEDIN)
+        self.assertEqual(
+            run.input_data["brand_profile"]["category"],
+            "editorial studio",
+        )
+        self.assertEqual(
+            run.input_data["brand_profile"]["key_benefit"],
+            "turn brand direction into clear stories",
+        )
+        self.assertEqual(
+            run.input_data["channel_style"],
+            {
+                "target_length": "80-150 words",
+                "structure_norms": "Hook, one useful point, soft invitation.",
+                "emoji_policy": "no emoji characters",
+                "hashtag_policy": "only #BrandDirection",
+                "cta_style": "invite readers to share their perspective",
+                "notes": "",
+            },
+        )
         self.assertEqual(
             run.input_data["voice"]["preferred_vocabulary"][0]["term"],
             "clientele",
