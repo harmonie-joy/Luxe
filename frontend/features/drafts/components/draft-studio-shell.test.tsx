@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -104,6 +104,70 @@ describe("DraftStudioShell", () => {
       screen.queryByText(/Draft text copied\./),
     ).toBeNull();
   });
+
+  it.each([
+    ["editing content", "resolve"],
+    ["editing content", "reject"],
+    ["switching drafts", "resolve"],
+    ["switching drafts", "reject"],
+    ["switching briefs", "resolve"],
+    ["switching briefs", "reject"],
+  ] as const)(
+    "ignores delayed clipboard %s when the editor context changes (%s)",
+    async (contextChange, outcome) => {
+      let resolveWriteText!: () => void;
+      let rejectWriteText!: (error: Error) => void;
+      const writeText = vi.fn(
+        () =>
+          new Promise<void>((resolve, reject) => {
+            resolveWriteText = resolve;
+            rejectWriteText = reject;
+          }),
+      );
+      const user = userEvent.setup();
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText },
+      });
+
+      const newsletterDraft = {
+        ...linkedinDraft,
+        id: "draft-b",
+        channel: "newsletter" as const,
+      };
+      await renderLive([linkedinDraft, newsletterDraft]);
+      await user.click(screen.getByRole("button", { name: "Copy LinkedIn draft" }));
+      await screen.findByText("Copying draft text.");
+
+      if (contextChange === "editing content") {
+        fireEvent.change(screen.getByLabelText("Draft content"), {
+          target: { value: "Edited LinkedIn copy." },
+        });
+      } else if (contextChange === "switching drafts") {
+        await user.click(screen.getByRole("tab", { name: "Newsletter" }));
+      } else {
+        vi.mocked(contentDraftsApi.getContentDrafts).mockResolvedValueOnce([
+          { ...linkedinDraft, id: "draft-c", briefId: "brief-b" },
+        ]);
+        await user.selectOptions(screen.getByLabelText("Switch brief"), "brief-b");
+        await screen.findByRole("heading", { name: "Second brief objective" });
+      }
+
+      await act(async () => {
+        if (outcome === "resolve") resolveWriteText();
+        else rejectWriteText(new Error("denied"));
+      });
+
+      expect(screen.queryByText(/Draft text copied\./)).toBeNull();
+      expect(screen.queryByText(/Could not copy draft text\./)).toBeNull();
+      expect(screen.queryByRole("alert")).toBeNull();
+      if (contextChange === "editing content") {
+        expect(
+          screen.getByText("Save this draft before copying its persisted text."),
+        ).toBeTruthy();
+      }
+    },
+  );
 
   it("explains when clipboard access is unsupported", async () => {
     const user = userEvent.setup();

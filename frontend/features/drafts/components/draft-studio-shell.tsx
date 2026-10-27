@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { StatusIndicator } from "@/components/ui/status-indicator";
 import type { StatusIndicatorTone } from "@/components/ui/status-indicator";
@@ -129,6 +129,11 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<RequestStatus>("idle");
   const [deleteMessage, setDeleteMessage] = useState("");
+  const copyRequestIdRef = useRef(0);
+
+  function invalidateCopyRequest() {
+    copyRequestIdRef.current += 1;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -208,6 +213,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     const selectedBrief = briefs.find((item) => item.id === nextBriefId);
     if (!selectedBrief) return;
 
+    invalidateCopyRequest();
     setBrief(selectedBrief);
     setDrafts([]);
     setPersistedDraftContents({});
@@ -250,6 +256,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   async function handleDeleteBrief() {
     if (!canDelete) return;
 
+    invalidateCopyRequest();
     setDeleteStatus("loading");
     setDeleteMessage("Deleting brief.");
 
@@ -307,6 +314,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   }
 
   function handleDraftChange(draftId: string, updates: Partial<ContentDraft>) {
+    invalidateCopyRequest();
     setDrafts((currentDrafts) => updateDraftById(currentDrafts, draftId, updates));
     setSavedDraftId(null);
     setSaveStatus("idle");
@@ -332,6 +340,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
 
     setGenerationStatus("loading");
     setGenerationMessage("Generating channel drafts.");
+    invalidateCopyRequest();
     setSaveStatus("idle");
     setSaveMessage("");
     setPersistedDraftContents({});
@@ -429,14 +438,17 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
 
     setCopyStatus("loading");
     setCopyMessage("Copying draft text.");
+    const copyRequestId = ++copyRequestIdRef.current;
 
     try {
       await navigator.clipboard.writeText(currentDraft.content);
+      if (copyRequestId !== copyRequestIdRef.current) return;
       setCopyStatus("success");
       setCopyMessage(
         "Draft text copied. This does not approve or publish it or indicate final export readiness.",
       );
     } catch {
+      if (copyRequestId !== copyRequestIdRef.current) return;
       setCopyStatus("error");
       setCopyMessage(
         "Could not copy draft text. Check browser clipboard permissions and try again.",
@@ -632,6 +644,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
                       }
                       key={draft.id}
                       onClick={() => {
+                        invalidateCopyRequest();
                         setActiveDraftId(draft.id);
                         setSavedDraftId(null);
                         setSaveStatus("idle");
