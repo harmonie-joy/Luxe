@@ -22,13 +22,15 @@ COMMIT = """mutation($input: CreateCommitOnBranchInput!) {
   createCommitOnBranch(input: $input) { commit { oid } }
 }"""
 MAX_BYTES = 32768
-ATTEMPT_MARKER = "<!-- luxe-autonomy:gh-aw-repair:v1 -->"
+ATTEMPT_MARKER = "<!-- luxe-autonomy:gh-aw-repair-attempt:v1 -->"
+RESERVATION_MARKER = "<!-- luxe-autonomy:gh-aw-repair:v1 -->"
 RUN_TITLE_PREFIX = "THE LUXE Bounded Repair for "
 
 
 def consumed(comments):
     # Even malformed or foreign repair records cause a human hold, not a reset.
     return any(ATTEMPT_MARKER in (c.get("body") or "")
+               or RESERVATION_MARKER in (c.get("body") or "")
                or ("<!-- luxe-autonomy:event:v1 -->" in (c.get("body") or "")
                    and "repair-reserved" in c["body"]) for c in comments)
 
@@ -43,7 +45,8 @@ def prior_apply_attempt(api, branch, current_run_id):
     title = RUN_TITLE_PREFIX + branch
     current = api.request("GET", f"{ROOT}/actions/runs/{current_run_id}")
     require(current.get("path") == REPAIR_PATH and current.get("event") == "workflow_run"
-            and current.get("display_title") == title and positive_int(current.get("run_attempt")),
+            and current.get("id") == current_run_id and current.get("display_title") == title
+            and positive_int(current.get("run_number")) and positive_int(current.get("run_attempt")),
             "current repair run identity is unverified")
 
     workflow_file = REPAIR_PATH.rsplit("/", 1)[-1]
@@ -51,13 +54,23 @@ def prior_apply_attempt(api, branch, current_run_id):
         f"{ROOT}/actions/workflows/{workflow_file}/runs?event=workflow_run", "workflow_runs",
     )
     relevant = {}
+    seen_numbers = {}
     for run in runs:
         require(isinstance(run, dict) and positive_int(run.get("id"))
+                and run.get("path") == REPAIR_PATH and positive_int(run.get("run_number"))
                 and positive_int(run.get("run_attempt"))
                 and isinstance(run.get("display_title"), str) and run["display_title"],
                 "incomplete prior repair run history")
+        prior_id = seen_numbers.setdefault(run["run_number"], run["id"])
+        require(prior_id == run["id"], "ambiguous prior repair run ordering")
+        if run["run_number"] > current["run_number"]:
+            continue
         if run.get("display_title") != title:
             continue
+        if run["id"] == current_run_id:
+            require(run["run_number"] == current["run_number"]
+                    and run["run_attempt"] == current["run_attempt"],
+                    "current repair run history changed")
         relevant[run["id"]] = run
     if current_run_id not in relevant:
         relevant[current_run_id] = current
@@ -83,7 +96,7 @@ def prior_apply_attempt(api, branch, current_run_id):
             check_attempts(run_id, [attempt])
 
 
-def repair_binding(api, data, policy, *, run_id, allow_reservation=None):
+def repair_binding(api, data, policy, *, run_id, allow_attempt=None, allow_reservation=None):
     binding, scope, reviews = data["binding"], data["scope"], data["reviews"]
     require(bool(policy["qa_reviewer_ids"]) and bool(policy["qa_bot_ids"])
             and positive_int(policy["repair_bot_id"]), "repair identities not configured")
@@ -98,11 +111,13 @@ def repair_binding(api, data, policy, *, run_id, allow_reservation=None):
     require(positive_int(run_id), "missing current repair workflow run")
     prior_apply_attempt(api, branch, run_id)
     comments = data["comments"]
-    if allow_reservation is not None:
-        own = [c for c in comments if c.get("id") == allow_reservation]
+    allowed_records = {record_id for record_id in (allow_attempt, allow_reservation) if record_id is not None}
+    for record_id in allowed_records:
+        own = [c for c in comments if c.get("id") == record_id]
         require(len(own) == 1 and own[0].get("user", {}).get("id") == policy["repair_bot_id"],
                 "reservation disappeared or identity changed")
-        comments = [c for c in comments if c.get("id") != allow_reservation]
+    if allowed_records:
+        comments = [c for c in comments if c.get("id") not in allowed_records]
     require(not consumed(comments), "issue repair allowance already consumed or uncertain")
     require(binding["ci"]["passed"], "current CI is not fully successful")
     bots = [r for r in reviews if r.get("user", {}).get("id") in policy["qa_bot_ids"]
@@ -204,6 +219,13 @@ def confirmed_reservation(record, expected_body, bot_id):
             "repair reservation response is uncertain")
 
 
+def confirmed_attempt(record, expected_body, bot_id):
+    require(isinstance(record, dict) and positive_int(record.get("id")) and record.get("body") == expected_body
+            and record.get("user", {}).get("id") == bot_id and record["user"].get("type") == "Bot"
+            and bool(record.get("created_at")) and record["created_at"] == record.get("updated_at"),
+            "repair attempt record is uncertain")
+
+
 def apply_repair(api, expected, proposal, policy, *, run_id):
     require(positive_int(run_id), "unverified repair run")
     data = snapshot(api, expected["pr"], expected["head"], policy)
@@ -211,12 +233,28 @@ def apply_repair(api, expected, proposal, policy, *, run_id):
             "repair evidence changed after inference")
     content = proposal_content(api, expected, proposal)
     run_url = f"https://github.com/{REPO}/actions/runs/{run_id}"
+    content_hash = hashlib.sha256(base64.b64decode(content, validate=True)).hexdigest()
+    attempt_body = encode("gh-aw-repair-attempt", {
+        "attempt": 1, "binding": expected, "content_sha256": content_hash, "run_id": run_id,
+    }) + f"\n\nRecorded before the reservation by [THE LUXE gh-aw bounded repair]({run_url}). Never retry automatically."
+    # Persist an issue-bound attempt before the reservation write can become uncertain.
+    attempt = api.request("POST", f"{ROOT}/issues/{expected['issue']}/comments", {"body": attempt_body})
+    confirmed_attempt(attempt, attempt_body, policy["repair_bot_id"])
+    persisted_attempt = api.request("GET", f"{ROOT}/issues/comments/{attempt['id']}")
+    confirmed_attempt(persisted_attempt, attempt_body, policy["repair_bot_id"])
+    current = snapshot(api, expected["pr"], expected["head"], policy)
+    own_attempt = [c for c in current["comments"] if c.get("id") == attempt["id"]]
+    require(len(own_attempt) == 1, "attempt record no longer visible")
+    confirmed_attempt(own_attempt[0], attempt_body, policy["repair_bot_id"])
+    require(repair_binding(
+        api, current, policy, run_id=run_id, allow_attempt=attempt["id"],
+    ) == expected, "source or approvals changed after attempt record")
+
     body = encode("gh-aw-repair", {
-        "attempt": 1, "binding": expected,
-        "content_sha256": hashlib.sha256(base64.b64decode(content, validate=True)).hexdigest(),
+        "attempt": 1, "binding": expected, "content_sha256": content_hash,
         "run_id": run_id,
     }) + f"\n\nReserved by [THE LUXE gh-aw bounded repair]({run_url}). Never retry automatically."
-    # Reserve before committing. A lost response consumes the allowance.
+    # A lost response consumes the allowance; the earlier attempt record survives it.
     reservation = api.request("POST", f"{ROOT}/issues/{expected['issue']}/comments", {"body": body})
     confirmed_reservation(reservation, body, policy["repair_bot_id"])
     persisted = api.request("GET", f"{ROOT}/issues/comments/{reservation['id']}")
@@ -226,7 +264,8 @@ def apply_repair(api, expected, proposal, policy, *, run_id):
     require(len(own) == 1, "reservation no longer visible")
     confirmed_reservation(own[0], body, policy["repair_bot_id"])
     require(repair_binding(
-        api, current, policy, run_id=run_id, allow_reservation=reservation["id"],
+        api, current, policy, run_id=run_id,
+        allow_attempt=attempt["id"], allow_reservation=reservation["id"],
     ) == expected,
             "source or approvals changed after reservation")
     # GitHub atomically rejects a head change between the last read and this write.

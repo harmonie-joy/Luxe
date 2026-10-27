@@ -26,7 +26,13 @@ and human acceptance; this implementation is not an accepted D-0019 activation.
 `luxe-independent-qa.md` compiles to the checked-in `.lock.yml`. PR opened,
 reopened and synchronize events start read-only reconciliation. CI completion
 also wakes QA for `luxe-pilot/**` branches, so an initial pending-CI review does
-not become a permanent verdict. No schedule, assignment API or external service.
+not become a permanent verdict. A trusted default-branch relay revalidates
+successful CI runs authored by the configured repair App, then sends a
+`repository_dispatch`; gh-aw permits its allowlisted `github-actions[bot]` on
+that write-required event without treating the App as a collaborator. QA
+revalidates the run actor, repository, branch, PR link, head and attempt before
+review. The relay has only `contents: write` and `actions: read`. No schedule,
+assignment API or external service.
 
 Both `qa_enabled` in reviewed policy and repository variable
 `LUXE_GH_AW_QA_ENABLED=true` are required. Identity allowlists are numeric GitHub
@@ -131,14 +137,18 @@ decodes and validates the bounded UTF-8 text:
    `docs/help/`, or `.ts`/`.tsx` under `frontend/features/`, at most 32 KiB.
    No auth/tenancy/security/privacy/schema/compliance/dependency/governance
    paths, new/deleted/renamed/symlink/executable files or multi-file scopes.
-5. Writes and confirms an issue-wide `gh-aw-repair` reservation **before** the
-   commit. Any prior reservation (including malformed records or legacy
-   `repair-reserved` records) consumes the allowance across reruns, new heads,
-   changed issue text, closed/reopened or replacement PRs. A stable workflow run
-   title binds each attempt to `luxe-pilot/<issue-number>`; before inference and
-   before reserving, the handler checks prior matching runs and their
-   `propose_repair` job. A started, failed, or incomplete prior job is a human
-   hold even when its reservation POST left no comment. Only an explicitly
+5. Writes and confirms an issue-bound `gh-aw-repair-attempt` record before the
+   `gh-aw-repair` reservation and commit. Either record (including malformed
+   records or legacy `repair-reserved` records) consumes the allowance across
+   reruns, new heads, changed issue text, closed/reopened or replacement PRs. A
+   stable workflow run title binds each attempt to `luxe-pilot/<issue-number>`;
+   before inference and before reserving, the handler checks prior matching runs
+   and their `propose_repair` job. The current workflow's verified `run_number`
+   orders history: newer queued runs are excluded, earlier runs and prior
+   attempts of the current run remain checked. A started, failed, or incomplete
+   prior job is a human hold. If the reservation write fails without persisting
+   its comment, the earlier issue-bound attempt record still consumes the
+   allowance even if Actions history is later deleted. Only an explicitly
    skipped proposal job is not an attempt.
 6. Revalidates after reserving, then calls `createCommitOnBranch` with
    `expectedHeadOid` equal to the attested head. GitHub atomically rejects
@@ -153,15 +163,19 @@ default-branch safe-output job mints a short-lived repository-scoped GitHub App
 token. Only its apply step receives that token. Its environment key must never
 be a repository/organization secret. App-authored commits produce ordinary PR
 synchronize/CI events; `GITHUB_TOKEN` pushes would suppress those events, which
-is why they are not used. No empty-commit trigger credential is needed.
+is why they are not used. Non-collaborator App events do not bypass gh-aw's
+repository-role check. After a successful App-authored CI run, the default-
+branch relay emits the constrained `repository_dispatch` used to wake fresh QA.
+No empty-commit trigger credential is needed.
 
 Review events run a zero-permission metadata-only signal. Completion of that
 signal, QA or CI can wake trusted repair reconciliation. Every source run is
 re-read through the API and must expose exactly one PR/head. Missing associations
 are a blocker, not permission to guess a branch. `workflow_run` filters limit
-the pilot to `luxe-pilot/**`; other branches get initial QA only. Event-role
-support for the installed App/bot must be observed during the authorized pilot.
-No signal or completion text is itself an attestation.
+the pilot to `luxe-pilot/**`; other branches get initial QA only. App-authored
+CI completion is relayed only through the verified `repository_dispatch` QA
+path; it does not weaken role checks on ordinary agent triggers. No signal or
+completion text is itself an attestation.
 
 CI and fresh independent QA run after the repair. A second defect, failing CI
 or exhausted six-review budget requires a human; there is no repair loop or

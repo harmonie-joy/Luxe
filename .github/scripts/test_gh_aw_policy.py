@@ -7,8 +7,8 @@ import unittest
 
 from autonomous_development import Blocked, ROOT, REPO, encode, scope_digest
 from gh_aw_policy import (
-    CHECKS, QA_ENVELOPE, ci_evidence, decode_qa, encode_qa, event_pr, fingerprint,
-    protected, qa_preflight, snapshot, validate_review,
+    CHECKS, QA_DISPATCH_EVENT, QA_ENVELOPE, ci_evidence, decode_qa, encode_qa, event_pr,
+    fingerprint, protected, qa_preflight, snapshot, validate_review,
 )
 
 
@@ -190,6 +190,46 @@ class PolicyTests(unittest.TestCase):
             event_pr(self.api, {"workflow_run": {"id": 200}}, "workflow_run"),
             (91, HEAD),
         )
+
+    def test_noncollaborator_app_dispatch_is_bound_to_successful_ci(self):
+        run = {
+            "id": 202, "run_attempt": 2, "path": ".github/workflows/ci.yml",
+            "event": "pull_request", "status": "completed", "conclusion": "success",
+            "repository": {"full_name": REPO}, "head_repository": {"full_name": REPO},
+            "head_branch": "luxe-pilot/90", "head_sha": HEAD,
+            "actor": {"id": 40, "type": "Bot", "login": "luxe-repair-app[bot]"},
+            "pull_requests": [{"number": 91, "head": {"sha": HEAD}}],
+        }
+        self.api.data[f"{ROOT}/actions/runs/202"] = run
+        event = {
+            "action": QA_DISPATCH_EVENT,
+            "client_payload": {"run_id": 202, "run_attempt": 2},
+        }
+        self.assertEqual(
+            event_pr(self.api, event, "repository_dispatch", repair_bot_id=40),
+            (91, HEAD),
+        )
+        self.assertEqual(
+            self.api.calls,
+            [("GET", f"{ROOT}/actions/runs/202", None)],
+        )
+
+        for change in (
+            {"actor": {"id": 41, "type": "Bot"}},
+            {"actor": {"id": 40, "type": "User"}},
+            {"status": "in_progress"},
+            {"conclusion": "failure"},
+            {"head_repository": {"full_name": "outside/fork"}},
+            {"run_attempt": 1},
+            {"head_branch": "feature/90"},
+        ):
+            with self.subTest(change=change):
+                self.api = API()
+                self.api.data[f"{ROOT}/actions/runs/202"] = {**run, **change}
+                with self.assertRaises(Blocked):
+                    event_pr(self.api, event, "repository_dispatch", repair_bot_id=40)
+        with self.assertRaises(Blocked):
+            event_pr(self.api, event, "repository_dispatch", repair_bot_id=41)
 
     def test_protected_file_policy(self):
         self.assertFalse(protected(FILE))

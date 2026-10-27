@@ -82,17 +82,33 @@ class WorkflowTests(unittest.TestCase):
     def test_repair_app_can_trigger_only_the_trusted_qa_paths(self):
         source = (WORKFLOWS / "luxe-independent-qa.md").read_text()
         lock = (WORKFLOWS / "luxe-independent-qa.lock.yml").read_text()
-        self.assertIn('bots: ["${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}"]', source)
+        self.assertIn(
+            'bots: ["${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}", "github-actions[bot]"]',
+            source,
+        )
         self.assertIn("types: [opened, reopened, synchronize]", source)
         self.assertIn("workflows: [CI]", source)
-        self.assertIn('GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}"', lock)
+        self.assertIn('GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }},github-actions[bot]"', lock)
         pre_activation = job(lock, "pre_activation")
         self.assertIn("GH_AW_REQUIRED_ROLES: \"admin,maintainer,write\"", pre_activation)
-        self.assertIn("GH_AW_ALLOWED_BOTS: \"${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}\"", pre_activation)
+        self.assertIn(
+            'GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }},github-actions[bot]"',
+            pre_activation,
+        )
         self.assertIn("check_membership.cjs", pre_activation)
         activation = job(lock, "activation")
         self.assertIn("github.event.workflow_run.repository.id == github.repository_id", activation)
         self.assertIn("!(github.event.workflow_run.repository.fork)", activation)
+
+    def test_repair_qa_relay_is_default_branch_and_provenance_gated(self):
+        source = (WORKFLOWS / "luxe-qa-dispatch.yml").read_text()
+        self.assertIn("workflows: [CI]", source)
+        self.assertIn("branches: ['luxe-pilot/**']", source)
+        self.assertIn("ref: master", source)
+        self.assertIn("python3 .github/scripts/gh_aw_qa_dispatch.py", source)
+        self.assertIn("contents: write", job(source, "dispatch"))
+        self.assertIn("actions: read", job(source, "dispatch"))
+        self.assertNotIn("pull-requests: write", source)
 
     def test_repair_secret_only_in_safe_output_and_no_extra_mutations(self):
         text = (WORKFLOWS / "luxe-bounded-repair.lock.yml").read_text()

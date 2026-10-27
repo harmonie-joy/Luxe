@@ -15,7 +15,8 @@ from autonomous_development import Blocked, ROOT, REPO, encode
 from gh_aw_policy import CHECKS, QA_PATH, REPAIR_PATH, encode_qa, snapshot
 from test_gh_aw_policy import API, BASE, FILE, HEAD, POLICY
 from gh_aw_repair import (
-    COMMIT, SafeOutputGitHub, apply_repair, main, proposal_content, repair_binding, repair_proposal,
+    ATTEMPT_MARKER, COMMIT, RESERVATION_MARKER, SafeOutputGitHub, apply_repair, main,
+    proposal_content, repair_binding, repair_proposal,
 )
 from test_gh_aw_policy import sanitize_safe_output
 
@@ -25,6 +26,7 @@ class RepairAPI(API):
         super().__init__()
         self.fail_comment = False
         self.persist_failed_comment = True
+        self.fail_attempt = False
         self.fail_commit = False
         self.uncertain_commit = False
         self.advance_after_reservation = False
@@ -82,16 +84,18 @@ class RepairAPI(API):
             return copy.deepcopy(self.run_jobs.get((int(match.group(1)), int(match.group(2))), []))
         return super().pages(path, key)
 
-    def add_run(self, run_id, *, run_attempt=1, conclusion=None):
+    def add_run(self, run_id, *, run_number=None, run_attempt=1, conclusion=None):
+        run_number = run_id if run_number is None else run_number
         title = f"THE LUXE Bounded Repair for {self.data[f'{ROOT}/pulls/91']['head']['ref']}"
         record = next((run for run in self.run_history if run.get("id") == run_id), None)
         if record is None:
             record = {"id": run_id}
             self.run_history.append(record)
-        record.update({"display_title": title, "run_attempt": run_attempt})
+        record.update({"display_title": title, "path": REPAIR_PATH,
+                       "run_number": run_number, "run_attempt": run_attempt})
         self.data[f"{ROOT}/actions/runs/{run_id}"] = {
             "id": run_id, "path": REPAIR_PATH, "event": "workflow_run",
-            "display_title": title, "run_attempt": run_attempt,
+            "display_title": title, "run_number": run_number, "run_attempt": run_attempt,
         }
         self.run_jobs[(run_id, run_attempt)] = [{
             "name": "propose_repair",
@@ -104,18 +108,21 @@ class RepairAPI(API):
             return super().request(method, path, data)
         self.calls.append((method, path, copy.deepcopy(data)))
         if method == "POST" and path == f"{ROOT}/issues/90/comments":
-            if self.fail_comment:
+            is_attempt = ATTEMPT_MARKER in data["body"]
+            if self.fail_attempt and is_attempt:
+                raise Blocked("uncertain attempt record")
+            if self.fail_comment and not is_attempt:
                 # The server may have persisted the write before the response was lost.
                 if self.persist_failed_comment:
                     self.data[path].append({
                         "id": 500, "user": {"id": 40, "type": "Bot"},
                         "body": data["body"], "created_at": "now", "updated_at": "now"})
                 raise Blocked("uncertain reservation")
-            record = {"id": 500, "user": {"id": 40, "type": "Bot"},
+            record = {"id": 499 if is_attempt else 500, "user": {"id": 40, "type": "Bot"},
                       "body": data["body"], "created_at": "now", "updated_at": "now"}
             self.data[path].append(record)
-            self.data[f"{ROOT}/issues/comments/500"] = record
-            if self.advance_after_reservation:
+            self.data[f"{ROOT}/issues/comments/{record['id']}"] = record
+            if self.advance_after_reservation and not is_attempt:
                 self.data[f"{ROOT}/pulls/91"]["head"]["sha"] = "f" * 40
             return copy.deepcopy(record)
         if method == "POST" and path == "/graphql":
@@ -149,9 +156,11 @@ class RepairTests(unittest.TestCase):
         result = self.apply()
         self.assertEqual(result, "e" * 40)
         writes = [c for c in self.api.calls if c[0] != "GET"]
-        self.assertEqual(len(writes), 2)
-        self.assertTrue(writes[0][1].endswith("/comments"))
-        variables = writes[1][2]["variables"]["input"]
+        self.assertEqual(len(writes), 3)
+        self.assertIn(ATTEMPT_MARKER, writes[0][2]["body"])
+        self.assertTrue(writes[1][1].endswith("/comments"))
+        self.assertIn(RESERVATION_MARKER, writes[1][2]["body"])
+        variables = writes[2][2]["variables"]["input"]
         self.assertEqual(variables["expectedHeadOid"], HEAD)
         self.assertEqual(variables["branch"], {"repositoryNameWithOwner": REPO, "branchName": "luxe-pilot/90"})
         self.assertEqual(variables["fileChanges"]["additions"][0]["path"], FILE)
@@ -208,19 +217,34 @@ class RepairTests(unittest.TestCase):
         self.api.run_jobs[(600, 1)][0].update({"status": "completed", "conclusion": "failure"})
         with self.assertRaises(Blocked):
             self.apply(601)
-        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 2)
+
+    def test_uncertain_attempt_record_never_reaches_reservation(self):
+        self.api.fail_attempt = True
+        with self.assertRaises(Blocked):
+            self.apply()
+        writes = [call for call in self.api.calls if call[0] == "POST"]
+        self.assertEqual(len(writes), 1)
+        self.assertIn(ATTEMPT_MARKER, writes[0][2]["body"])
+        self.assertFalse(any(call[1] == "/graphql" for call in self.api.calls))
 
     def test_uncertain_reservation_without_persisted_comment_consumes_attempt(self):
         self.api.fail_comment = True
         self.api.persist_failed_comment = False
         with self.assertRaises(Blocked):
             self.apply(600)
-        self.assertEqual(self.api.data[f"{ROOT}/issues/90/comments"], self.data["comments"])
+        comments = self.api.data[f"{ROOT}/issues/90/comments"]
+        self.assertEqual(len(comments), len(self.data["comments"]) + 1)
+        self.assertIn(ATTEMPT_MARKER, comments[-1]["body"])
+        self.assertNotIn(RESERVATION_MARKER, comments[-1]["body"])
         self.api.run_jobs[(600, 1)][0].update({"status": "completed", "conclusion": "failure"})
+        self.api.run_history = [run for run in self.api.run_history if run["id"] != 600]
+        self.api.data.pop(f"{ROOT}/actions/runs/600")
+        self.api.run_jobs.pop((600, 1))
 
-        with self.assertRaisesRegex(Blocked, "previous repair attempt"):
+        with self.assertRaisesRegex(Blocked, "allowance already consumed"):
             self.apply(601)
-        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 2)
 
     def test_uncertain_reservation_same_workflow_rerun_consumes_attempt(self):
         self.api.fail_comment = True
@@ -231,16 +255,25 @@ class RepairTests(unittest.TestCase):
 
         with self.assertRaisesRegex(Blocked, "previous repair attempt"):
             self.apply(600, 2)
-        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 2)
 
     def test_skipped_safe_output_job_does_not_consume_attempt(self):
         self.api.add_run(550, conclusion="skipped")
         self.assertEqual(self.apply(), "e" * 40)
 
+    def test_newer_queued_run_does_not_block_current_run(self):
+        current = self.api.data[f"{ROOT}/actions/runs/600"]
+        current["run_number"] = 12
+        current_history = next(run for run in self.api.run_history if run["id"] == 600)
+        current_history["run_number"] = 12
+        self.api.add_run(700, run_number=11, conclusion="skipped")
+        self.api.add_run(550, run_number=13)
+        self.assertEqual(self.apply(), "e" * 40)
+
     def test_incomplete_prior_run_evidence_blocks_before_reservation(self):
         title = f"THE LUXE Bounded Repair for {self.api.data[f'{ROOT}/pulls/91']['head']['ref']}"
         self.api.run_history.append({"id": 550, "display_title": title, "run_attempt": 1})
-        with self.assertRaisesRegex(Blocked, "incomplete prior repair run evidence"):
+        with self.assertRaisesRegex(Blocked, "incomplete prior repair run history"):
             repair_binding(self.api, self.data, POLICY, run_id=600)
         self.assertFalse(any(call[0] != "GET" for call in self.api.calls))
 
@@ -261,7 +294,7 @@ class RepairTests(unittest.TestCase):
         self.api.advance_after_reservation = True
         with self.assertRaises(Blocked):
             self.apply()
-        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 1)
+        self.assertEqual(len([c for c in self.api.calls if c[0] == "POST"]), 2)
 
     def test_scope_and_safe_output_shape_enforced(self):
         for change in (

@@ -17,6 +17,8 @@ from autonomous_development import (
 QA_PATH = ".github/workflows/luxe-independent-qa.lock.yml"
 REPAIR_PATH = ".github/workflows/luxe-bounded-repair.lock.yml"
 SIGNAL_PATH = ".github/workflows/luxe-repair-signal.yml"
+CI_PATH = ".github/workflows/ci.yml"
+QA_DISPATCH_EVENT = "luxe-repair-ci-complete"
 POLICY = Path(__file__).resolve().parents[1] / "gh-aw-policy.json"
 JOBS = {"frontend", "backend", "real-e2e", "autonomous-controller"}
 SHA = re.compile(r"[0-9a-f]{40}")
@@ -63,15 +65,54 @@ def protected(path):
     )
 
 
-def event_pr(api, event, event_name, *, repair=False):
+def repair_ci_provenance(api, run_id, run_attempt, repair_bot_id):
+    require(positive_int(run_id) and positive_int(run_attempt) and positive_int(repair_bot_id),
+            "missing repair CI provenance")
+    run = api.request("GET", f"{ROOT}/actions/runs/{run_id}")
+    require(isinstance(run, dict), "repair App CI provenance is unverified")
+    actor = run.get("actor", {})
+    links = run.get("pull_requests", [])
+    repository = run.get("repository")
+    head_repository = run.get("head_repository")
+    branch = run.get("head_branch")
+    head_sha = run.get("head_sha")
+    require(isinstance(actor, dict) and isinstance(links, list)
+            and len(links) == 1 and isinstance(links[0], dict)
+            and isinstance(repository, dict) and isinstance(head_repository, dict)
+            and isinstance(branch, str) and isinstance(head_sha, str),
+            "repair App CI provenance is unverified")
+    head = links[0].get("head")
+    require(isinstance(head, dict), "repair App CI provenance is unverified")
+    require(run.get("id") == run_id and run.get("run_attempt") == run_attempt
+            and run.get("path") == CI_PATH and run.get("event") == "pull_request"
+            and run.get("status") == "completed" and run.get("conclusion") == "success"
+            and repository.get("full_name") == REPO
+            and head_repository.get("full_name") == REPO
+            and re.fullmatch(r"luxe-pilot/[1-9][0-9]*", branch)
+            and actor.get("id") == repair_bot_id and actor.get("type") == "Bot"
+            and positive_int(links[0].get("number")) and head.get("sha") == head_sha
+            and SHA.fullmatch(head_sha),
+            "repair App CI provenance is unverified")
+    return links[0]["number"], head_sha
+
+
+def event_pr(api, event, event_name, *, repair=False, repair_bot_id=None):
     if event_name == "pull_request" and not repair:
         require(event.get("action") in {"opened", "reopened", "synchronize"}, "unsupported PR action")
         return event["pull_request"]["number"], event["pull_request"]["head"]["sha"]
+    if event_name == "repository_dispatch" and not repair:
+        require(event.get("action") == QA_DISPATCH_EVENT, "unsupported repository dispatch")
+        hint = event.get("client_payload", {})
+        require(isinstance(hint, dict) and set(hint) == {"run_id", "run_attempt"},
+                "incomplete repair CI dispatch")
+        return repair_ci_provenance(
+            api, hint["run_id"], hint["run_attempt"], repair_bot_id,
+        )
     require(event_name == "workflow_run", "unsupported event")
     hint = event.get("workflow_run", {})
     require(positive_int(hint.get("id")), "missing source run")
     run = api.request("GET", f"{ROOT}/actions/runs/{hint['id']}")
-    paths = {QA_PATH, SIGNAL_PATH, ".github/workflows/ci.yml"} if repair else {".github/workflows/ci.yml"}
+    paths = {QA_PATH, SIGNAL_PATH, CI_PATH} if repair else {CI_PATH}
     require(run.get("path") in paths and run.get("status") == "completed"
             and run.get("repository", {}).get("full_name") == REPO,
             "unverified source workflow")
@@ -255,7 +296,9 @@ def main():
             validate_review(json.loads(path.read_text()), original, int(os.environ["GITHUB_RUN_ID"]))
     else:
         event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
-        pr, head = event_pr(api, event, os.environ["GITHUB_EVENT_NAME"])
+        pr, head = event_pr(
+            api, event, os.environ["GITHUB_EVENT_NAME"], repair_bot_id=policy["repair_bot_id"],
+        )
         outputs(qa_preflight(snapshot(api, pr, head, policy), policy))
 
 
