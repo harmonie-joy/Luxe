@@ -6,15 +6,35 @@ import { mockSession } from "@/test/setup";
 
 afterEach(() => vi.unstubAllGlobals());
 it("lists only the active workspace's persisted items and exposes honest creation paths", async () => {
-  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify([{ id: "post-1", title: "A thoughtful launch", goal: "Explain our purpose", workflowStage: "idea", nextAction: "Choose the angle", revision: 2, updatedAt: "2026-10-18T10:00:00Z" }])));
+  const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify([
+    { id: "post-b", title: "Earlier save", goal: "Explain our purpose", workflowStage: "idea", nextAction: "Choose the angle", revision: 2, updatedAt: "2026-10-17T10:00:00Z" },
+    { id: "post-1", title: "A thoughtful launch", goal: "Explain our purpose", workflowStage: "idea", nextAction: "Choose the angle", revision: 2, updatedAt: "2026-10-18T10:00:00Z" },
+    { id: "post-a", title: "Same-time save", goal: "Explain our purpose", workflowStage: "drafting", nextAction: "Review the opening", revision: 3, updatedAt: "2026-10-17T10:00:00Z" },
+  ])));
   vi.stubGlobal("fetch", fetch);
   render(<CreatorSessionProvider session={mockSession}><CreatorHome /></CreatorSessionProvider>);
   expect(await screen.findByText("A thoughtful launch")).toBeTruthy();
   expect(fetch.mock.calls[0][0]).toContain("/api/content-items/?workspace=ws-1");
-  expect(screen.getByRole("link", { name: /Resume/ }).getAttribute("href")).toBe("/content-items/post-1");
+  const savedWork = screen.getByRole("region", { name: "Continue where you left off" });
+  expect(within(savedWork).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+    "A thoughtful launch",
+    "Same-time save",
+    "Earlier save",
+  ]);
+  expect(within(savedWork).getAllByText("Next action")).toHaveLength(3);
+  expect(within(savedWork).getAllByText("Choose the angle")).toHaveLength(2);
+  const resumeLinks = within(savedWork).getAllByRole("link", { name: /^Resume/ });
+  expect(resumeLinks.map((link) => link.getAttribute("href"))).toEqual([
+    "/content-items/post-1",
+    "/content-items/post-a",
+    "/content-items/post-b",
+  ]);
+  const resumeLink = resumeLinks[0];
+  expect(resumeLink.className).toContain("min-h-12");
+  expect(resumeLink.className).toContain("w-full");
   expect(screen.getByRole("link", { name: "Create With Me" }).getAttribute("href")).toBe("/content-items/new");
   for (const name of ["Quick Draft", "Bring Something In"]) expect((screen.getByRole("button", { name }) as HTMLButtonElement).disabled).toBe(true);
-  expect(within(screen.getByRole("region", { name: "Continue where you left off" })).getByText(/Checkpoint 2/)).toBeTruthy();
+  expect(within(savedWork).getAllByText(/Checkpoint 2/)).toHaveLength(2);
 });
 
 it("distinguishes loading, empty and unavailable workspaces without mock fallback", async () => {
