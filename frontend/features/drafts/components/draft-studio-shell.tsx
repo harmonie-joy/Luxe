@@ -334,6 +334,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     setGenerationMessage("Generating channel drafts.");
     setSaveStatus("idle");
     setSaveMessage("");
+    setPersistedDraftContents({});
     setCopyStatus("idle");
     setCopyMessage("");
 
