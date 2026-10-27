@@ -170,6 +170,23 @@ class FakeGitHub(controller.GitHub):
         self.task_details = {"task-1": {"state": "completed", "sessions": [{"head_ref": "copilot/trial"}]}}
         return self
 
+    def with_historical_assignment(self):
+        item = self.issues[0]
+        item.update(state="closed", assignees=[{"login": "copilot-swe-agent[bot]"}],
+                    labels=[{"name": "ready-for-agent"}, {"name": "autonomy:enabled"}])
+        self.pulls = [{"number": 80, "state": "closed", "merged_at": "2026-10-25T10:00:00Z",
+                       "user": {"id": 44},
+                       "head": {"sha": "h" * 40, "ref": "copilot/history",
+                                "repo": {"full_name": controller.REPO}},
+                       "base": {"sha": "b" * 40, "ref": "master", "repo": {"full_name": controller.REPO}}}]
+        self.timelines[item["number"]] = [{"event": "cross-referenced", "source": {"issue": {
+            "number": 80, "pull_request": {"url": "synthetic"},
+            "repository_url": "https://api.github.com" + controller.ROOT}}}]
+        self.tasks = [{"id": "historical-task", "state": "completed"}]
+        self.task_details = {"historical-task": {
+            "state": "completed", "sessions": [{"head_ref": "copilot/history"}]}}
+        return self
+
     def with_review(self, verdict="Accepted"):
         self.with_pr()
         reservation = self.add_event("qa-reserved", head="h" * 40, base="b" * 40, pr=80)
@@ -352,6 +369,55 @@ class ReconciliationTests(unittest.TestCase):
                 api.timelines = {}
             with self.assertRaises(controller.Blocked):
                 controller.reconcile(api, config())
+
+    def test_completed_historical_assignment_requires_matching_task_and_pr(self):
+        api = FakeGitHub([issue(70), issue(71)]).with_historical_assignment()
+        self.assertEqual([action["issue"] for action in controller.reconcile(api, config())["actions"]], [71])
+
+    def test_active_or_unverifiable_historical_assignment_blocks(self):
+        for evidence in ("active", "missing_task", "missing_session", "missing_pr",
+                         "multiple_tasks", "multiple_prs", "duplicate_session",
+                         "incomplete_session", "mismatched_state", "api_forbidden"):
+            with self.subTest(evidence=evidence):
+                api = FakeGitHub([issue(70), issue(71)]).with_historical_assignment()
+                if evidence == "active":
+                    api.tasks[0]["state"] = "in_progress"
+                    api.task_details["historical-task"]["state"] = "in_progress"
+                elif evidence == "missing_task":
+                    api.tasks = []
+                elif evidence == "missing_session":
+                    api.task_details["historical-task"]["sessions"] = []
+                elif evidence == "missing_pr":
+                    api.timelines[70] = []
+                elif evidence == "multiple_tasks":
+                    api.tasks.append({"id": "another-task", "state": "completed"})
+                    api.task_details["another-task"] = {
+                        "state": "completed", "sessions": [{"head_ref": "copilot/history"}]}
+                elif evidence == "multiple_prs":
+                    second = copy.deepcopy(api.pulls[0])
+                    second["number"] = 81
+                    api.pulls.append(second)
+                    reference = copy.deepcopy(api.timelines[70][0])
+                    reference["source"]["issue"]["number"] = 81
+                    api.timelines[70].append(reference)
+                elif evidence == "duplicate_session":
+                    api.task_details["historical-task"]["sessions"].append(
+                        {"head_ref": "copilot/history"})
+                elif evidence == "incomplete_session":
+                    api.task_details["historical-task"]["sessions"] = [{}]
+                elif evidence == "mismatched_state":
+                    api.tasks[0]["state"] = "completed"
+                    api.task_details["historical-task"]["state"] = "in_progress"
+                else:
+                    api.failures[f"/agents/repos/{controller.REPO}/tasks"] = controller.Blocked("403")
+                with self.assertRaises(controller.Blocked):
+                    controller.reconcile(api, config())
+
+    def test_open_copilot_pr_stays_a_blocker_after_assignment_completion(self):
+        api = FakeGitHub([issue(70), issue(71)]).with_historical_assignment()
+        api.pulls[0].update(state="open", merged_at=None)
+        with self.assertRaises(controller.Blocked):
+            controller.reconcile(api, config())
 
     def test_qa_is_requested_after_coding_completion(self):
         api = FakeGitHub().with_pr()

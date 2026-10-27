@@ -145,6 +145,16 @@ cannot concurrently touch the same allowed path. Unknown Copilot assignments,
 open PRs or active tasks block new dispatch. A missing session/tasks API
 permission is a blocker, not proof of idle capacity.
 
+The historical scan includes closed issues and their controller reservation
+records. A Copilot assignment without a controller reservation is exempted
+only when its issue has exactly one same-repository PR cross-reference and
+exactly one Agent Task session with the PR's exact head ref; both the task-list
+and task-detail states must be `completed`. The linked PR is then treated as
+completion evidence only; an open Copilot PR still independently blocks
+dispatch unless tracked by the controller. Missing, active, mismatched,
+duplicate, or otherwise unverifiable task/session/PR evidence blocks
+reconciliation. This check never removes assignments or changes task records.
+
 Missing or ambiguous PR links retain the entire reserved file scope, including
 at capacity two and after a lost assignment response. Reconstruction requires
 the current issue's full scope digest to match its original reservation. A
@@ -252,6 +262,10 @@ task visibility through the chosen user token, archived/default task coverage
 and branch-name-only matching to the intended current task/session remain
 activation blockers. No mocked response or previous read-only queue scan proves
 those live capabilities. No credential or live-task change is included here.
+In the current read-only reconciliation attempt, the historical issue scan
+reached a lingering Copilot assignment, while direct access to the Agent Tasks
+list returned HTTP 403. Therefore task/session visibility could not be verified
+with this session's token; that response is not evidence that no task exists.
 
 The dormant executor rechecks the environment flag and current remote variable
 before every POST. Errors or values other than exactly `true` stop writes.
