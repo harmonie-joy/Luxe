@@ -7,14 +7,18 @@
 PR `opened`, `reopened`, `ready_for_review` and `synchronize` events targeting
 `master` from branches in `harmonie-joy/Luxe`. Fork PRs need human QA because
 the read-only PR token cannot publish the review. Per-PR cancellation limits duplicate review
-runs. It uses read-only GitHub tools, no PR checkout or code execution, and a
+runs. The explicit `on.bots` allowlist admits the GitHub Copilot Coding Agent
+on PR open and push. It uses read-only GitHub tools, no PR checkout or code execution, and a
 separate safe-output job that can submit **COMMENT** reviews only. The review
 waits up to five minutes for the current-head CI run to complete before review;
 missing or incomplete CI after that wait yields Blocked. The review
 names the exact head/base, linked approved issue, scope, current CI evidence,
 findings, verdict and human next action. A post-agent live revision check fails
 the agent job and suppresses safe outputs if the PR changed; gh-aw also pins
-the submitted review to the event head commit. Any older review is stale after
+the submitted review to the event head commit. The separate safe-output job
+rechecks the live head/base/open state just before publication. These checks
+are not atomic with GitHub's final write; the existing controller still rejects
+stale bot evidence. Any older review is stale after
 a push. Missing evidence yields Blocked, never acceptance. A failed engine or
 safe-output job is visible in Actions and requires human intervention.
 

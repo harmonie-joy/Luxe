@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [master]
     types: [opened, reopened, ready_for_review, synchronize]
+  bots: [Copilot, copilot-swe-agent]
 
 if: github.repository == 'harmonie-joy/Luxe' && github.event.pull_request.head.repo.full_name == 'harmonie-joy/Luxe'
 engine: copilot
@@ -23,6 +24,16 @@ concurrency:
 jobs:
   safe_outputs:
     if: needs.agent.result == 'success'
+    pre-steps:
+      - name: Refuse changed revision before review publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+          EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          current=$(gh api "repos/harmonie-joy/Luxe/pulls/$PR_NUMBER" --jq '[.head.sha, .base.sha, .state] | join(" ")')
+          test "$current" = "$EXPECTED_HEAD $EXPECTED_BASE open"
 pre-agent-steps:
   - name: Allow current PR CI to finish
     env:
