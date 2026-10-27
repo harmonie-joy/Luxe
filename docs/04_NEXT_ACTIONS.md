@@ -34,4 +34,8 @@ Founder Page9 typography/card density/mobile drawer acceptance and Page10A final
 
 ## Best Next Task for AI
 
+Separate evaluation follow-up [#92](https://github.com/harmonie-joy/Luxe/issues/92): review the [missing-context diagnosis and QA handoff](ci/OLLAMA_MISSING_CONTEXT.md). The evaluator now exposes malformed generation and unsupported certainty honestly; the local model and product uncertainty contract are not fixed. No production prompt/schema/provider or workflow changes, runner activation or product-priority change are authorized by that investigation.
+
+Infrastructure side task [#89](https://github.com/harmonie-joy/Luxe/issues/89): review [trusted local CI preparation](ci/RUNNER_AUDIT.md) independently. Hosted required checks stay in place; zero self-hosted runners and the inert template must remain inactive until separate approved isolation and enforced workflow access are verified. Current public hosted CI costs net$0. This does not reprioritize the product backlog below or authorize production/host changes.
+
 Review the partial #58 PR3 homepage slice, then scope the remaining PR3 gates separately: login demo-credential cleanup, deployment/review instructions, environment/release readiness and screenshots. Do not reopen #54 to implement CreatorDNAProposal, communication guides, caption/DraftVersion comparison, Gallery, Media Finalizer, WorkOS migration, LinkedIn publishing, production hosting or another state/agent framework. Keep #49/#58/milestone 4 open until their own acceptance.
