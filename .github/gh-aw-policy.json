@@ -1,0 +1,9 @@
+{
+  "qa_enabled": false,
+  "repair_enabled": false,
+  "approver_ids": [],
+  "qa_reviewer_ids": [],
+  "qa_bot_ids": [],
+  "repair_bot_id": null,
+  "max_qa_reviews_per_pr": 6
+}
