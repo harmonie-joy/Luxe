@@ -4,7 +4,7 @@ import copy
 import unittest
 
 from autonomous_development import Blocked, ROOT, REPO, encode, scope_digest
-from gh_aw_policy import ci_evidence, event_pr, fingerprint, protected, qa_preflight, snapshot
+from gh_aw_policy import CHECKS, ci_evidence, event_pr, fingerprint, protected, qa_preflight, snapshot, validate_review
 
 
 HEAD, BASE = "a" * 40, "b" * 40
@@ -31,7 +31,7 @@ def fixture():
                                           "verification": scope["verification"]})}
     pr = {"number": 91, "state": "open", "merged": False, "changed_files": 1,
           "body": "Refs #90\n" + encode("gh-aw-issue", {"issue": 90}),
-          "user": {"id": 50}, "head": {"sha": HEAD, "ref": "pilot", "repo": {"full_name": REPO}},
+          "user": {"id": 50}, "head": {"sha": HEAD, "ref": "luxe-pilot/90", "repo": {"full_name": REPO}},
           "base": {"sha": BASE, "ref": "master", "repo": {"full_name": REPO}}}
     link = {"number": 91, "head": {"sha": HEAD}, "base": {"sha": BASE}}
     run = {"id": 200, "run_attempt": 1, "path": ".github/workflows/ci.yml",
@@ -42,6 +42,9 @@ def fixture():
         f"{ROOT}/branches/master": {"commit": {"sha": BASE}},
         f"{ROOT}/issues/90": issue,
         f"{ROOT}/issues/90/comments": [approval],
+        f"{ROOT}/issues/90/parent": {"number": 69, "repository_url": "https://api.github.com" + ROOT},
+        f"{ROOT}/issues/90/dependencies/blocked_by": [],
+        f"{ROOT}/issues/90/sub_issues": [],
         f"{ROOT}/issues/90/timeline": [{"event": "cross-referenced", "source": {"issue": {
             "number": 91, "pull_request": {"url": "synthetic"}, "repository_url": "https://api.github.com" + ROOT}}}],
         f"{ROOT}/pulls/91/files": [{"filename": FILE, "status": "modified"}],
@@ -159,11 +162,13 @@ class PolicyTests(unittest.TestCase):
     def test_protected_file_policy(self):
         self.assertFalse(protected(FILE))
         self.assertFalse(protected("frontend/features/drafts/editor.tsx"))
+        self.assertFalse(protected("frontend/features/drafts/editor.test.tsx"))
         for path in ("docs/02_DECISIONS.md", "docs/help/AGENTS.md", "docs/help/../x.md",
                      "docs/help/*.md", "docs/help/secret\n.md", "frontend/features/auth/login.tsx",
                      "backend/tenancy/views.py", ".github/workflows/ci.yml", "package.json",
                      "frontend/features/drafts/schema.ts", "docs/help/permissions.md",
-                     "docs/help/.agents/rules.md", "docs/help/package-lock.json"):
+                     "docs/help/.agents/rules.md", "docs/help/package-lock.json", "docs/help/.hidden.md",
+                     "frontend/features/drafts/tokens.test.ts"):
             with self.subTest(path=path):
                 self.assertTrue(protected(path))
 
@@ -172,6 +177,51 @@ class PolicyTests(unittest.TestCase):
         changed = copy.deepcopy(binding)
         changed["ci"]["attempt"] += 1
         self.assertNotEqual(fingerprint(binding), fingerprint(changed))
+
+    def test_native_parent_leaf_and_dependencies_are_verified(self):
+        for path, value in (
+            (f"{ROOT}/issues/90/parent", {"number": 99}),
+            (f"{ROOT}/issues/90/sub_issues", [{"number": 99}]),
+            (f"{ROOT}/issues/90/dependencies/blocked_by", [{"number": 99, "state": "open"}]),
+        ):
+            with self.subTest(path=path):
+                self.api = API()
+                self.api.data[path] = value
+                with self.assertRaises(Blocked):
+                    self.read()
+
+    def test_qa_publication_rejects_fabricated_pass_and_approval(self):
+        binding = qa_preflight(self.read(), POLICY)
+        report = {key: binding[key] for key in ("key", "head", "base", "issue", "digest", "ci")}
+        report.update({"run_id": 300, "verdict": "Accepted", "findings": [],
+                       "checks": {key: {"status": "pass", "evidence": "Observed current synthetic CI and source"}
+                                  for key in CHECKS}})
+        output = {"items": [{"type": "submit_pull_request_review", "event": "COMMENT",
+                             "body": encode("gh-aw-qa", report)}]}
+        self.assertEqual(validate_review(output, binding, 300)["verdict"], "Accepted")
+        for change in ("approval", "stale", "ci", "safety", "placeholder", "duplicate", "retarget"):
+            with self.subTest(change=change):
+                altered = copy.deepcopy(output)
+                changed_report = copy.deepcopy(report)
+                changed_binding = copy.deepcopy(binding)
+                if change == "approval":
+                    altered["items"][0]["event"] = "APPROVE"
+                elif change == "stale":
+                    changed_report["head"] = "f" * 40
+                elif change == "ci":
+                    changed_binding["ci"]["passed"] = False
+                    changed_report["ci"]["passed"] = False
+                elif change == "safety":
+                    changed_report["checks"]["security_privacy"]["status"] = "not-applicable"
+                elif change == "placeholder":
+                    changed_report["checks"]["scope"]["evidence"] = "LGTM"
+                elif change == "duplicate":
+                    altered["items"].append(altered["items"][0])
+                else:
+                    altered["items"][0]["pull_request_number"] = 92
+                altered["items"][0]["body"] = encode("gh-aw-qa", changed_report)
+                with self.assertRaises(Blocked):
+                    validate_review(altered, changed_binding, 300)
 
 
 if __name__ == "__main__":

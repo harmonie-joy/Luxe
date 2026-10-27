@@ -37,6 +37,9 @@ observability:
 imports:
   - ../agents/qa-agent.agent.md
 tools:
+  bash: false
+  edit: false
+  cli-proxy: false
   github:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     toolsets: [repos, issues, pull_requests, actions]
@@ -90,20 +93,37 @@ jobs:
         run: python3 .github/scripts/gh_aw_policy.py
   agent:
     needs: [preflight]
-  safe_outputs:
-    needs: [preflight]
-    pre-steps:
+    timeout-minutes: 15
+  detection:
+    timeout-minutes: 5
+  validate_qa:
+    needs: [agent, detection, preflight]
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+      actions: read
+    steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event.pull_request.base.sha || github.sha }}
           persist-credentials: false
           sparse-checkout: .github
-      - name: Revalidate live source before publishing
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: agent-output-fallback
+          path: ${{ runner.temp }}/luxe-qa-evidence
+      - name: Revalidate source and structured COMMENT before publishing
         env:
           GH_TOKEN: ${{ github.token }}
           QA_ENABLED: ${{ vars.LUXE_GH_AW_QA_ENABLED }}
           EXPECTED_BINDING: ${{ needs.preflight.outputs.binding }}
-        run: python3 .github/scripts/gh_aw_policy.py --recheck
+          GH_AW_AGENT_OUTPUT: ${{ runner.temp }}/luxe-qa-evidence/agent_output.json
+        run: python3 .github/scripts/gh_aw_policy.py --validate-output
+  safe_outputs:
+    needs: [preflight, validate_qa]
 ---
 
 # Independent QA, not acceptance

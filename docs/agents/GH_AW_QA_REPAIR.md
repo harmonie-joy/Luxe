@@ -45,8 +45,8 @@ Refs #90
 <!-- luxe-autonomy:gh-aw-issue:v1 -->
 ```json
 {"issue": 90}
-````
 ```
+````
 
 The numeric example is synthetic, not an instruction to dispatch issue 90.
 The agent reads source by exact SHA through read-only GitHub tools. It has no
@@ -98,3 +98,159 @@ Independent QA must inspect actual generated locks, permission isolation,
 current CI and the exact implementation head. Compilation and synthetic tests
 are not evidence of live engine authentication, safe-output permissions,
 Actions event delivery or successful end-to-end execution.
+
+## Stage B: disabled bounded repair
+
+This uses gh-aw's custom safe-output job, not an orchestration service or
+speculative Copilot assignment endpoint. Upstream v0.93.5's native
+`push-to-pull-request-branch` was inspected: it supports `allowed-files`,
+`protected-files: blocked`, signed commits and same-repository targeting, but
+may re-anchor a generated patch after the branch advances. It does not expose
+the approved head as an atomic expected-head parameter. That is insufficient
+for this pilot's exact-revision contract.
+
+Instead, `propose_repair` accepts **data only**: the evidence binding, one exact
+path and replacement text. The trusted safe-output handler:
+
+1. Re-reads the source workflow, PR, issue, unedited scope approval, native
+   parent/dependencies/leaf status, changed files, latest QA and current CI.
+2. Requires a latest COMMENT attestation from an allowlisted independent
+   `type: User` account, not the PR author. It binds the advisory QA's exact
+   review ID/body hash, current issue digest, head/base and CI run/attempt.
+   The human must actually reproduce/verify the findings, not copy bot JSON.
+3. Allows only explicit correctness/test findings with evidenced passing
+   scope/security checks. All findings must concern the one allowed file.
+   Missing, failed, malformed, dismissed, stale or bot-only attestation blocks.
+4. Enforces an exact one-file allowlist plus a separate protected-file deny
+   policy (`protected()` layered over the unchanged controller policy).
+   The pilot permits only an existing, modified, regular UTF-8 `.md` under
+   `docs/help/`, or `.ts`/`.tsx` under `frontend/features/`, at most 32 KiB.
+   No auth/tenancy/security/privacy/schema/compliance/dependency/governance
+   paths, new/deleted/renamed/symlink/executable files or multi-file scopes.
+5. Writes and confirms an issue-wide `gh-aw-repair` reservation **before** the
+   commit. Any prior reservation (including malformed records or legacy
+   `repair-reserved` records) consumes the allowance across reruns, new heads,
+   changed issue text, closed/reopened or replacement PRs. Ambiguity is a hold.
+6. Revalidates after reserving, then calls `createCommitOnBranch` with
+   `expectedHeadOid` equal to the attested head. GitHub atomically rejects
+   intervening head changes; no force push, rebasing, retry or fallback PR.
+   A failed/lost comment response, GraphQL error, timeout or unconfirmed commit
+   never authorizes another attempt.
+
+The repair agent has no checkout/shell/tests or privileged token. Only the
+default-branch safe-output job mints a short-lived repository-scoped GitHub App
+token. Only its apply step receives that token. Its environment key must never
+be a repository/organization secret. App-authored commits produce ordinary PR
+synchronize/CI events; `GITHUB_TOKEN` pushes would suppress those events, which
+is why they are not used. No empty-commit trigger credential is needed.
+
+Review events run a zero-permission metadata-only signal. Completion of that
+signal, QA or CI can wake trusted repair reconciliation. Every source run is
+re-read through the API and must expose exactly one PR/head. Missing associations
+are a blocker, not permission to guess a branch. `workflow_run` filters limit
+the pilot to `luxe-pilot/**`; other branches get initial QA only. Event-role
+support for the installed App/bot must be observed during the authorized pilot.
+No signal or completion text is itself an attestation.
+
+CI and fresh independent QA run after the repair. A second defect, failing CI
+or exhausted six-review budget requires a human; there is no repair loop or
+automatic acceptance. There is deliberately **no bot-only repair acceptance**.
+The existing controller's human-attestation trust boundary is preserved.
+
+### Human repair attestation
+
+Submit a COMMENT review on the exact current head after independently verifying
+the QA findings. Prepend the normal QA profile headings, findings and evidence.
+Append exactly one `<!-- luxe-autonomy:gh-aw-repair-attestation:v1 -->` fenced
+JSON object with these fields:
+
+| Field | Required value |
+| --- | --- |
+| `qa_review_id` | Numeric ID of the latest allowlisted Bot COMMENT QA review |
+| `qa_sha256` | SHA-256 of that review's entire current UTF-8 `body`, including footer |
+| `binding` | The QA binding: `pr`, `issue`, `head`, `base`, `digest`, `allowed_files`, `ci`, `key`; exact values from preflight/QA |
+| `checks` | Exactly `scope`, `security_privacy`, `correctness`, `tests`; each `{"status":"pass","evidence":"actual independent verification details"}` |
+
+`correctness`/`tests` here attest the independent reproduction/verification of
+the reported defect and repair eligibility, **not** acceptance of unfixed code.
+Placeholder-only statements fail. This is a separate protocol, never a forged
+controller reservation. A later malformed/dismissed reviewer entry invalidates
+an older attestation; a changed bot body or CI rerun requires fresh verification.
+
+## Controlled pilot: Founder operations only
+
+No commands in this section were executed by the implementation session.
+
+| Step | Automatic after approved setup | Human / Founder gate |
+| --- | --- | --- |
+| Review and merge implementation | Validation workflow runs synthetic tests and strict compilation | Independent QA of exact head; human merge; not activation |
+| Stage A setup | PR open/reopen/push and pilot CI completion reconcile and publish COMMENT QA | Separate activation PR sets `qa_enabled`, numeric approver/QA bot IDs; Founder sets `LUXE_GH_AW_QA_ENABLED=true` and approves cost ceiling |
+| Engine and repository audit | Keyless Copilot inference, read-only GitHub tools, strict detector | Confirm organization `copilot-requests` support/billing, allowed pinned Actions, and workflow approval policies; do not weaken security settings |
+| Secrets isolation | Generated read tools/reviews explicitly use ephemeral `GITHUB_TOKEN` | Inventory repo/org/environment secrets manually: this session's secret-name API returned **403**, so isolation is unverified |
+| First trial | QA evaluates one synthetic approved L0 leaf PR on `luxe-pilot/issue-N` | Use an appropriate open parent (not an unresolved closed tracker); declare exact existing help file, acceptance/verification and unedited Founder scope approval |
+| Stage B setup | Nothing while either switch is off | Separate approved activation PR sets `repair_enabled` and reviewer/App bot IDs; Founder creates/configures the App/environment/key and `LUXE_REPAIR_APP_CLIENT_ID` only under explicit authorization |
+| Branch repair | One reserved, atomic, single-file commit; normal CI and fresh QA | Verify and COMMENT-attest exact findings; authorize one-issue pilot and its cost |
+| Final result | Evidence remains visible; no automatic second repair | Independent final QA, review all required CI, Founder manual merge; no deploy |
+| Stop / rollback | Subsequent gated jobs stop | Clear both repository variables, revert reviewed policy switches, cancel in-flight runs and revoke App installation/key if needed; never delete reservation history |
+
+Environment `luxe-gh-aw-repair` must be restricted to the reviewed master
+workflow; verify required reviewers and prevent self-review as appropriate.
+Before Stage B, the Founder must explicitly decide whether per-run environment
+approval remains required or whether a narrowly authorized one-shot pilot may
+run automatically. This PR creates neither the environment nor any secret.
+The App needs only Luxe `contents: write`, `issues: write`,
+`pull_requests: read`, `actions: read` and implicit metadata read: no
+administration, workflows, merge bypass or other repository access.
+
+gh-aw's generated bootstrap/redaction still references ambient
+`GH_AW_GITHUB_TOKEN`, `GH_AW_GITHUB_MCP_SERVER_TOKEN` and default OTLP settings,
+even with explicit ephemeral tool tokens. **Do not activate if privileged
+versions of those secrets are available to PR workflows.** Remove/restrict
+them only via a separately authorized settings change, or keep the pilot
+blocked. No custom MCP server or credential-bearing prompt is introduced.
+Inference and detection jobs do not receive the repair environment or App key.
+
+Pilot evidence must observe real COMMENT commit binding, exact User/App IDs,
+source-run PR associations, role authorization, one reservation/one App commit,
+fresh CI and QA after that commit, duplicate delivery/rerun rejection, stale
+head/approval rejection, usage/cost and emergency stop. Then return both
+switches/variables to disabled and record results. Do not treat compilation,
+mocked CAS responses, unavailable APIs or a successful review request as proof
+that these live operations work.
+
+Reservations are durable issue comments, not tamper-proof against repository
+administrators. Never delete them; deletion defeats any comment-based budget.
+An issue/base/CI/approval can change after the final check; GitHub CAS makes
+the **head** check atomic, not all GitHub resources. Final fresh QA/CI and human
+merge remain necessary. Kill switches stop subsequent work, not an already
+accepted API write; cancel/revoke to handle in-flight work.
+
+## Verification and QA handoff
+
+The added `luxe-gh-aw-tests.yml` runs all script regressions and downloads the
+compiler only after verifying its fixed SHA-256, compiles both workflows and
+rejects generated-file drift. Existing CI/controller workflows are unchanged.
+Local full command:
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s .github/scripts -p 'test_*.py'
+gh aw compile luxe-independent-qa luxe-bounded-repair --strict --validate \
+  --action-mode release --action-tag 32ecafbc061c9af57e9361942099e381102ae304 \
+  --no-check-update
+git diff --check
+```
+
+Review stages by commit: Stage A (read-only QA), Stage B (disabled repair and
+regressions), then any narrowly documented validation corrections. The
+implementation session cannot provide independent QA or human attestation.
+Required independent review: scope, correctness, contracts, errors, tests,
+regressions, privacy/security, docs, decisions and non-product UX applicability.
+Management project-memory updates remain proposed until accepted; no activation,
+test success on GitHub, human acceptance or production readiness is inferred.
+
+Implementation-session evidence (2026-10-27): all 92 script tests passed,
+including the unchanged controller suite; both workflows compiled with strict
+schema/action validation, actionlint 1.7.12 (two workflows, no issues) and
+shellcheck (113 run resources), zero compiler warnings. `git diff --check`
+passed. No live inference, review publication, repair, credential creation,
+setting change, merge, deployment or independent human acceptance was exercised.

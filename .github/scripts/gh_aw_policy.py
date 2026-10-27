@@ -49,11 +49,12 @@ def protected(path):
     # The existing controller policy remains unchanged; the pilot is stricter.
     return (
         forbidden(path)
-        or not re.fullmatch(r"[A-Za-z0-9_/-]+\.(md|ts|tsx)", path)
+        or not re.fullmatch(r"[A-Za-z0-9_./-]+\.(md|ts|tsx)", path)
+        or any(part.startswith(".") for part in path.split("/"))
         or not path.startswith(("docs/help/", "frontend/features/"))
         or any(word in path.casefold() for word in
                ("auth", "tenan", "security", "privacy", "compliance", "schema",
-                "permission", "session", "credential", "governance", "dependenc"))
+                "permission", "session", "credential", "secret", "token", "governance", "dependenc"))
     )
 
 
@@ -119,6 +120,14 @@ def snapshot(api, pr_number, expected_head, policy):
     scope = handoff(issue)
     comments = api.pages(f"{ROOT}/issues/{issue['number']}/comments")
     require(approved(issue, comments, policy), "missing current Founder scope approval")
+    parent = api.request("GET", f"{ROOT}/issues/{issue['number']}/parent")
+    require(parent.get("number") == scope["parent"]
+            and parent.get("repository_url") == "https://api.github.com" + ROOT, "native parent changed")
+    dependencies = api.pages(f"{ROOT}/issues/{issue['number']}/dependencies/blocked_by")
+    require(sorted(d["number"] for d in dependencies) == sorted(scope["dependencies"])
+            and all(d.get("state") == "closed" and d.get("state_reason") == "completed"
+                    for d in dependencies), "native dependencies are unverified")
+    require(not api.pages(f"{ROOT}/issues/{issue['number']}/sub_issues"), "issue is not a leaf")
     require(not any(l["name"] in {"autonomy:needs-human", "autonomy:awaiting-human"}
                     for l in issue.get("labels", [])), "issue is on human hold")
     timeline = api.pages(f"{ROOT}/issues/{issue['number']}/timeline")
@@ -173,17 +182,56 @@ def outputs(value):
         stream.write("binding=" + json.dumps(value, separators=(",", ":")) + "\n")
 
 
+def validate_review(output, binding, run_id):
+    require(isinstance(output, dict) and isinstance(output.get("items"), list)
+            and len(output["items"]) == 1, "exactly one QA COMMENT required")
+    item = output["items"][0]
+    require(isinstance(item, dict) and item.get("type") == "submit_pull_request_review"
+            and item.get("event", "COMMENT") == "COMMENT", "only COMMENT reviews are permitted")
+    require(not any(k in item for k in ("repo", "repository", "owner", "commit_id", "comments")),
+            "QA output may not override trusted target or add inline effects")
+    if "pull_request_number" in item:
+        require(item["pull_request_number"] == binding["pr"], "QA output retargeted PR")
+    report = decode(item.get("body"), "gh-aw-qa")
+    require(all(report.get(k) == binding[k] for k in ("key", "head", "base", "issue", "digest", "ci"))
+            and report.get("run_id") == run_id, "QA output evidence binding changed")
+    require(report.get("verdict") in {"Accepted", "Accepted with Notes", "Changes Required", "Blocked"},
+            "invalid QA verdict")
+    checks = report.get("checks")
+    require(isinstance(checks, dict) and set(checks) == CHECKS, "incomplete QA checks")
+    require(all(isinstance(c, dict) and c.get("status") in {"pass", "fail", "not-applicable"}
+                and has_review_evidence(c.get("evidence")) for c in checks.values()), "unverified QA evidence")
+    findings = report.get("findings")
+    require(isinstance(findings, list) and all(
+        isinstance(f, dict) and f.get("severity") in {"Blocker", "Major", "Minor", "Note"}
+        and isinstance(f.get("file"), str) and f["file"].strip()
+        and has_review_evidence(f.get("reason")) for f in findings), "invalid QA findings")
+    if not binding["ci"]["passed"]:
+        require(report["verdict"] == "Blocked", "unverified CI cannot yield a QA pass")
+    if report["verdict"] in {"Accepted", "Accepted with Notes"}:
+        require(all(checks[k]["status"] == "pass" for k in
+                    ("scope", "correctness", "tests", "security_privacy"))
+                and not any(c["status"] == "fail" for c in checks.values())
+                and not any(f["severity"] in {"Blocker", "Major"} for f in findings), "QA acceptance contradicted")
+    return report
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--recheck", action="store_true")
+    parser.add_argument("--validate-output", action="store_true")
     args = parser.parse_args()
     policy = settings()
     require(policy["qa_enabled"] and os.environ.get("QA_ENABLED") == "true", "QA pilot disabled")
     api = GitHub(os.environ["GH_TOKEN"])
-    if args.recheck:
+    if args.recheck or args.validate_output:
         original = json.loads(os.environ["EXPECTED_BINDING"])
         data = snapshot(api, original["pr"], original["head"], policy)
         require(qa_preflight(data, policy) == original, "QA source/evidence changed during review")
+        if args.validate_output:
+            path = Path(os.environ["GH_AW_AGENT_OUTPUT"])
+            require(path.stat().st_size <= 262144, "oversized QA output")
+            validate_review(json.loads(path.read_text()), original, int(os.environ["GITHUB_RUN_ID"]))
     else:
         event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
         pr, head = event_pr(api, event, os.environ["GITHUB_EVENT_NAME"])
