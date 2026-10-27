@@ -374,6 +374,14 @@ class ReconciliationTests(unittest.TestCase):
         api = FakeGitHub([issue(70), issue(71)]).with_historical_assignment()
         self.assertEqual([action["issue"] for action in controller.reconcile(api, config())["actions"]], [71])
 
+    def test_unrelated_task_state_mismatch_blocks_completed_historical_assignment(self):
+        api = FakeGitHub([issue(70), issue(71)]).with_historical_assignment()
+        api.tasks.append({"id": "unrelated-task", "state": "completed"})
+        api.task_details["unrelated-task"] = {
+            "state": "in_progress", "sessions": [{"head_ref": "copilot/unrelated"}]}
+        with self.assertRaises(controller.Blocked):
+            controller.reconcile(api, config())
+
     def test_active_or_unverifiable_historical_assignment_blocks(self):
         for evidence in ("active", "missing_task", "missing_session", "missing_pr",
                          "multiple_tasks", "multiple_prs", "duplicate_session",
