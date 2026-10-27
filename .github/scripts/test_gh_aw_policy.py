@@ -148,6 +148,7 @@ class PolicyTests(unittest.TestCase):
 
     def test_advisory_reviews_are_separate_from_controller_evidence(self):
         data = self.read()
+        key = qa_preflight(data, POLICY)["key"]
         advisory = {
             "protocol": ADVISORY_QA_ENVELOPE,
             "pr": 91,
@@ -161,6 +162,11 @@ class PolicyTests(unittest.TestCase):
 
         advisory["pr"] = 92
         data["reviews"][0]["body"] = f"```json\n{json.dumps(advisory)}\n```"
+        with self.assertRaises(Blocked):
+            qa_preflight(data, POLICY)
+
+        data["reviews"] = [{"user": {"id": 30, "type": "Bot"},
+                            "body": encode_qa({"key": key, "producer": "autonomous-qa-advisory-v1"})}]
         with self.assertRaises(Blocked):
             qa_preflight(data, POLICY)
 

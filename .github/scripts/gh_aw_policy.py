@@ -161,6 +161,19 @@ def qa_record(review):
         return None
 
 
+def advisory_qa_record(review):
+    if qa_record(review) is not None:
+        return False
+    matches = re.findall(r"(?m)^```json[ \t]*\r?\n([\s\S]*?)^```[ \t]*$", review.get("body") or "")
+    if len(matches) != 1:
+        return False
+    try:
+        report = json.loads(matches[0])
+    except (ValueError, TypeError):
+        return False
+    return isinstance(report, dict) and report.get("producer") == ADVISORY_QA_PRODUCER
+
+
 def encode_qa(report):
     require(isinstance(report, dict) and "protocol" not in report, "invalid QA report")
     return f"```json\n{json.dumps({**report, 'protocol': QA_ENVELOPE}, sort_keys=True)}\n```"

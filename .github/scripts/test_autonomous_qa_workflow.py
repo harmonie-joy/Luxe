@@ -37,6 +37,12 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertLess(source.index("Require QA activation gates before publication"),
                         source.index("Refuse changed revision before review publication"))
         self.assertEqual(source.count('test "$QA_ENABLED" = "true"'), 2)
+        agent = compiled.split("  agent:\n", 1)[1].split("  detection:\n", 1)[0]
+        safe_outputs = compiled.split("  safe_outputs:\n", 1)[1]
+        self.assertLess(agent.index("name: Require QA activation gates before inference"),
+                        agent.index("name: Execute GitHub Copilot CLI"))
+        self.assertLess(safe_outputs.index("name: Require QA activation gates before publication"),
+                        safe_outputs.index("name: Process Safe Outputs"))
 
     def test_advisory_review_uses_separate_evidence_envelope(self):
         source = Path(".github/workflows/autonomous-qa.md").read_text()
