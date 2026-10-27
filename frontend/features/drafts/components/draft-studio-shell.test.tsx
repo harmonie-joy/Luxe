@@ -291,6 +291,76 @@ describe("DraftStudioShell", () => {
     ).toBe(true);
   });
 
+  it("waits for a pending save before regenerating and requires a fresh draft acknowledgement", async () => {
+    let resolveSave!: (draft: ContentDraft) => void;
+    let resolveGeneration!: (
+      result: Awaited<ReturnType<typeof aiApi.generateDrafts>>,
+    ) => void;
+    vi.mocked(contentDraftsApi.updateContentDraft).mockReturnValue(
+      new Promise((resolve) => {
+        resolveSave = resolve;
+      }),
+    );
+    const generationResponse: Awaited<
+      ReturnType<typeof aiApi.generateDrafts>
+    > = {
+      aiRunIds: ["run-linkedin"],
+      drafts: [
+        {
+          id: linkedinDraft.id,
+          brief: linkedinDraft.briefId,
+          channel: "linkedin",
+          title: linkedinDraft.title,
+          content: "Regenerated LinkedIn copy.",
+          status: "draft",
+        },
+      ],
+    };
+    vi.mocked(aiApi.generateDrafts).mockReturnValue(
+      new Promise((resolve) => {
+        resolveGeneration = resolve;
+      }),
+    );
+    vi.mocked(contentDraftsApi.getContentDrafts)
+      .mockResolvedValueOnce([linkedinDraft])
+      .mockRejectedValueOnce(new Error("Refresh failed"));
+    const user = userEvent.setup();
+    await renderLive();
+
+    fireEvent.change(screen.getByLabelText("Draft content"), {
+      target: { value: "Updated LinkedIn copy." },
+    });
+    await user.click(screen.getByRole("button", { name: "Save draft" }));
+
+    const generateButton = screen.getByRole<HTMLButtonElement>("button", {
+      name: "Generate Drafts",
+    });
+    const generationWasDisabledDuringSave = generateButton.disabled;
+    await user.click(generateButton);
+    const generationStartedDuringSave =
+      vi.mocked(aiApi.generateDrafts).mock.calls.length > 0;
+
+    resolveSave({ ...linkedinDraft, content: "Updated LinkedIn copy." });
+    await screen.findByText("Draft saved.");
+    if (!generationStartedDuringSave) {
+      await user.click(generateButton);
+    }
+    await waitFor(() =>
+      expect(aiApi.generateDrafts).toHaveBeenCalledTimes(1),
+    );
+    resolveGeneration(generationResponse);
+    expect(await screen.findByText("Refresh failed")).toBeTruthy();
+
+    expect(generationWasDisabledDuringSave).toBe(true);
+    expect(generationStartedDuringSave).toBe(false);
+
+    expect(
+      screen.getByRole<HTMLButtonElement>("button", {
+        name: "Copy LinkedIn draft",
+      }).disabled,
+    ).toBe(true);
+  });
+
   it("does not treat generated local fallback drafts as persisted", async () => {
     vi.mocked(contentDraftsApi.getContentDrafts)
       .mockResolvedValueOnce([linkedinDraft])

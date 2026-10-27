@@ -28,6 +28,7 @@ interface DraftStudioShellProps {
 
 type DataSource = "loading" | "api" | "mock";
 type RequestStatus = "idle" | "loading" | "success" | "error";
+type DraftMutation = "idle" | "saving" | "generating";
 
 const DRAFT_STATUS_TONES = {
   draft: "neutral",
@@ -109,6 +110,7 @@ function generatedDraftToContentDraft(
 
 export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps) {
   const router = useRouter();
+  const draftMutationInFlight = useRef(false);
   const [briefs, setBriefs] = useState<ContentBrief[]>([data.brief]);
   const [brief, setBrief] = useState<ContentBrief>(data.brief);
   const [drafts, setDrafts] = useState<ContentDraft[]>([...data.drafts]);
@@ -121,6 +123,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const [loadMessage, setLoadMessage] = useState("Loading persisted drafts.");
   const [generationStatus, setGenerationStatus] =
     useState<RequestStatus>("idle");
+  const [draftMutation, setDraftMutation] = useState<DraftMutation>("idle");
   const [generationMessage, setGenerationMessage] = useState("");
   const [saveStatus, setSaveStatus] = useState<RequestStatus>("idle");
   const [saveMessage, setSaveMessage] = useState("");
@@ -202,7 +205,10 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     ? DRAFT_STATUS_TONES[currentDraft.status]
     : "neutral";
   const savedCurrentDraft = currentDraft ? savedDraftId === currentDraft.id : false;
-  const canGenerate = generationStatus !== "loading" && dataSource !== "loading";
+  const canGenerate =
+    generationStatus !== "loading" &&
+    dataSource !== "loading" &&
+    draftMutation === "idle";
   const canDelete = deleteStatus !== "loading" && dataSource !== "loading";
   const targetChannelLabels = brief.targetChannels
     .map((channel) => CONTENT_CHANNEL_LABELS[channel])
@@ -324,7 +330,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   }
 
   async function handleGenerateDrafts() {
-    if (!canGenerate) return;
+    if (!canGenerate || draftMutationInFlight.current) return;
 
     if (dataSource !== "api") {
       setGenerationStatus("error");
@@ -338,6 +344,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       return;
     }
 
+    draftMutationInFlight.current = true;
+    setDraftMutation("generating");
     setGenerationStatus("loading");
     setGenerationMessage("Generating channel drafts.");
     invalidateCopyRequest();
@@ -374,11 +382,20 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     } catch (error) {
       setGenerationStatus("error");
       setGenerationMessage(errorMessage(error));
+    } finally {
+      draftMutationInFlight.current = false;
+      setDraftMutation("idle");
     }
   }
 
   async function handleSave() {
-    if (!currentDraft) return;
+    if (
+      !currentDraft ||
+      draftMutation !== "idle" ||
+      draftMutationInFlight.current
+    ) {
+      return;
+    }
 
     const updatedAt = new Date().toISOString();
 
@@ -392,6 +409,8 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       return;
     }
 
+    draftMutationInFlight.current = true;
+    setDraftMutation("saving");
     setSaveStatus("loading");
     setSaveMessage("Saving draft.");
 
@@ -413,6 +432,9 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     } catch (error) {
       setSaveStatus("error");
       setSaveMessage(errorMessage(error));
+    } finally {
+      draftMutationInFlight.current = false;
+      setDraftMutation("idle");
     }
   }
 
@@ -747,7 +769,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
                   ) : null}
                   <button
                     className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled={saveStatus === "loading"}
+                    disabled={draftMutation !== "idle"}
                     type="submit"
                   >
                     {saveStatus === "loading" ? "Saving..." : "Save draft"}
