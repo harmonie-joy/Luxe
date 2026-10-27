@@ -49,10 +49,13 @@ records the exact bootstrap failure; no agent or safe-output job ran.
 `max_repairs: 0`. The existing planner tests exact scope, current human QA,
 current CI, safety checks, one repair reservation and replay persistence. Its
 old unverified `@copilot` comment dispatch is now a hard block before any write.
-No supported, credential-isolated Copilot repair dispatch to the original PR
-branch has been demonstrated. Activation needs a separate Founder-approved PR
-with a verified task/branch API, narrow token, completed response semantics and
-independent security QA. No automatic repair is attempted by this draft.
+gh-aw documents `push-to-pull-request-branch`, but an exact per-issue dynamic
+file allowlist, credential-isolated dispatch to the original branch and task
+completion semantics have not been demonstrated here. Its default
+`GITHUB_TOKEN` push does not trigger CI, so a separate narrow credential or
+verified CI trigger is also required for the re-review loop. Activation needs
+a separate Founder-approved PR proving these boundaries and independent
+security QA. No automatic repair is attempted by this draft.
 
 **L0 pilot:** after human merge and Copilot inference setup, create one public,
 synthetic documentation-only leaf issue with the exact handoff/approval contract
