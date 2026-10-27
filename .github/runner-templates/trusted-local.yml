@@ -1,0 +1,77 @@
+# PREPARATION ONLY: outside workflows/ so GitHub cannot execute this file.
+# See docs/ci/RUNNER_RUNBOOK.md. No repository-scoped runner may be registered.
+# Activation requires an isolated VM and server-enforced workflow access in an
+# organization runner group; labels and these conditions are NOT that boundary.
+name: Trusted Local Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Fixed synthetic validation suite
+        required: true
+        type: choice
+        default: health
+        options: [health, backend, browser, ai]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: theluxe-trusted-local
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    if: >-
+      github.repository == 'harmonie-joy/Luxe' &&
+      github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/master' && github.ref_protected &&
+      github.actor_id == '57563103' && github.triggering_actor == github.actor &&
+      github.workflow_ref == 'harmonie-joy/Luxe/.github/workflows/trusted-local.yml@refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Refuse public repositories or stale/unprotected revisions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_SHA: ${{ github.workflow_sha }}
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/harmonie-joy/Luxe --jq '[.visibility, .default_branch] | join(" ")')" = 'private master'
+          test "$(gh api repos/harmonie-joy/Luxe/branches/master --jq '[.protected, .commit.sha] | join(" ")')" = "true $EXPECTED_SHA"
+
+  validate:
+    needs: preflight
+    # Server-side group policy must allow ONLY this workflow at refs/heads/master.
+    # This group does not currently exist as a verified/authorized capability.
+    runs-on:
+      group: theluxe-trusted
+      labels: ${{ fromJSON(inputs.suite == 'ai' && '["theluxe-local","theluxe-gpu"]' || '["theluxe-local"]') }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Health (sanitized capabilities only)
+        run: python3 .github/scripts/runner_health.py
+      - name: Run one fixed suite
+        env:
+          LOCAL_SUITE: ${{ inputs.suite }}
+          PIP_DISABLE_PIP_VERSION_CHECK: '1'
+        run: |
+          set -euo pipefail
+          case "$LOCAL_SUITE" in
+            health) : ;;
+            backend|browser) bash .github/scripts/run_local_integration.sh "$LOCAL_SUITE" ;;
+            ai)
+              nvidia-smi --query-gpu=memory.total --format=csv,noheader >/dev/null
+              ai_dir=$(mktemp -d "${RUNNER_TEMP:?}/luxe-ai.XXXXXX")
+              trap 'rm -rf -- "$ai_dir"' EXIT
+              python3 -m venv "$ai_dir/venv"
+              "$ai_dir/venv/bin/python" -m pip install -r backend/requirements/base.txt
+              timeout 240 "$ai_dir/venv/bin/python" .github/scripts/evaluate_local_ai.py --model gemma4:12b --case all
+              ;;
+            *) echo 'Unsupported suite' >&2; exit 2 ;;
+          esac
