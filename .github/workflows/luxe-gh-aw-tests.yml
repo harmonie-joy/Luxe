@@ -1,0 +1,53 @@
+name: THE LUXE gh-aw validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/luxe-*'
+      - '.github/scripts/*gh_aw*'
+      - '.github/scripts/autonomous_development.py'
+      - '.github/gh-aw-policy.json'
+      - '.github/aw/**'
+      - '.github/agents/qa-agent.agent.md'
+      - '.agents/skills/the-luxe-qa/**'
+      - 'docs/agents/GH_AW_QA_REPAIR.md'
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/luxe-*'
+      - '.github/scripts/*gh_aw*'
+      - '.github/scripts/autonomous_development.py'
+      - '.github/gh-aw-policy.json'
+      - '.github/aw/**'
+      - '.github/agents/qa-agent.agent.md'
+      - '.agents/skills/the-luxe-qa/**'
+
+permissions:
+  contents: read
+
+jobs:
+  gh-aw-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Synthetic gate and replay regressions
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s .github/scripts -p 'test_*.py'
+      - name: Download verified patched compiler
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/github/gh-aw/releases/download/v0.93.5/linux-amd64 \
+            --output "$RUNNER_TEMP/gh-aw-compiler"
+          echo "a7b06bffaf7c24f713d10ec0a865514b764e62af639b13df953a480d74e8a8de  $RUNNER_TEMP/gh-aw-compiler" | sha256sum --check
+          chmod +x "$RUNNER_TEMP/gh-aw-compiler"
+      - name: Strict compile and generated-file drift check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          "$RUNNER_TEMP/gh-aw-compiler" compile luxe-independent-qa luxe-bounded-repair \
+            --strict --validate --actionlint --shellcheck --action-mode release \
+            --action-tag 32ecafbc061c9af57e9361942099e381102ae304 --no-check-update
+          git diff --exit-code -- .github/workflows/luxe-independent-qa.lock.yml \
+            .github/workflows/luxe-bounded-repair.lock.yml .github/aw/actions-lock.json .gitattributes

@@ -1,0 +1,19 @@
+name: THE LUXE Repair Signal
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions: {}
+
+jobs:
+  signal:
+    if: >-
+      vars.LUXE_GH_AW_REPAIR_ENABLED == 'true' &&
+      github.repository == 'harmonie-joy/Luxe' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      # Metadata wake-up only. The trusted repair workflow re-reads every fact.
+      - run: ':'
