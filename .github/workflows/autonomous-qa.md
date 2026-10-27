@@ -46,6 +46,17 @@ pre-agent-steps:
         sleep 15
       done
 safe-outputs:
+  steps:
+    - name: Refuse stale review before processing
+      env:
+        GH_TOKEN: ${{ github.token }}
+        EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        set -o pipefail
+        gh api "repos/harmonie-joy/Luxe/pulls/$PR_NUMBER" --jq '[.head.sha, .base.sha, .state] | join(" ")' |
+        grep -Fx -- "$EXPECTED_HEAD $EXPECTED_BASE open"
   submit-pull-request-review:
     max: 1
     target: triggering

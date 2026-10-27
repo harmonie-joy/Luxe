@@ -18,7 +18,9 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertIn("cancel-in-progress: true", source)
         self.assertIn('test "$current" = "$EXPECTED_HEAD $EXPECTED_BASE open"', source)
         self.assertEqual(source.count('test "$current" = "$EXPECTED_HEAD $EXPECTED_BASE open"'), 2)
+        self.assertIn('grep -Fx -- "$EXPECTED_HEAD $EXPECTED_BASE open"', source)
         self.assertIn("Refuse changed revision before review publication", source)
+        self.assertIn("Refuse stale review before processing", source)
         self.assertIn("if: needs.agent.result == 'success'", source)
 
     def test_compiled_permissions_and_read_only_review(self):
@@ -38,13 +40,28 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertIn("pull-requests: write", output_permissions)
         self.assertIn("copilot-requests: write", compiled)
         self.assertIn("needs.agent.result == 'success'", compiled)
+        compiled_safe_outputs = compiled.split("  safe_outputs:\n", 1)[1]
+        stale_guard = compiled_safe_outputs.index("name: Refuse stale review before processing")
+        process_review = compiled_safe_outputs.index("name: Process Safe Outputs")
+        self.assertLess(stale_guard, process_review)
 
     def test_publication_guard_rejects_changed_base_head_and_api_error(self):
         source = Path(".github/workflows/autonomous-qa.md").read_text()
-        commands = [line.strip() for line in source.splitlines()
+        frontmatter = source.split("---", 2)[1]
+        post_agent = frontmatter.split("post-steps:", 1)[1]
+        safe_outputs = frontmatter.split("safe-outputs:", 1)[1].split("post-steps:", 1)[0]
+
+        def commands_in(section):
+            return [line.strip() for line in section.splitlines()
                     if line.strip().startswith(('current=$(gh api ', 'test "$current" = '))]
-        self.assertEqual(len(commands), 4)
-        self.assertEqual(commands[:2], commands[2:])
+
+        post_agent_commands = commands_in(post_agent)
+        safe_output_commands = [line.strip() for line in safe_outputs.splitlines()
+                                if line.strip().startswith(('set -o pipefail', 'gh api ',
+                                                           'grep -Fx -- "$EXPECTED_HEAD'))]
+        self.assertEqual(len(post_agent_commands), 2)
+        self.assertEqual(len(safe_output_commands), 3)
+        self.assertEqual(safe_output_commands[0], "set -o pipefail")
         with tempfile.TemporaryDirectory() as directory:
             gh = Path(directory) / "gh"
             gh.write_text('#!/bin/sh\n[ "$MOCK_FAIL" != 1 ] || exit 1\nprintf "%s\\n" "$MOCK_CURRENT"\n')
@@ -57,10 +74,24 @@ class QAWorkflowTests(unittest.TestCase):
                                           ("h" * 40 + " " + "b" * 40 + " closed", "0", False),
                                           ("", "1", False)):
                 with self.subTest(current=current, fail=fail):
-                    result = subprocess.run(["bash", "-e", "-c", "\n".join(commands[:2])],
+                    result = subprocess.run(["bash", "-e", "-c", "\n".join(safe_output_commands)],
                                             env={**env, "MOCK_CURRENT": current, "MOCK_FAIL": fail},
                                             capture_output=True, text=True)
                     self.assertEqual(result.returncode == 0, passes)
+
+            agent_result = subprocess.run(
+                ["bash", "-e", "-c", "\n".join(post_agent_commands)],
+                env={**env, "MOCK_CURRENT": "h" * 40 + " " + "b" * 40 + " open",
+                     "MOCK_FAIL": "0"},
+                capture_output=True, text=True)
+            self.assertEqual(agent_result.returncode, 0)
+
+            changed_base_result = subprocess.run(
+                ["bash", "-e", "-c", "\n".join(safe_output_commands)],
+                env={**env, "MOCK_CURRENT": "h" * 40 + " " + "c" * 40 + " open",
+                     "MOCK_FAIL": "0"},
+                capture_output=True, text=True)
+            self.assertNotEqual(changed_base_result.returncode, 0)
 
 
 if __name__ == "__main__":
