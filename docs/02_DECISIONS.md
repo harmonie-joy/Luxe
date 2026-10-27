@@ -238,6 +238,16 @@
   `docs/04_NEXT_ACTIONS.md`.
 - Follow-up actions: Write PRIV-001 before production deployment work.
 
+### D-0019: Optional local CI preparation; activation remains gated
+
+- Date: 2026-10-27
+- Status: Proposed for activation; preparation explicitly requested by Founder.
+- Context: [#89](https://github.com/harmonie-joy/Luxe/issues/89) audits the actual public repository and personal WSL2/Docker Desktop host. Current hosted Actions billing is net$0. A repository-scoped desktop runner cannot enforce the requested exclusion of arbitrary PR workflows.
+- Decision: Preserve hosted merge gates and prepare disposable synthetic local commands plus an inert manual-workflow template. No runner registration, host/security/settings changes, production access or paid-agent activation occurs. Future isolated VM and organization group restricted to an exact trusted workflow/ref require separate L3 approval and independent verification; the template additionally refuses the current public repository.
+- Consequences: No product architecture, auth, provider, data model or roadmap change. Monetary savings are not a current justification; GPU feedback is optional. No live-runner acceptance is inferred from local test success.
+- Related files: [audit](ci/RUNNER_AUDIT.md), [runbook](ci/RUNNER_RUNBOOK.md), `.github/runner-templates/trusted-local.yml`.
+- Follow-up actions: Independent preparation QA and human review; decide isolation/access boundary before a separate activation PR.
+
 ## Decision Entry Template
 
 ### D-0000: Decision Title

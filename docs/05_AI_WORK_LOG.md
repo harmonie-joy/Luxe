@@ -1,5 +1,12 @@
 # AI Work Log
 
+### 2026-10-27 - Codex - #89 trusted local CI preparation
+
+- Explicit Founder request: audit desktop/repository/usage and safely prepare hybrid CI, without privileged changes, registration, settings changes or architectural expansion. Management/Coding/independent QA follow repository skills; separate Coding session implements scripts, separate read-only QA session reviews. Worktree `feat/trusted-local-ci` at base5562762 preserves original branch/work.
+- Scope: hosted `ci.yml` hardening, four existing-location diagnostic/integration/evaluation/test scripts, inert workflow template, audit/runbook and narrow memory entries. No application files, package/locks, migrations, provider/auth changes, production data or paid AI requests. Proposed D-0019 records activation blockers, not deployment approval.
+- Evidence:180 disposable PostgreSQL tests pass twice,7 real browser tests pass; initial106 deterministic automation checks and actionlint/shell/diff checks pass. Installed gemma4:12b draft/voice schema valid; missing-context response invalid and full optional evaluation exits1. Content-free timings/GPU residency and net$0 billing recorded in [audit](ci/RUNNER_AUDIT.md).
+- Independent QA reproduced startup-TERM cleanup and inherited-netrc auth issues; Coding corrected locally with regressions. Separate QA accepted preparation with notes after12 focused tests, actionlint and a real synthetic loopback HTTP check confirmed absent Authorization. Final110 automation tests and post-hardening180 PostgreSQL tests pass; no owned-resource leftovers. Current GitHub gates/human review remain required; no live runner job/restart/removal claimed. Activation is separate L3 approval.
+
 ### 2026-10-20 - Codex - #58 PR3 public-homepage slice
 
 - Direct user authorization was limited to the public homepage. Rewrote `HomeShell` for accurate Creator/CEO audience and context-preservation messaging; described verified Internal Alpha behavior only (exact BrandVoice-version acceptance, post checkpoint save/resume, idea/drafting) and separated Build vision from future/planned Scale and Automate.
