@@ -47,6 +47,9 @@ function ContinueWork() {
   const [items, setItems] = useState<ContentItem[] | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const sortedItems = items?.slice().sort((a, b) =>
+    Date.parse(b.updatedAt) - Date.parse(a.updatedAt) || a.id.localeCompare(b.id),
+  ) ?? null;
   useEffect(() => {
     let cancelled = false;
     if (workspace) getContentItems(workspace).then((rows) => {
@@ -56,9 +59,17 @@ function ContinueWork() {
   }, [workspace, attempt]);
   return <section aria-labelledby="continue-heading" className="space-y-5">
     <h2 className="luxe-section-title" id="continue-heading">Continue where you left off</h2>
-    {!workspace ? <p className="luxe-form-help">Create a workspace with Create With Me to start saving posts.</p> : error ? <SurfaceCard><p role="alert">Saved posts are unavailable. Your saved work has not been replaced with examples.</p><button className="luxe-secondary-action px-4 py-3" onClick={() => { setError(false); setItems(null); setAttempt((n) => n + 1); }}>Try again</button></SurfaceCard> : items === null ? <p role="status">Loading saved posts…</p> : items.length === 0 ? <SurfaceCard><h3 className="luxe-section-title">Your next idea deserves a place to land.</h3><p className="luxe-form-help">No saved posts in this workspace yet. Start with Create With Me.</p></SurfaceCard> : <div className="grid gap-4">{items.map((item) => <SurfaceCard key={item.id} className="flex min-w-0 flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
-      <div className="min-w-0 w-full flex-1 space-y-2 break-words sm:w-auto"><h3 className="luxe-section-title">{item.title}</h3><p>{item.goal}</p><p className="luxe-form-help">{item.workflowStage === "idea" ? "Idea" : "Drafting"} · Checkpoint {item.revision} · Last saved {new Date(item.updatedAt).toLocaleString()}</p><p className="luxe-form-help">Next: {item.nextAction}</p></div>
-      <Link className="luxe-primary-action luxe-focus-ring px-5 py-3" href={contentItemRoute(item.id)} aria-label={`Resume ${item.title}`}>Resume →</Link>
+    {!workspace ? <p className="luxe-form-help">Create a workspace with Create With Me to start saving posts.</p> : error ? <SurfaceCard><p role="alert">Saved posts are unavailable. Your saved work has not been replaced with examples.</p><button className="luxe-secondary-action px-4 py-3" onClick={() => { setError(false); setItems(null); setAttempt((n) => n + 1); }}>Try again</button></SurfaceCard> : sortedItems === null ? <p role="status">Loading saved posts…</p> : sortedItems.length === 0 ? <SurfaceCard><h3 className="luxe-section-title">Your next idea deserves a place to land.</h3><p className="luxe-form-help">No saved posts in this workspace yet. Start with Create With Me.</p></SurfaceCard> : <div className="grid gap-4">{sortedItems.map((item) => <SurfaceCard key={item.id} className="flex min-w-0 flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+      <div className="min-w-0 w-full flex-1 space-y-2 break-words sm:w-auto">
+        <h3 className="luxe-section-title">{item.title}</h3>
+        <p>{item.goal}</p>
+        <p className="luxe-form-help">{item.workflowStage === "idea" ? "Idea" : "Drafting"} · Checkpoint {item.revision} · Last saved {new Date(item.updatedAt).toLocaleString()}</p>
+        <div className="space-y-1">
+          <p className="luxe-card-kicker">Next action</p>
+          <p className="break-words">{item.nextAction}</p>
+        </div>
+      </div>
+      <Link className="luxe-primary-action luxe-focus-ring flex min-h-12 w-full items-center justify-center px-5 py-3 font-semibold sm:w-auto" href={contentItemRoute(item.id)} aria-label={`Resume ${item.title}`}>Resume →</Link>
     </SurfaceCard>)}</div>}
   </section>;
 }
