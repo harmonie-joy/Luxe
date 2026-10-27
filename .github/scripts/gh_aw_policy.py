@@ -21,6 +21,7 @@ POLICY = Path(__file__).resolve().parents[1] / "gh-aw-policy.json"
 JOBS = {"frontend", "backend", "real-e2e", "autonomous-controller"}
 SHA = re.compile(r"[0-9a-f]{40}")
 QA_ENVELOPE = "luxe-autonomy-gh-aw-qa-v1"
+ADVISORY_QA_PRODUCER = "autonomous-qa-advisory-v1"
 
 
 def require(condition, reason):
@@ -160,6 +161,19 @@ def qa_record(review):
         return None
 
 
+def advisory_qa_record(review):
+    if qa_record(review) is not None:
+        return False
+    matches = re.findall(r"(?m)^```json[ \t]*\r?\n([\s\S]*?)^```[ \t]*$", review.get("body") or "")
+    if len(matches) != 1:
+        return False
+    try:
+        report = json.loads(matches[0])
+    except (ValueError, TypeError):
+        return False
+    return isinstance(report, dict) and report.get("producer") == ADVISORY_QA_PRODUCER
+
+
 def encode_qa(report):
     require(isinstance(report, dict) and "protocol" not in report, "invalid QA report")
     return f"```json\n{json.dumps({**report, 'protocol': QA_ENVELOPE}, sort_keys=True)}\n```"
@@ -183,6 +197,7 @@ def qa_preflight(data, policy):
     key = fingerprint(binding)
     records = [r for r in data["reviews"] if r.get("user", {}).get("type") == "Bot"
                and r["user"].get("id") in policy["qa_bot_ids"]]
+    records = [r for r in records if not advisory_qa_record(r)]
     require(len(records) < policy["max_qa_reviews_per_pr"], "QA review budget exhausted; require human QA")
     require(all(qa_record(r) is not None for r in records), "malformed previous QA evidence")
     require(not any(qa_record(r).get("key") == key for r in records), "duplicate QA evidence; not replaying")

@@ -38,12 +38,30 @@ class QAWorkflowTests(unittest.TestCase):
         self.assertNotIn("pull-requests: write", agent_permissions)
         self.assertNotIn("issues: write", agent_permissions)
         self.assertIn("pull-requests: write", output_permissions)
+        self.assertIn("contents: read", output_permissions)
         self.assertIn("copilot-requests: write", compiled)
         self.assertIn("needs.agent.result == 'success'", compiled)
         compiled_safe_outputs = compiled.split("  safe_outputs:\n", 1)[1]
         stale_guard = compiled_safe_outputs.index("name: Refuse stale review before processing")
         process_review = compiled_safe_outputs.index("name: Process Safe Outputs")
         self.assertLess(stale_guard, process_review)
+
+    def test_activation_gates_precede_inference_and_publication(self):
+        source = Path(".github/workflows/autonomous-qa.md").read_text()
+        compiled = Path(".github/workflows/autonomous-qa.lock.yml").read_text()
+        frontmatter = source.split("---", 2)[1]
+        self.assertIn("vars.LUXE_GH_AW_QA_ENABLED == 'true'", frontmatter)
+        self.assertIn("github.event.pull_request.head.repo.full_name == 'harmonie-joy/Luxe'", frontmatter)
+        self.assertEqual(frontmatter.count("Require QA activation policy"), 2)
+        self.assertEqual(frontmatter.count("QA_ENABLED: ${{ vars.LUXE_GH_AW_QA_ENABLED }}"), 2)
+        self.assertEqual(frontmatter.count(".get(\"qa_enabled\") is True"), 2)
+
+        agent = compiled.split("  agent:\n", 1)[1].split("  detection:\n", 1)[0]
+        safe_outputs = compiled.split("  safe_outputs:\n", 1)[1]
+        self.assertLess(agent.index("name: Require QA activation policy before inference"),
+                        agent.index("name: Execute GitHub Copilot CLI"))
+        self.assertLess(safe_outputs.index("name: Require QA activation policy before publication"),
+                        safe_outputs.index("name: Process Safe Outputs"))
 
     def test_publication_guard_rejects_changed_base_head_and_api_error(self):
         source = Path(".github/workflows/autonomous-qa.md").read_text()

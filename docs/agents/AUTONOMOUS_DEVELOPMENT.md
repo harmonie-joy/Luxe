@@ -29,6 +29,12 @@ requires the four CI jobs and has automatic Copilot code review enabled for
 drafts and new pushes, but requires zero formal approving reviews. Founder-only
 merge remains an operating rule and must be checked by the Founder.
 
+The workflow requires both `LUXE_GH_AW_QA_ENABLED=true` and
+`.github/gh-aw-policy.json`'s `qa_enabled: true` before inference and again
+before publishing. Its `autonomous-qa-advisory-v1` producer marker keeps these
+reviews separate from controller evidence; malformed controller reviews still
+block replay checks.
+
 **Activation prerequisite:** the organization must allow GitHub Actions to use
 Copilot inference with `copilot-requests: write` and billing. On 2026-10-27,
 the read-only billing API reported `cli: unconfigured` and zero Copilot seats;

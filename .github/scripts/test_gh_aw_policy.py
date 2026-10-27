@@ -7,8 +7,8 @@ import unittest
 
 from autonomous_development import Blocked, ROOT, REPO, encode, scope_digest
 from gh_aw_policy import (
-    CHECKS, QA_ENVELOPE, ci_evidence, decode_qa, encode_qa, event_pr, fingerprint,
-    protected, qa_preflight, snapshot, validate_review,
+    ADVISORY_QA_PRODUCER, CHECKS, QA_ENVELOPE, ci_evidence, decode_qa, encode_qa,
+    event_pr, fingerprint, protected, qa_preflight, snapshot, validate_review,
 )
 
 
@@ -143,6 +143,25 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaises(Blocked):
             qa_preflight(data, POLICY)
         data["reviews"] = [{**record, "body": "A sanitized legacy QA review without its marker."}]
+        with self.assertRaises(Blocked):
+            qa_preflight(data, POLICY)
+
+    def test_advisory_reviews_are_separate_from_controller_evidence(self):
+        data = self.read()
+        key = qa_preflight(data, POLICY)["key"]
+        advisory_body = f'```json\n{{"producer":"{ADVISORY_QA_PRODUCER}"}}\n```'
+        data["reviews"] = [{"user": {"id": 30, "type": "Bot"}, "body": advisory_body}]
+        self.assertEqual(qa_preflight(data, POLICY)["head"], HEAD)
+
+        data["reviews"] = [{"user": {"id": 30, "type": "Bot"},
+                            "body": encode_qa({"key": key, "producer": ADVISORY_QA_PRODUCER})}]
+        with self.assertRaises(Blocked):
+            qa_preflight(data, POLICY)
+
+        data["reviews"] = [
+            {"user": {"id": 30, "type": "Bot"}, "body": advisory_body},
+            {"user": {"id": 30, "type": "Bot"}, "body": "Unstructured advisory-looking review"},
+        ]
         with self.assertRaises(Blocked):
             qa_preflight(data, POLICY)
 

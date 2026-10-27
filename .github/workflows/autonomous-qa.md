@@ -6,7 +6,7 @@ on:
     types: [opened, reopened, ready_for_review, synchronize]
   bots: [Copilot, copilot-swe-agent]
 
-if: github.repository == 'harmonie-joy/Luxe' && github.event.pull_request.head.repo.full_name == 'harmonie-joy/Luxe'
+if: vars.LUXE_GH_AW_QA_ENABLED == 'true' && github.repository == 'harmonie-joy/Luxe' && github.event.pull_request.head.repo.full_name == 'harmonie-joy/Luxe'
 engine: copilot
 permissions:
   contents: read
@@ -24,7 +24,20 @@ concurrency:
 jobs:
   safe_outputs:
     if: needs.agent.result == 'success'
+    permissions:
+      contents: read
     pre-steps:
+      - name: Require QA activation policy before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QA_ENABLED: ${{ vars.LUXE_GH_AW_QA_ENABLED }}
+          EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          test "$QA_ENABLED" = "true"
+          policy=$(gh api "repos/$GITHUB_REPOSITORY/contents/.github/gh-aw-policy.json?ref=$EXPECTED_BASE" --jq '.content')
+          printf '%s' "$policy" | base64 --decode |
+            python3 -c 'import json, sys; raise SystemExit(0 if json.load(sys.stdin).get("qa_enabled") is True else 1)'
       - name: Refuse changed revision before review publication
         env:
           GH_TOKEN: ${{ github.token }}
@@ -35,6 +48,17 @@ jobs:
           current=$(gh api "repos/harmonie-joy/Luxe/pulls/$PR_NUMBER" --jq '[.head.sha, .base.sha, .state] | join(" ")')
           test "$current" = "$EXPECTED_HEAD $EXPECTED_BASE open"
 pre-agent-steps:
+  - name: Require QA activation policy before inference
+    env:
+      GH_TOKEN: ${{ github.token }}
+      QA_ENABLED: ${{ vars.LUXE_GH_AW_QA_ENABLED }}
+      EXPECTED_BASE: ${{ github.event.pull_request.base.sha }}
+    run: |
+      set -euo pipefail
+      test "$QA_ENABLED" = "true"
+      policy=$(gh api "repos/$GITHUB_REPOSITORY/contents/.github/gh-aw-policy.json?ref=$EXPECTED_BASE" --jq '.content')
+      printf '%s' "$policy" | base64 --decode |
+        python3 -c 'import json, sys; raise SystemExit(0 if json.load(sys.stdin).get("qa_enabled") is True else 1)'
   - name: Allow current PR CI to finish
     env:
       GH_TOKEN: ${{ github.token }}
@@ -117,3 +141,7 @@ human QA attestation. The Founder alone decides whether to merge.
 
 Immediately before submitting, re-read the live head and base. If either
 changed, submit no review; the new commit will trigger a fresh run.
+
+Include `"producer": "autonomous-qa-advisory-v1"` in the fenced JSON evidence.
+This identifies this advisory review separately from the controller's QA
+evidence protocol.
