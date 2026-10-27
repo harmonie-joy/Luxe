@@ -183,6 +183,11 @@ def ledger(item, comments, settings):
     return events
 
 
+def copilot_assigned(item):
+    return any("copilot" in actor.get("login", "").lower()
+               for actor in item.get("assignees", []))
+
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise Blocked("API redirect refused")
@@ -240,8 +245,14 @@ def collect(api, settings):
         comments = api.pages(f"{ROOT}/issues/{number}/comments") if item.get("comments", 0) else []
         events = ledger(item, comments, settings)
         opted = "autonomy:enabled" in {label["name"] for label in item.get("labels", [])}
+        assigned = copilot_assigned(item)
         detail = {"comments": comments, "events": events, "children": [], "dependencies": [], "links": []}
-        if opted or events:
+        if opted or events or assigned:
+            timeline = api.pages(f"{ROOT}/issues/{number}/timeline")
+            detail["links"] = sorted({entry["source"]["issue"]["number"] for entry in timeline
+                if entry.get("event") == "cross-referenced"
+                and entry.get("source", {}).get("issue", {}).get("pull_request")
+                and entry["source"]["issue"].get("repository_url") == "https://api.github.com" + ROOT})
             try:
                 scope = handoff(item)
             except (Blocked, TypeError, KeyError):
@@ -254,13 +265,60 @@ def collect(api, settings):
             parent = api.request("GET", f"{ROOT}/issues/{number}/parent")
             if parent.get("number") != scope["parent"] or parent.get("repository_url") != "https://api.github.com" + ROOT:
                 raise Blocked("native parent disagrees with handoff")
-            timeline = api.pages(f"{ROOT}/issues/{number}/timeline")
-            detail["links"] = sorted({entry["source"]["issue"]["number"] for entry in timeline
-                if entry.get("event") == "cross-referenced"
-                and entry.get("source", {}).get("issue", {}).get("pull_request")
-                and entry["source"]["issue"].get("repository_url") == "https://api.github.com" + ROOT})
         facts["items"][number] = detail
     return facts
+
+
+def verified_assignment_completion(api, detail, pulls, tasks):
+    if len(detail["links"]) != 1:
+        raise Blocked("Copilot assignment has no unique linked PR")
+    linked_prs = [pr for pr in pulls if pr.get("number") == detail["links"][0]]
+    if len(linked_prs) != 1:
+        raise Blocked("Copilot assignment PR is missing or ambiguous")
+    pr = linked_prs[0]
+    head = pr.get("head") if isinstance(pr, dict) else None
+    head_repo = head.get("repo") if isinstance(head, dict) else None
+    if (not isinstance(head, dict) or not isinstance(head_repo, dict)
+            or head_repo.get("full_name") != REPO or not isinstance(head.get("ref"), str)
+            or not head["ref"]):
+        raise Blocked("Copilot assignment PR cannot be matched to a repository session")
+
+    matches = []
+    seen_ids = set()
+    for task in tasks:
+        if not isinstance(task, dict):
+            raise Blocked("Agent Tasks response is incomplete")
+        task_id = task.get("id")
+        if not (positive_int(task_id) or isinstance(task_id, str) and task_id.strip()):
+            raise Blocked("Agent Tasks response has no usable task identifier")
+        if task_id in seen_ids:
+            raise Blocked("Agent Tasks response has duplicate task identifiers")
+        seen_ids.add(task_id)
+        task_state = task.get("state")
+        if not isinstance(task_state, str) or not task_state:
+            raise Blocked("Agent Tasks response has no task state")
+        observed = api.request("GET", f"/agents/repos/{REPO}/tasks/{task_id}")
+        if not isinstance(observed, dict):
+            raise Blocked("Agent Task detail is incomplete")
+        state = observed.get("state")
+        sessions = observed.get("sessions")
+        if not isinstance(state, str) or not state or not isinstance(sessions, list) or not sessions:
+            raise Blocked("Agent Task completion or session evidence is missing")
+        if task_state != state:
+            raise Blocked("Agent Task list/detail states disagree")
+        refs = []
+        for session in sessions:
+            if not isinstance(session, dict) or not isinstance(session.get("head_ref"), str) or not session["head_ref"]:
+                raise Blocked("Agent Task session evidence is incomplete")
+            refs.append(session["head_ref"])
+        matching_sessions = [ref for ref in refs if ref == head["ref"]]
+        if matching_sessions:
+            if len(matching_sessions) != 1:
+                raise Blocked("Copilot assignment has ambiguous matching sessions")
+            matches.append((task_state, state))
+
+    if len(matches) != 1 or matches[0] != ("completed", "completed"):
+        raise Blocked("Copilot assignment lacks one positively completed matching task")
 
 
 def has_review_evidence(value):
@@ -415,11 +473,15 @@ def reconcile(api, settings):
             actions.append({**common, "kind": "repair", "review_id": latest["id"]})
         else:
             reasons[number] = "needs-human: QA failure or automatic repair allowance exhausted"
-    # Unknown Copilot activity prevents claiming that a slot is free.
+    # A lingering assignment is harmless only when its linked PR maps to one completed task.
+    task_list = None
     for item in facts["issues"]:
-        if any("copilot" in actor.get("login", "").lower() for actor in item.get("assignees", [])):
-            if not facts["items"][item["number"]]["events"]:
-                raise Blocked("untracked Copilot assignment")
+        if copilot_assigned(item) and not facts["items"][item["number"]]["events"]:
+            if task_list is None:
+                task_list = api.pages(f"/agents/repos/{REPO}/tasks", "tasks")
+            verified_assignment_completion(
+                api, facts["items"][item["number"]], facts["pulls"], task_list
+            )
     if any(pr["state"] == "open" and (pr["head"]["ref"].startswith("copilot/")
            or "copilot" in pr.get("user", {}).get("login", "").lower())
            and pr["number"] not in known_pulls for pr in facts["pulls"]):
