@@ -1,9 +1,9 @@
 {
-  "qa_enabled": false,
+  "qa_enabled": true,
   "repair_enabled": false,
-  "approver_ids": [],
+  "approver_ids": [57563103],
   "qa_reviewer_ids": [],
-  "qa_bot_ids": [],
+  "qa_bot_ids": [41898282],
   "repair_bot_id": null,
   "max_qa_reviews_per_pr": 6
 }
