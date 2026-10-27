@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 import shlex
 import signal
 import subprocess
@@ -18,6 +19,118 @@ import runner_health
 
 
 class LocalCITests(unittest.TestCase):
+    def test_completion_metadata_distinguishes_full_json_from_prefix(self):
+        for raw, full, prefix, trailing in (
+            (' {"ok": true} \n', True, True, 0),
+            ('{"ok": true}\nDone.', False, True, 5),
+            ('{"ok":', False, False, 0),
+            ('not JSON', False, False, 0),
+            ('NaN', False, True, 0),
+        ):
+            with self.subTest(raw=raw):
+                result = evaluate_local_ai.completion_metadata({"response": raw, "done": True, "done_reason": "stop"})
+                self.assertEqual(result["strict_json_valid"], full)
+                self.assertEqual(result["prefix_json_valid"], prefix)
+                self.assertEqual(result["trailing_nonspace_characters"], trailing)
+                self.assertNotIn(raw, json.dumps(result))
+
+    def test_prefix_accepted_by_provider_still_fails_full_json_evaluation(self):
+        provider = Mock()
+        metadata = {}
+        def generate(*_):
+            metadata.update(evaluate_local_ai.completion_metadata({
+                "response": '{"channel":"linkedin"}\nDone.', "done": True, "done_reason": "stop",
+            }))
+            return SimpleNamespace(channel="linkedin", content="Synthetic content")
+        provider.generate.side_effect = generate
+        result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "draft", metadata)
+        self.assertTrue(result["schema_valid"])
+        self.assertEqual(result["schema_validation"], "ACCEPTED")
+        self.assertTrue(result["semantic_checks_pass"])
+        self.assertTrue(result["completion"]["prefix_json_valid"])
+        self.assertFalse(result["case_pass"])
+        self.assertIn("response_json", result["failure_stages"])
+
+    def test_valid_json_does_not_mask_provider_schema_failure(self):
+        class ValidationError(ValueError):
+            """Provider contract double; backend tests exercise actual Pydantic."""
+
+        provider = Mock()
+        metadata = {}
+        def generate(*_):
+            metadata.update(evaluate_local_ai.completion_metadata({"response": '{}', "done": True, "done_reason": "stop"}))
+            raise ValidationError("private schema error")
+        provider.generate.side_effect = generate
+        result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "voice", metadata)
+        self.assertTrue(result["completion"]["strict_json_valid"])
+        self.assertFalse(result["schema_valid"])
+        self.assertEqual(result["schema_validation"], "REJECTED")
+        self.assertFalse(result["case_pass"])
+        self.assertNotIn("private schema error", json.dumps(result))
+
+    def test_completion_metadata_does_not_call_a_length_stop_complete(self):
+        result = evaluate_local_ai.completion_metadata({
+            "response": '{}', "done": True, "done_reason": "length", "eval_count": 768,
+            "thinking": "private reasoning", "unexpected": "private value",
+        })
+        self.assertTrue(result["strict_json_valid"])
+        self.assertFalse(result["generation_complete"])
+        self.assertEqual(result["eval_count"], 768)
+        self.assertNotIn("private", json.dumps(result))
+
+    def test_low_context_never_certifies_abstention_from_schema_alone(self):
+        for case in ("missing-context", "insufficient-context"):
+            for confidence, notes, examples in ((85, "Evidence missing", []), (0, "", []), (0, "Evidence missing", [{"text": "invented"}]), (0, "Evidence missing", [])):
+                with self.subTest(case=case, confidence=confidence, notes=notes, examples=examples):
+                    output = SimpleNamespace(confidence=confidence, extraction_notes=notes, model_dump=lambda: {"examples": examples})
+                    provider = Mock()
+                    metadata = {}
+                    def generate(*_):
+                        metadata.update(strict_json_valid=True, generation_complete=True)
+                        return output
+                    provider.generate.side_effect = generate
+                    result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", case, metadata)
+                    self.assertTrue(result["schema_valid"])
+                    self.assertEqual(result["appropriate_uncertainty"], "NOT_ESTABLISHED")
+                    self.assertFalse(result["case_pass"])
+                    self.assertEqual(result["uncertainty_checks"]["confidence_zero"], confidence == 0)
+                    self.assertEqual(result["uncertainty_checks"]["notes_present"], bool(notes))
+                    self.assertEqual(result["uncertainty_checks"]["no_unsupported_derived_fields"], not examples)
+
+    def test_low_context_rejects_unsupported_segments_and_positioning(self):
+        for claims in ({"audience_segments": [{"name": "Invented"}]}, {"positioning": {"category": "Invented"}}):
+            with self.subTest(claims=claims):
+                provider = Mock()
+                provider.generate.return_value = SimpleNamespace(confidence=0, extraction_notes="Evidence missing", model_dump=lambda: claims)
+                result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "insufficient-context")
+                self.assertFalse(result["uncertainty_checks"]["no_unsupported_derived_fields"])
+                self.assertEqual(result["unsupported_derived_fields"], list(claims))
+
+    def test_wrong_channel_or_empty_draft_fails_even_with_valid_schema(self):
+        for channel, content in (("blog", "Synthetic content"), ("linkedin", " ")):
+            with self.subTest(channel=channel, content=content):
+                provider = Mock()
+                metadata = {}
+                def generate(*_):
+                    metadata.update(strict_json_valid=True, generation_complete=True)
+                    return SimpleNamespace(channel=channel, content=content)
+                provider.generate.side_effect = generate
+                result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "draft", metadata)
+                self.assertTrue(result["schema_valid"])
+                self.assertFalse(result["semantic_checks_pass"])
+                self.assertFalse(result["case_pass"])
+
+    def test_prior_completion_metadata_cannot_mask_a_new_provider_failure(self):
+        provider = Mock()
+        provider.generate.side_effect = ValueError("private model response")
+        metadata = {"strict_json_valid": True, "generation_complete": True}
+        result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "voice", metadata)
+        self.assertFalse(result["schema_valid"])
+        self.assertEqual(result["schema_validation"], "NOT_RUN")
+        self.assertFalse(result["case_pass"])
+        self.assertEqual(metadata, {})
+        self.assertIsNone(result["completion"].get("strict_json_valid"))
+
     def test_executable_workflows_do_not_route_to_local_runners(self):
         root = Path(__file__).resolve().parents[2]
         for workflow in (root / ".github/workflows").glob("*.yml"):
@@ -61,10 +174,15 @@ class LocalCITests(unittest.TestCase):
     def test_ai_invalid_response_does_not_leak_content(self):
         provider = Mock()
         provider.generate.side_effect = ValueError("private model response")
-        result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", "voice")
-        self.assertFalse(result["schema_valid"])
-        self.assertEqual(result["error_type"], "ValueError")
-        self.assertNotIn("private model response", json.dumps(result))
+        for case in ("voice", "missing-context", "insufficient-context"):
+            with self.subTest(case=case):
+                result = evaluate_local_ai.evaluate_case(provider, object, "synthetic", case)
+                self.assertFalse(result["schema_valid"])
+                self.assertEqual(result["schema_validation"], "NOT_RUN")
+                self.assertEqual(result["error_type"], "ValueError")
+                self.assertNotIn("private model response", json.dumps(result))
+                if case != "voice":
+                    self.assertEqual(result["appropriate_uncertainty"], "NOT_ESTABLISHED")
 
     def test_ai_valid_response_records_factual_checks(self):
         provider = Mock()

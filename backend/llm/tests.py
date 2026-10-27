@@ -3,7 +3,8 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
+from pydantic import ValidationError
 from rest_framework.test import APITestCase
 
 from brand.models import (
@@ -844,6 +845,74 @@ class DraftGenerationAPITests(APITestCase):
         self.assertEqual(existing.content, response.data["drafts"][0]["content"])
         self.assertEqual(existing.status, ContentDraft.DraftStatus.DRAFT)
         self.assertEqual(str(existing.id), response.data["drafts"][0]["id"])
+
+
+@override_settings(OLLAMA_MODEL="gemma4:12b", OLLAMA_NUM_PREDICT=768)
+class OllamaMissingContextContractTests(SimpleTestCase):
+    """Synthetic protocol replays characterize the unchanged provider contract."""
+
+    def setUp(self):
+        self.payload = {
+            "voice_summary": "No source material supplied.",
+            "tone": {
+                "funny": 0, "casual": 0, "irreverent": 0, "enthusiastic": 0,
+                "justification": "No evidence to assess tone.",
+            },
+            "confidence": 0,
+            "extraction_notes": "Supply representative writing samples.",
+        }
+
+    def test_truncated_json_remains_an_explicit_provider_error(self):
+        for context in (
+            {"brand_profile": {}, "assets": []},
+            {"brand_profile": {"name": "Synthetic Workshop"}, "assets": [{"content": "Hello."}]},
+        ):
+            with self.subTest(context=context):
+                response = Mock()
+                response.json.return_value = {
+                    "response": json.dumps(self.payload)[:-1],
+                    "done": True, "done_reason": "length", "eval_count": 768,
+                }
+                with patch("llm.providers.requests.post", return_value=response):
+                    with self.assertRaises(AIProviderError) as raised:
+                        OllamaProvider().generate(
+                            prompts.brand_voice_extraction_prompt(context),
+                            BrandVoiceExtractionResult,
+                        )
+                self.assertIsInstance(raised.exception.__cause__, json.JSONDecodeError)
+
+    def test_prefix_acceptance_does_not_imply_full_document_json(self):
+        raw = json.dumps(self.payload) + "\n\nDone."
+        with self.assertRaises(json.JSONDecodeError):
+            json.loads(raw)
+        response = Mock()
+        response.json.return_value = {"response": raw, "done": True, "done_reason": "stop"}
+        with patch("llm.providers.requests.post", return_value=response):
+            result = OllamaProvider().generate("Synthetic missing context.", BrandVoiceExtractionResult)
+        self.assertEqual(result.confidence, 0)
+
+    def test_valid_json_with_invalid_tone_is_a_schema_error(self):
+        self.payload["tone"]["funny"] = 101
+        response = Mock()
+        response.json.return_value = {"response": json.dumps(self.payload)}
+        with patch("llm.providers.requests.post", return_value=response):
+            with self.assertRaises(ValidationError):
+                OllamaProvider().generate("Synthetic missing context.", BrandVoiceExtractionResult)
+
+    def test_schema_accepts_unsupported_certainty_and_empty_notes(self):
+        self.payload.update(confidence=90, extraction_notes="")
+        self.payload["examples"] = [{"kind": "do", "text": "Invented synthetic example."}]
+        result = BrandVoiceExtractionResult.model_validate(self.payload)
+        self.assertEqual(result.confidence, 90)
+        self.assertEqual(result.extraction_notes, "")
+        self.assertEqual(len(result.examples), 1)
+
+    def test_tone_contract_cannot_represent_unknown_with_null(self):
+        for field in ("funny", "casual", "irreverent", "enthusiastic"):
+            with self.subTest(field=field):
+                payload = {**self.payload, "tone": {**self.payload["tone"], field: None}}
+                with self.assertRaises(ValidationError):
+                    BrandVoiceExtractionResult.model_validate(payload)
 
 
 class SchemaAndPromptTests(TestCase):

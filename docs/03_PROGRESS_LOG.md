@@ -1,5 +1,12 @@
 # Progress Log
 
+### 2026-10-28 - #92 synthetic Ollama missing-context investigation
+
+- Separate follow-up branch to PR#90; independent Standards/Spec reviews found no blocker in its preparation scope. All four hosted gates, inert runner template and production provider/prompt/schema/settings remain unchanged; no registration, paid AI, migration or roadmap change.
+- Reproduced invalid JSON on installed gemma4:12b. Seed4/budget768 hit the limit; budget1536 still stopped with the same unterminated JSON. Prompt schema-grounding alone also failed. Existing prefix parsing can accept trailing non-JSON data, while the schema accepts unsupported certainty/defaults. These are distinct from the production schema's inability to express unknown tone.
+- Evaluator now reports strict/prefix JSON, completion metadata, schema NOT_RUN/ACCEPTED/REJECTED, bounded semantic checks and uncertainty separately. Added canonical synthetic v2/insufficient-context fixtures and deterministic regressions. No repaired/fabricated output: low-context cases remain nonzero/NOT_ESTABLISHED.
+- 20 focused/118 automation tests and43 backend LLM tests pass. Final seeded four-case model benchmark honestly FAILS:3 malformed generations,1 schema-valid but semantically unsupported insufficient-context result. [Diagnosis, controls, benchmark and QA handoff](ci/OLLAMA_MISSING_CONTEXT.md) record limits; independent QA Accepted with Notes. Current hosted checks/human review remain required; product abstention/runtime fixes need separate scope.
+
 ### 2026-10-27 - #89 trusted local CI preparation (activation blocked)
 
 - Verified actual remote `harmonie-joy/Luxe`, protected `master`, public visibility and zero runners; isolated `feat/trusted-local-ci` worktree preserves existing work. Audited Windows/WSL2/Docker/GPU/Ollama and current workflows. Host isolation and organization group enforcement remain unverified; no registration, host/security/settings changes or production access.

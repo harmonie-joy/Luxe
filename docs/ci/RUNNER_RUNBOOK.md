@@ -95,17 +95,23 @@ For optional AI, use a Python environment containing the existing backend requir
 
 ```bash
 backend/.venv/bin/python .github/scripts/evaluate_local_ai.py --model gemma4:12b --case draft
-timeout 240 backend/.venv/bin/python .github/scripts/evaluate_local_ai.py --model gemma4:12b --case all
+timeout 300 backend/.venv/bin/python .github/scripts/evaluate_local_ai.py --model gemma4:12b --case all --seed 4 --num-predict 768
 ```
 
 If that venv is absent, create a fresh temporary venv and install
 `backend/requirements/base.txt`; the inert template shows that procedure. Exact model
 must already be installed at loopback `127.0.0.1:11434`; no pull is performed.
 Unavailable service/model, invalid output, insufficient resources or timeout fail
-honestly. Exit2 means precondition unavailable/NOT VERIFIED, exit1 evaluation failure,
-exit0 schema-valid responses. Factual checks such as LinkedIn channel and missing
-context notes are reported separately from schema validity; semantic quality has no
-calibrated pass threshold. Evaluation is advisory, not a deterministic release gate.
+honestly. Exit2 means precondition unavailable/NOT VERIFIED; exit1 includes protocol,
+schema, bounded-assertion failures or an unresolved uncertainty contract. Exit0 means
+the selected case passed those checks, not semantic-quality certification. Version2
+separates strict JSON/prefix parsing, completion metadata, schema acceptance, bounded
+semantic assertions and uncertainty. Missing and insufficient context intentionally
+remain nonzero: the production voice schema cannot represent unknown tone. The full
+four-case suite therefore currently exits1; it is advisory, not a deterministic
+release gate. See the [separate investigation](OLLAMA_MISSING_CONTEXT.md) for replay
+commands, synthetic fixtures, evidence and limitations. The inert runner template is
+unchanged; its old240-second AI limit must be reviewed before any future activation.
 Sampled peak GPU memory includes **all GPU processes**, not just this model; cases/min
 is not model tokens/sec. Provider evaluation does not create database AIRun records;
 application provenance/approval is covered separately by existing backend tests.

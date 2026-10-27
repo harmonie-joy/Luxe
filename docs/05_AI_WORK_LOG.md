@@ -1,5 +1,12 @@
 # AI Work Log
 
+### 2026-10-28 - Codex - #92 Ollama missing-context diagnosis
+
+- Explicit Founder request to review PR#90 and investigate locally in a separate scoped task. Read governance/architecture/decisions/progress/operating model; separate read-only Standards/Spec reviewers found no PR90 preparation blocker. Separate Coding session changed evaluator/tests/fixture; coordinator added backend characterization tests/report; separate QA accepted the bounded correction with notes.
+- Live synthetic evidence: initial invalid JSON54.593s; seeded768-token failure27.085s; same seed/budget1536 still malformed27.488s; schema-grounding control failed29.964s. Other outputs had trailing junk or unsupported confidence85–100 despite schema acceptance. No root-cause claim is inferred from a single timing or a related upstream issue.
+- Corrected evaluation honesty without changing production contracts: strict/prefix JSON, completion/token metrics, schema tri-state, bounded assertions, explicit uncertainty limits; replay seed/budget controls and canonical v2 fixtures. Existing provider/parser/schema/settings, hosted workflows, runner template and dependency files unchanged. No production data, model downloads, paid AI loops or registration.
+- 20 focused/118 automation tests and43 backend LLM tests PASS; independent QA reran20/118 and5 real provider/schema replay methods. Four-case live benchmark exits1 honestly; no model repair or semantic-quality certification claimed. Full evidence/limits and remaining separately scoped product/runtime questions: [report](ci/OLLAMA_MISSING_CONTEXT.md). Current GitHub gates and human review/merge remain required; no decision-log/roadmap rewrite.
+
 ### 2026-10-27 - Codex - #89 trusted local CI preparation
 
 - Explicit Founder request: audit desktop/repository/usage and safely prepare hybrid CI, without privileged changes, registration, settings changes or architectural expansion. Management/Coding/independent QA follow repository skills; separate Coding session implements scripts, separate read-only QA session reviews. Worktree `feat/trusted-local-ci` at base5562762 preserves original branch/work.
