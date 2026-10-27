@@ -138,6 +138,17 @@ def proposal_content(api, binding, proposal):
     return base64.b64encode(text.encode("utf-8")).decode()
 
 
+def repair_proposal(output):
+    require(isinstance(output, dict) and isinstance(output.get("items"), list)
+            and len(output["items"]) == 1, "exactly one repair proposal required")
+    item = output["items"][0]
+    require(isinstance(item, dict)
+            and set(item) == {"type", "binding", "path", "content_base64"}
+            and item.get("type") == "propose_repair", "invalid repair proposal")
+    require(isinstance(item["binding"], str), "invalid repair binding")
+    return json.loads(item["binding"]), {key: value for key, value in item.items() if key != "binding"}
+
+
 def confirmed_reservation(record, expected_body, bot_id):
     require(isinstance(record, dict) and positive_int(record.get("id")) and record.get("body") == expected_body
             and record.get("user", {}).get("id") == bot_id and record["user"].get("type") == "Bot"
@@ -227,16 +238,10 @@ def main():
         output_path = Path(os.environ["GH_AW_AGENT_OUTPUT"])
         require(output_path.stat().st_size <= 262144, "oversized safe output")
         output = json.loads(output_path.read_text())
-        require(isinstance(output, dict) and isinstance(output.get("items"), list) and len(output["items"]) == 1,
-                "exactly one repair proposal required")
-        item = output["items"][0]
-        require(isinstance(item, dict) and set(item) == {"type", "binding", "path", "content"},
-                "unexpected safe-output fields")
-        expected = json.loads(item["binding"])
+        expected, proposal = repair_proposal(output)
         event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
         pr, head = event_pr(api, event, os.environ["GITHUB_EVENT_NAME"], repair=True)
         require(expected["pr"] == pr and expected["head"] == head, "proposal retargeted the triggering PR")
-        proposal = {k: v for k, v in item.items() if k != "binding"}
         apply_repair(api, expected, proposal, policy, run_id=int(os.environ["GITHUB_RUN_ID"]))
         print("One reserved repair commit confirmed; fresh CI/independent QA and human merge required.")
     else:

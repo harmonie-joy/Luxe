@@ -13,7 +13,9 @@ import urllib.error
 from autonomous_development import Blocked, ROOT, REPO, encode
 from gh_aw_policy import CHECKS, QA_PATH, encode_qa, snapshot
 from test_gh_aw_policy import API, BASE, FILE, HEAD, POLICY
-from gh_aw_repair import COMMIT, SafeOutputGitHub, apply_repair, main, proposal_content, repair_binding
+from gh_aw_repair import (
+    COMMIT, SafeOutputGitHub, apply_repair, main, proposal_content, repair_binding, repair_proposal,
+)
 from test_gh_aw_policy import sanitize_safe_output
 
 
@@ -211,16 +213,13 @@ class RepairTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertNotEqual(sanitize_safe_output(text), text)
                 content = text.encode("utf-8")
-                proposal = {
-                    "type": "propose_repair", "path": FILE,
-                    "content_base64": base64.b64encode(content).decode(),
-                }
                 safe_output = json.dumps({"items": [{
                     "type": "propose_repair", "binding": json.dumps(self.binding),
-                    "path": FILE, "content_base64": proposal["content_base64"],
+                    "path": FILE, "content_base64": base64.b64encode(content).decode(),
                 }]})
-                transported = json.loads(sanitize_safe_output(safe_output))["items"][0]
-                proposal["content_base64"] = transported["content_base64"]
+                transported = json.loads(sanitize_safe_output(safe_output))
+                expected, proposal = repair_proposal(transported)
+                self.assertEqual(expected, self.binding)
                 result = proposal_content(self.api, self.binding, proposal)
                 self.assertEqual(base64.b64decode(result, validate=True), content)
 
