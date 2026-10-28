@@ -213,6 +213,8 @@ class GitHub:
         )
         try:
             with self.opener.open(request, timeout=20) as response:
+                if response.status == 204:
+                    return None
                 return json.load(response)
         except (urllib.error.URLError, TimeoutError, ValueError) as exc:
             # API bodies may contain private content; report only a status/category.

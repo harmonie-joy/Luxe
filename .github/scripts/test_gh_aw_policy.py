@@ -214,11 +214,70 @@ class PolicyTests(unittest.TestCase):
         with self.assertRaises(Blocked):
             event_pr(self.api, event, "workflow_run")
 
+    def test_app_synchronization_and_ci_completion_keep_exact_pr_provenance(self):
+        app_sync = {
+            "action": "synchronize",
+            "sender": {"id": 40, "type": "Bot", "login": "luxe-repair-app[bot]"},
+            "pull_request": {"number": 91, "head": {"sha": HEAD}},
+        }
+        self.assertEqual(event_pr(self.api, app_sync, "pull_request"), (91, HEAD))
+
+        run = {"id": 200, "path": ".github/workflows/ci.yml", "repository": {"full_name": REPO},
+               "status": "completed", "conclusion": "success", "event": "pull_request",
+               "head_branch": "luxe-pilot/90",
+               "pull_requests": [{"number": 91, "head": {"sha": HEAD}}]}
+        self.api.data[f"{ROOT}/actions/runs/200"] = run
+        self.assertEqual(
+            event_pr(self.api, {"workflow_run": {"id": 200}}, "workflow_run"),
+            (91, HEAD),
+        )
+
+    def test_noncollaborator_app_dispatch_is_bound_to_successful_ci(self):
+        run = {
+            "id": 202, "run_attempt": 2, "path": ".github/workflows/ci.yml",
+            "event": "pull_request", "status": "completed", "conclusion": "success",
+            "repository": {"full_name": REPO}, "head_repository": {"full_name": REPO},
+            "head_branch": "luxe-pilot/90", "head_sha": HEAD,
+            "actor": {"id": 40, "type": "Bot", "login": "luxe-repair-app[bot]"},
+            "pull_requests": [{"number": 91, "head": {"sha": HEAD}}],
+        }
+        self.api.data[f"{ROOT}/actions/runs/202"] = run
+        event = {
+            "action": QA_DISPATCH_EVENT,
+            "client_payload": {"run_id": 202, "run_attempt": 2},
+        }
+        self.assertEqual(
+            event_pr(self.api, event, "repository_dispatch", repair_bot_id=40),
+            (91, HEAD),
+        )
+        self.assertEqual(
+            self.api.calls,
+            [("GET", f"{ROOT}/actions/runs/202", None)],
+        )
+
+        for change in (
+            {"actor": {"id": 41, "type": "Bot"}},
+            {"actor": {"id": 40, "type": "User"}},
+            {"status": "in_progress"},
+            {"conclusion": "failure"},
+            {"head_repository": {"full_name": "outside/fork"}},
+            {"run_attempt": 1},
+            {"head_branch": "feature/90"},
+        ):
+            with self.subTest(change=change):
+                self.api = API()
+                self.api.data[f"{ROOT}/actions/runs/202"] = {**run, **change}
+                with self.assertRaises(Blocked):
+                    event_pr(self.api, event, "repository_dispatch", repair_bot_id=40)
+        with self.assertRaises(Blocked):
+            event_pr(self.api, event, "repository_dispatch", repair_bot_id=41)
+
     def test_protected_file_policy(self):
         self.assertFalse(protected(FILE))
         self.assertFalse(protected("frontend/features/drafts/editor.tsx"))
         self.assertFalse(protected("frontend/features/drafts/editor.test.tsx"))
-        for path in ("docs/02_DECISIONS.md", "docs/help/AGENTS.md", "docs/help/../x.md",
+        for path in ("docs/02_DECISIONS.md", "docs/help/script.ts", "docs/help/card.tsx",
+                     "frontend/features/drafts/notes.md", "docs/help/AGENTS.md", "docs/help/../x.md",
                      "docs/help/*.md", "docs/help/secret\n.md", "frontend/features/auth/login.tsx",
                      "backend/tenancy/views.py", ".github/workflows/ci.yml", "package.json",
                      "frontend/features/drafts/schema.ts", "docs/help/permissions.md",

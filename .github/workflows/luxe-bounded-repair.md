@@ -1,6 +1,7 @@
 ---
 name: THE LUXE Bounded Repair
 description: Default-disabled single-file repair; human-attested findings and an atomic one-attempt safe output.
+run-name: THE LUXE Bounded Repair for ${{ github.event.workflow_run.head_branch }}
 on:
   workflow_run:
     workflows: [THE LUXE Independent QA, THE LUXE Repair Signal, CI]

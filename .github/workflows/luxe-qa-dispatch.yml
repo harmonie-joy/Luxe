@@ -1,0 +1,32 @@
+name: THE LUXE Repair QA Dispatch
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: ['luxe-pilot/**']
+
+permissions: {}
+
+jobs:
+  dispatch:
+    if: vars.LUXE_GH_AW_QA_ENABLED == 'true' && vars.LUXE_GH_AW_REPAIR_ENABLED == 'true' && github.repository == 'harmonie-joy/Luxe'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: master
+          persist-credentials: false
+          sparse-checkout: |
+            .github/gh-aw-policy.json
+            .github/scripts
+      - name: Revalidate App-authored CI before waking independent QA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QA_ENABLED: ${{ vars.LUXE_GH_AW_QA_ENABLED }}
+          REPAIR_ENABLED: ${{ vars.LUXE_GH_AW_REPAIR_ENABLED }}
+        run: python3 .github/scripts/gh_aw_qa_dispatch.py

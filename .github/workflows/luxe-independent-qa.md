@@ -9,6 +9,9 @@ on:
     workflows: [CI]
     types: [completed]
     branches: ['luxe-pilot/**']
+  repository_dispatch:
+    types: [luxe-repair-ci-complete]
+  bots: ["${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }}", "github-actions[bot]"]
   roles: [admin, maintainer, write]
   reaction: none
   github-token: ${{ secrets.GITHUB_TOKEN }}
