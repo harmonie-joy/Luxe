@@ -212,6 +212,7 @@ def advisory_qa_record(review, pr_number):
 
 
 def qa_preflight(data, policy):
+    require(data["binding"]["ci"].get("passed") is True, "current CI has not passed")
     require(bool(policy["approver_ids"]) and bool(policy["qa_bot_ids"]), "QA identities not configured")
     binding = data["binding"]
     key = fingerprint(binding)

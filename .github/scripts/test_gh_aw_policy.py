@@ -95,6 +95,12 @@ class PolicyTests(unittest.TestCase):
         self.assertEqual(qa_preflight(data, POLICY)["head"], HEAD)
         self.assertTrue(all(call[0] == "GET" for call in self.api.calls))
 
+    def test_qa_preflight_blocks_before_inference_until_all_current_ci_gates_pass(self):
+        data = self.read()
+        data["binding"]["ci"]["passed"] = False
+        with self.assertRaisesRegex(Blocked, "current CI has not passed"):
+            qa_preflight(data, POLICY)
+
     def test_stale_head_base_and_changed_issue(self):
         for mutate in ("head", "base", "issue"):
             with self.subTest(mutate=mutate):
@@ -181,6 +187,17 @@ class PolicyTests(unittest.TestCase):
         self.assertFalse(self.read()["binding"]["ci"]["passed"])
         self.api.data[f"{ROOT}/actions/workflows/ci.yml/runs?event=pull_request&head_sha={HEAD}"] = []
         self.assertFalse(self.read()["binding"]["ci"]["passed"])
+
+    def test_current_master_policy_enables_only_stage_a_with_api_verified_identities(self):
+        from gh_aw_policy import settings
+
+        policy = settings()
+        self.assertIs(policy["qa_enabled"], True)
+        self.assertEqual(policy["approver_ids"], [57563103])
+        self.assertEqual(policy["qa_bot_ids"], [41898282])
+        self.assertEqual(policy["qa_reviewer_ids"], [])
+        self.assertIs(policy["repair_enabled"], False)
+        self.assertIsNone(policy["repair_bot_id"])
 
     def test_source_run_is_reread_and_ambiguous_source_blocks(self):
         run = {"id": 200, "path": ".github/workflows/ci.yml", "repository": {"full_name": REPO},
