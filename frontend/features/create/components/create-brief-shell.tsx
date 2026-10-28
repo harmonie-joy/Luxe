@@ -13,28 +13,121 @@ import {
 import { ApiError } from "@/lib/api/http-client";
 import { draftStudioRoute } from "@/lib/routes";
 import type { BrandProfile } from "@/types/brand-profile";
-import type {
-  CreateBriefPageData,
-  CreateBriefSelectableOption,
-} from "@/data/mock-create-brief";
+import type { CreateBriefDemoData } from "@/data/mock-create-brief";
 import type { CampaignGoal, ContentChannel } from "@/types/content";
 
 interface CreateBriefShellProps {
-  data: CreateBriefPageData;
+  demoData?: CreateBriefDemoData;
+}
+
+interface CreateBriefPageData {
+  workspaces: readonly {
+    id: string;
+    name: string;
+    selected: boolean;
+  }[];
+  brandProfiles: readonly BrandProfile[];
+}
+
+interface CreateBriefSelectableOption<TValue extends string> {
+  value: TValue;
+  label: string;
+  description: string;
 }
 
 interface CreateBriefFormState {
   workspaceId: string;
   brandProfileId: string;
   contentObjective: string;
-  campaignGoal: CampaignGoal;
+  campaignGoal: CampaignGoal | "";
   audience: string;
   angle: string;
   constraints: string;
   targetChannels: ContentChannel[];
 }
 
-function getInitialFormState(data: CreateBriefPageData): CreateBriefFormState {
+const PAGE_HEADER = {
+  eyebrow: "Create Brief",
+  title: "Shape the strategy before the first draft exists.",
+  description:
+    "Select the workspace and brand voice, then capture the objective, audience, angle, constraints, and channels that will guide every downstream draft.",
+};
+
+const CAMPAIGN_GOAL_OPTIONS = [
+  {
+    value: "educate",
+    label: "Educate",
+    description: "Clarify a concept, launch context, or client narrative.",
+  },
+  {
+    value: "announce",
+    label: "Announce",
+    description: "Reveal a launch, partnership, event, or milestone.",
+  },
+  {
+    value: "promote",
+    label: "Promote",
+    description: "Drive attention toward a collection, offer, or service.",
+  },
+  {
+    value: "fundraise",
+    label: "Fundraise",
+    description: "Support a development, donor, or patronage initiative.",
+  },
+  {
+    value: "thought_leadership",
+    label: "Thought Leadership",
+    description: "Position the brand as a trusted editorial authority.",
+  },
+] as const satisfies readonly CreateBriefSelectableOption<CampaignGoal>[];
+
+const CHANNEL_OPTIONS = [
+  {
+    value: "linkedin",
+    label: "LinkedIn",
+    description: "Executive-facing brand and partnership messaging.",
+  },
+  {
+    value: "instagram",
+    label: "Instagram",
+    description: "Visual-first storytelling and campaign moments.",
+  },
+  {
+    value: "blog",
+    label: "Blog",
+    description: "Long-form editorial framing and brand narrative.",
+  },
+  {
+    value: "newsletter",
+    label: "Newsletter",
+    description: "Direct client and prospect communication.",
+  },
+  {
+    value: "x",
+    label: "X",
+    description: "Timely short-form commentary and launch signals.",
+  },
+  {
+    value: "short_video",
+    label: "Short Video",
+    description: "Motion-led storytelling for teaser or reveal moments.",
+  },
+] as const satisfies readonly CreateBriefSelectableOption<ContentChannel>[];
+
+function getEmptyFormState(): CreateBriefFormState {
+  return {
+    workspaceId: "",
+    brandProfileId: "",
+    contentObjective: "",
+    campaignGoal: "",
+    audience: "",
+    angle: "",
+    constraints: "",
+    targetChannels: [],
+  };
+}
+
+function getDemoFormState(data: CreateBriefDemoData): CreateBriefFormState {
   return {
     workspaceId: data.brief.workspaceId,
     brandProfileId: data.brief.brandProfileId,
@@ -48,42 +141,43 @@ function getInitialFormState(data: CreateBriefPageData): CreateBriefFormState {
 }
 
 function buildLivePageData(
-  fallbackData: CreateBriefPageData,
   session: Awaited<ReturnType<typeof getSession>>,
   profiles: readonly BrandProfile[],
 ): CreateBriefPageData {
-  const workspaces =
-    session.workspaces.length > 0
-      ? session.workspaces.map((workspace) => ({
-          id: workspace.id,
-          name: workspace.name,
-          selected: workspace.id === session.activeWorkspaceId,
-        }))
-      : fallbackData.workspaces;
+  if (session.workspaces.length === 0) {
+    throw new Error("No workspace is available for this session.");
+  }
+  const workspaceIds = new Set(session.workspaces.map((workspace) => workspace.id));
+  const availableProfiles = profiles.filter((profile) =>
+    workspaceIds.has(profile.workspaceId),
+  );
+  if (availableProfiles.length === 0) {
+    throw new Error("No brand voice profiles are available for this session.");
+  }
+  return {
+    workspaces: session.workspaces.map((workspace) => ({
+      id: workspace.id,
+      name: workspace.name,
+      selected: workspace.id === session.activeWorkspaceId,
+    })),
+    brandProfiles: availableProfiles,
+  };
+}
 
-  const preferredWorkspaceId =
-    session.activeWorkspaceId ??
-    workspaces.find((workspace) => workspace.selected)?.id ??
-    fallbackData.brief.workspaceId;
-
-  const preferredProfile = profiles.find(
-    (profile) => profile.workspaceId === preferredWorkspaceId,
+function getInitialLiveFormState(
+  data: CreateBriefPageData,
+): CreateBriefFormState {
+  const selectedWorkspace =
+    data.workspaces.find((workspace) => workspace.selected) ??
+    data.workspaces[0];
+  const selectedProfile = data.brandProfiles.find(
+    (profile) => profile.workspaceId === selectedWorkspace?.id,
   );
 
   return {
-    ...fallbackData,
-    workspaces,
-    brandProfiles: profiles.length > 0 ? profiles : fallbackData.brandProfiles,
-    brief: {
-      ...fallbackData.brief,
-      workspaceId: preferredWorkspaceId,
-      brandProfileId:
-        preferredProfile?.id ??
-        fallbackData.brandProfiles.find(
-          (profile) => profile.workspaceId === preferredWorkspaceId,
-        )?.id ??
-        fallbackData.brief.brandProfileId,
-    },
+    ...getEmptyFormState(),
+    workspaceId: selectedWorkspace?.id ?? "",
+    brandProfileId: selectedProfile?.id ?? "",
   };
 }
 
@@ -168,19 +262,29 @@ function renderSelectableOptions<TValue extends CampaignGoal | ContentChannel>(
   ));
 }
 
-export function CreateBriefShell({ data }: CreateBriefShellProps) {
+export function CreateBriefShell({ demoData }: CreateBriefShellProps) {
   const router = useRouter();
-  const [pageData, setPageData] = useState<CreateBriefPageData>(data);
+  const [pageData, setPageData] = useState<CreateBriefPageData>(() =>
+    demoData
+      ? {
+          workspaces: demoData.workspaces,
+          brandProfiles: demoData.brandProfiles,
+        }
+      : { workspaces: [], brandProfiles: [] },
+  );
   const [formState, setFormState] = useState<CreateBriefFormState>(() =>
-    getInitialFormState(data),
+    demoData ? getDemoFormState(demoData) : getEmptyFormState(),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [hasLoadedLiveData, setHasLoadedLiveData] = useState(false);
+  const [bootstrapStatus, setBootstrapStatus] = useState<
+    "loading" | "ready" | "error" | "demo"
+  >(demoData ? "demo" : "loading");
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (hasLoadedLiveData) return;
+    if (demoData) return;
 
     let isActive = true;
 
@@ -193,16 +297,21 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
 
         if (!isActive) return;
 
-        const nextPageData = buildLivePageData(data, session, profiles);
+        const nextPageData = buildLivePageData(session, profiles);
         setPageData(nextPageData);
-        setFormState(getInitialFormState(nextPageData));
+        const initialContext = getInitialLiveFormState(nextPageData);
+        setFormState((current) => ({
+          ...current,
+          workspaceId: initialContext.workspaceId,
+          brandProfileId: initialContext.brandProfileId,
+        }));
+        setBootstrapStatus("ready");
       } catch {
         if (isActive) {
-          setPageData(data);
-        }
-      } finally {
-        if (isActive) {
-          setHasLoadedLiveData(true);
+          setBootstrapStatus("error");
+          setBootstrapError(
+            "Live workspace and brand voice data is unavailable. Brief saving is disabled.",
+          );
         }
       }
     }
@@ -212,7 +321,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
     return () => {
       isActive = false;
     };
-  }, [data, hasLoadedLiveData]);
+  }, [demoData]);
 
   const availableProfiles = useMemo(
     () =>
@@ -224,7 +333,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
 
   const selectedWorkspaceName = getWorkspaceName(pageData, formState.workspaceId);
   const selectedBrandProfile = getBrandProfile(pageData, formState.brandProfileId);
-  const selectedChannelLabels = pageData.channelOptions
+  const selectedChannelLabels = CHANNEL_OPTIONS
     .filter((option) => formState.targetChannels.includes(option.value))
     .map((option) => option.label);
 
@@ -287,9 +396,13 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (bootstrapStatus !== "ready") return;
+
     const validationError = validateForm(formState, availableProfiles);
-    if (validationError) {
-      setFormMessage(validationError);
+    if (validationError || !formState.campaignGoal) {
+      setFormMessage(
+        validationError ?? "Choose a campaign goal before saving the brief.",
+      );
       setApiError(null);
       return;
     }
@@ -300,8 +413,10 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
       content_objective: formState.contentObjective.trim(),
       campaign_goal: formState.campaignGoal,
       audience: formState.audience.trim(),
-      angle: formState.angle.trim(),
-      constraints: formState.constraints.trim(),
+      ...(formState.angle.trim() ? { angle: formState.angle.trim() } : {}),
+      ...(formState.constraints.trim()
+        ? { constraints: formState.constraints.trim() }
+        : {}),
       target_channels: formState.targetChannels,
     };
 
@@ -323,9 +438,9 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
   return (
     <div className="flex min-h-full flex-col gap-8">
       <header className="max-w-4xl">
-        <p className="luxe-eyebrow">{pageData.pageHeader.eyebrow}</p>
-        <h1 className="luxe-page-title mt-3">{pageData.pageHeader.title}</h1>
-        <p className="luxe-page-description mt-4">{pageData.pageHeader.description}</p>
+        <p className="luxe-eyebrow">{PAGE_HEADER.eyebrow}</p>
+        <h1 className="luxe-page-title mt-3">{PAGE_HEADER.title}</h1>
+        <p className="luxe-page-description mt-4">{PAGE_HEADER.description}</p>
       </header>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -337,6 +452,21 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               Briefs define what you want to create and why. Draft Studio turns
               that brief into editable channel drafts.
             </p>
+            {bootstrapStatus === "loading" ? (
+              <p className="luxe-form-help mt-2" role="status">
+                Loading your workspace and brand voice profiles...
+              </p>
+            ) : null}
+            {bootstrapError ? (
+              <p className="luxe-preview-stat p-4 text-sm font-medium text-luxe-danger" role="alert">
+                {bootstrapError}
+              </p>
+            ) : null}
+            {bootstrapStatus === "demo" ? (
+              <p className="luxe-preview-stat p-4 text-sm font-medium" role="status">
+                Demo data - saving is disabled; no API calls will be made.
+              </p>
+            ) : null}
           </div>
 
           <form
@@ -409,9 +539,9 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               <span className="luxe-form-label">Campaign goal</span>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {renderSelectableOptions(
-                  pageData.campaignGoalOptions,
+                  CAMPAIGN_GOAL_OPTIONS,
                   "campaignGoal",
-                  [formState.campaignGoal],
+                  formState.campaignGoal ? [formState.campaignGoal] : [],
                   (value) => handleCampaignGoalChange(value),
                 )}
               </div>
@@ -465,7 +595,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               <span className="luxe-form-label">Target channels</span>
               <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
                 {renderSelectableOptions(
-                  pageData.channelOptions,
+                  CHANNEL_OPTIONS,
                   "targetChannels",
                   formState.targetChannels,
                   handleTargetChannelChange,
@@ -493,7 +623,7 @@ export function CreateBriefShell({ data }: CreateBriefShellProps) {
               </p>
               <button
                 className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isSubmitting}
+                disabled={isSubmitting || bootstrapStatus !== "ready"}
                 type="submit"
               >
                 {isSubmitting ? "Saving brief..." : "Save brief"}
