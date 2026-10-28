@@ -13,8 +13,8 @@ import urllib.request
 
 from autonomous_development import Blocked, GitHub, REPO, ROOT, decode, encode, positive_int
 from gh_aw_policy import (
-    CHECKS, QA_PATH, REPAIR_PATH, SHA, event_pr, fingerprint, has_review_evidence,
-    protected, qa_record, require, settings, snapshot,
+    CHECKS, QA_PATH, REPAIR_PATH, SHA, advisory_qa_record, event_pr, fingerprint,
+    has_review_evidence, protected, qa_record, require, settings, snapshot,
 )
 
 
@@ -59,6 +59,7 @@ def repair_binding(api, data, policy, *, allow_reservation=None):
     require(binding["ci"]["passed"], "current CI is not fully successful")
     bots = [r for r in reviews if r.get("user", {}).get("id") in policy["qa_bot_ids"]
             and r["user"].get("type") == "Bot"]
+    bots = [r for r in bots if not advisory_qa_record(r, binding["pr"])]
     require(bool(bots), "missing independent advisory QA")
     qa = max(bots, key=lambda r: r["id"])
     report = qa_record(qa)
