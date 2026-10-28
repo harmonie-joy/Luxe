@@ -5,7 +5,8 @@ import { ContentItemDashboard } from "./content-item-dashboard";
 import { CreatorSessionProvider } from "./creator-session";
 import { mockSession } from "@/test/setup";
 
-const initial = { item: { id: "post-1", projectId: "project-1", title: "Our launch", goal: "Explain our purpose", workflowStage: "idea", nextAction: "Choose an angle", decisions: ["Stay thoughtful"], openQuestions: ["Who first?"], revision: 1 }, checkpoint: { id: "checkpoint-1", revision: 1, createdAt: "2026-10-18T10:00:00Z" }, brandVoice: { id: "voice-1", version: 2, isApproved: true } };
+const pinnedTemplate = { id: "template-v1", name: "Synthetic LinkedIn structure", channel: "linkedin", version: 1 };
+const initial = { item: { id: "post-1", projectId: "project-1", brandProfileId: "profile-1", brandVoiceId: "voice-1", channel: "linkedin", contentTemplate: pinnedTemplate, title: "Our launch", goal: "Explain our purpose", workflowStage: "idea", nextAction: "Choose an angle", decisions: ["Stay thoughtful"], openQuestions: ["Who first?"], revision: 1 }, checkpoint: { id: "checkpoint-1", revision: 1, createdAt: "2026-10-18T10:00:00Z" }, brandVoice: { id: "voice-1", version: 2, isApproved: true } };
 afterEach(() => vi.unstubAllGlobals());
 it("saves the full checkpoint snapshot with revision and UUID and restores acknowledged state", async () => {
   let current = initial;
@@ -20,6 +21,8 @@ it("saves the full checkpoint snapshot with revision and UUID and restores ackno
   vi.stubGlobal("fetch", fetch);
   render(<CreatorSessionProvider session={mockSession}><ContentItemDashboard id="post-1" /></CreatorSessionProvider>);
   expect(await screen.findByRole("heading", { name: "Our launch" })).toBeTruthy();
+  expect(screen.getByText("Synthetic LinkedIn structure · LinkedIn · version 1")).toBeTruthy();
+  expect(screen.getByText("Template ID: template-v1")).toBeTruthy();
   const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Edit checkpoint" }));
   await user.clear(screen.getByLabelText("Content goal"));
@@ -170,4 +173,12 @@ it("allows view-only roles to inspect pinned voice context without checkpoint wr
   render(<CreatorSessionProvider session={{ ...mockSession, workspaces: [{ ...mockSession.workspaces[0], role: "reviewer" }] }}><ContentItemDashboard id="post-1" /></CreatorSessionProvider>);
   expect(await screen.findByText(/Acceptance unverified/)).toBeTruthy();
   expect((screen.getByRole("button", { name: "Edit checkpoint" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+it("labels legacy null-template items explicitly and keeps checkpoint editing available", async () => {
+  vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("projects") ? Response.json([{ id: "project-1" }]) : Response.json({ ...initial, item: { ...initial.item, contentTemplate: null } })));
+  render(<CreatorSessionProvider session={mockSession}><ContentItemDashboard id="post-1" /></CreatorSessionProvider>);
+  expect(await screen.findByText("Legacy post · no template was pinned")).toBeTruthy();
+  expect(screen.queryByText(/Template ID:/)).toBeNull();
+  expect((screen.getByRole("button", { name: "Edit checkpoint" }) as HTMLButtonElement).disabled).toBe(false);
 });

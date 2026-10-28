@@ -14,6 +14,8 @@ test("foreign workspace cannot list, read, restore, checkpoint or accept another
     const items = await other.request.get(`${api}/api/content-items/?workspace=${fixtures.a.workspaceId}`);
     expect(items.status()).toBe(200);
     expect(await items.json()).toEqual([]);
+    const templates = await other.request.get(`${api}/api/content-templates/?workspace=${fixtures.a.workspaceId}`);
+    expect(templates.status()).toBe(403);
     for (const suffix of ["", "context/"]) {
       const denied = await other.request.get(`${api}/api/content-items/${created.item.id}/${suffix}`);
       expect(denied.status()).toBe(404);
@@ -34,6 +36,49 @@ test("foreign workspace cannot list, read, restore, checkpoint or accept another
     expect(fixtures.read().approvals).toEqual([{ voice_id: fixtures.a.voiceId, workspace_id: fixtures.a.workspaceId, approved_by_id: fixtures.a.userId }]);
     await screenshot(other, testInfo, "foreign-post-unavailable");
   } finally { await attach(); await context.close(); }
+});
+
+test("a server-rejected stale template preserves the form until the creator reloads and reselects", async ({ page, fixtures }) => {
+  await login(page, fixtures);
+  const templatesResponse = page.waitForResponse((response) => response.url() === `${api}/api/content-templates/?workspace=${fixtures.a.workspaceId}` && response.request().method() === "GET");
+  await page.getByRole("link", { name: "Create With Me", exact: true }).click();
+  const listedTemplates = await templatesResponse;
+  expect(listedTemplates.status()).toBe(200);
+  expect(await listedTemplates.json()).toContainEqual(expect.objectContaining({ id: fixtures.template.id, version: 1 }));
+  await page.getByRole("combobox", { name: "LinkedIn content template", exact: true }).selectOption(fixtures.template.id);
+  await page.getByRole("textbox", { name: "New project name", exact: true }).fill("Synthetic stale-template project");
+  await page.getByRole("textbox", { name: "Title", exact: true }).fill("Stale selection recovery");
+  await page.getByRole("textbox", { name: "Content goal", exact: true }).fill("Keep this creator input intact.");
+  await page.getByRole("textbox", { name: "Next action", exact: true }).fill("Choose the current template.");
+  await page.getByRole("button", { name: "Review and accept version 2", exact: true }).click();
+  await expect(page.getByText("Accepted version 2 for this workspace.", { exact: true })).toBeVisible();
+
+  const replacement = fixtures.advanceTemplate();
+  const rejectedRequest = page.waitForResponse((response) => response.url() === `${api}/api/content-items/` && response.request().method() === "POST");
+  await page.getByRole("button", { name: "Create saved post", exact: true }).click();
+  const rejected = await rejectedRequest;
+  expect(rejected.status()).toBe(400);
+  expect(await rejected.json()).toHaveProperty("content_template");
+  await expect(page.locator("main").getByRole("alert")).toContainText("The selected template is no longer active.");
+  await expect(page.getByRole("textbox", { name: "Title", exact: true })).toHaveValue("Stale selection recovery");
+  await expect(page.getByRole("textbox", { name: "Content goal", exact: true })).toHaveValue("Keep this creator input intact.");
+  await expect(page.getByRole("button", { name: "Create saved post", exact: true })).toBeDisabled();
+  expect(fixtures.read().items).toEqual([]);
+
+  const refreshedTemplates = page.waitForResponse((response) => response.url() === `${api}/api/content-templates/?workspace=${fixtures.a.workspaceId}` && response.request().method() === "GET");
+  await page.getByRole("button", { name: "Reload templates", exact: true }).click();
+  expect(await (await refreshedTemplates).json()).toContainEqual(expect.objectContaining(replacement));
+  const templateSelect = page.getByRole("combobox", { name: "LinkedIn content template", exact: true });
+  await expect(templateSelect).toHaveValue("");
+  await templateSelect.selectOption(replacement.id);
+
+  const createdRequest = page.waitForResponse((response) => response.url() === `${api}/api/content-items/` && response.request().method() === "POST");
+  await page.getByRole("button", { name: "Create saved post", exact: true }).click();
+  const created = await createdRequest;
+  expect(created.status()).toBe(201);
+  const body = await created.json();
+  expect(body.item.contentTemplate).toMatchObject(replacement);
+  expect(fixtures.read().items).toEqual([expect.objectContaining({ content_template_id: replacement.id, content_template__version: replacement.version })]);
 });
 
 test("independent sessions expose stale revision and conflicting retry without losing edits or overwriting checkpoints", async ({ page, fixtures, browser }, testInfo) => {
@@ -108,6 +153,7 @@ test("rapid creation submits once; disconnected creation requires deliberate rec
   // New form: approval already exists, but acceptance remains an explicit UI step.
   await page.getByRole("link", { name: "Back to Creator Home", exact: true }).click();
   await page.getByRole("link", { name: "Create With Me", exact: true }).click();
+  await page.getByRole("combobox", { name: "LinkedIn content template", exact: true }).selectOption(fixtures.template.id);
   await page.getByRole("textbox", { name: "Title", exact: true }).fill("Disconnected creation retry");
   await page.getByRole("textbox", { name: "Content goal", exact: true }).fill("Preserve this form for a deliberate retry");
   await page.getByRole("textbox", { name: "Next action", exact: true }).fill("Check saved posts first");
