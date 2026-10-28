@@ -4,6 +4,11 @@ from django.test import TransactionTestCase
 
 
 class ExecutionMigrationTest(TransactionTestCase):
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
     def test_existing_brief_and_draft_survive_ia1_migration(self):
         executor = MigrationExecutor(connection)
         before = [("content", "0004_add_approval"), ("brand", "0005_seed_voice_from_flat_fields")]

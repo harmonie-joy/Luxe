@@ -1,10 +1,23 @@
+from unittest import skipUnless
+
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
+from django.test import TransactionTestCase
 from rest_framework.test import APITestCase
 
-from brand.models import BrandProfile
+from brand.models import BrandProfile, BrandVoice, BrandVoiceApproval
 from tenancy.models import Membership, Workspace
 
-from .models import Approval, ContentBrief, ContentDraft, ScheduledContent
+from .models import (
+    Approval,
+    ContentBrief,
+    ContentDraft,
+    ContentItem,
+    ContentTemplate,
+    Project,
+    ScheduledContent,
+)
 
 User = get_user_model()
 
@@ -12,6 +25,8 @@ BRIEFS_URL = "/api/content-briefs/"
 DRAFTS_URL = "/api/content-drafts/"
 SCHEDULED_CONTENT_URL = "/api/scheduled-content/"
 APPROVALS_URL = "/api/approvals/"
+CONTENT_ITEMS_URL = "/api/content-items/"
+CONTENT_TEMPLATES_URL = "/api/content-templates/"
 
 
 def brief_detail_url(brief_id):
@@ -567,3 +582,315 @@ class ContentBriefAPITest(APITestCase):
                 "createdAt",
             },
         )
+
+
+class ContentTemplateAPITest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="template_writer", password="template-test-password"
+        )
+        self.reader = User.objects.create_user(
+            username="template_reader", password="template-test-password"
+        )
+        self.outsider = User.objects.create_user(
+            username="template_outsider", password="template-test-password"
+        )
+        self.workspace = Workspace.objects.create(name="Template workspace")
+        self.other_workspace = Workspace.objects.create(name="Other template workspace")
+        Membership.objects.create(
+            user=self.user, workspace=self.workspace, role=Membership.Role.EDITOR
+        )
+        Membership.objects.create(
+            user=self.reader, workspace=self.workspace, role=Membership.Role.VIEWER
+        )
+        Membership.objects.create(
+            user=self.outsider,
+            workspace=self.other_workspace,
+            role=Membership.Role.EDITOR,
+        )
+        self.profile = BrandProfile.objects.create(
+            workspace=self.workspace, name="Template brand"
+        )
+        self.voice = BrandVoice.objects.create(
+            brand_profile=self.profile, version=1, is_active=True
+        )
+        BrandVoiceApproval.objects.create(
+            workspace=self.workspace,
+            voice=self.voice,
+            approved_by=self.user,
+            approved_by_identifier=str(self.user.pk),
+        )
+        self.project = Project.objects.create(
+            workspace=self.workspace,
+            name="Template project",
+            created_by=self.user,
+        )
+        self.template = ContentTemplate.objects.get(
+            key="linkedin_text_post", version=1
+        )
+
+    def create_item(self, content_template=None):
+        payload = {
+            "project": str(self.project.id),
+            "brand_profile": str(self.profile.id),
+            "brand_voice": str(self.voice.id),
+            "title": "LinkedIn post",
+            "goal": "Share a useful observation",
+            "workflow_stage": "idea",
+            "next_action": "Draft the opening",
+            "decisions": [],
+            "open_questions": [],
+        }
+        if content_template is not None:
+            payload["content_template"] = str(content_template)
+        return self.client.post(CONTENT_ITEMS_URL, payload, format="json")
+
+    def test_workspace_member_can_list_active_system_templates(self):
+        inactive = ContentTemplate.objects.create(
+            key="retired_linkedin_template",
+            name="Retired LinkedIn template",
+            channel=ContentTemplate.Channel.LINKEDIN,
+            version=1,
+            body="[Retired]",
+            is_active=False,
+        )
+        self.client.force_authenticate(user=self.reader)
+
+        response = self.client.get(
+            CONTENT_TEMPLATES_URL, {"workspace": self.workspace.id}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [template["id"] for template in response.data],
+            [str(self.template.id)],
+        )
+        self.assertEqual(response.data[0]["channel"], "linkedin")
+        self.assertNotIn(str(inactive.id), [template["id"] for template in response.data])
+        self.assertIn("[Opening:", response.data[0]["body"])
+
+    def test_template_list_requires_membership_in_requested_workspace(self):
+        self.client.force_authenticate(user=self.outsider)
+
+        response = self.client.get(
+            CONTENT_TEMPLATES_URL, {"workspace": self.workspace.id}
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_template_list_requires_authentication_and_workspace(self):
+        self.assertIn(
+            self.client.get(CONTENT_TEMPLATES_URL).status_code, (401, 403)
+        )
+        self.client.force_authenticate(user=self.reader)
+
+        response = self.client.get(CONTENT_TEMPLATES_URL)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("workspace", response.data)
+
+    def test_new_item_pins_template_and_context_restore_exposes_exact_version(self):
+        self.client.force_authenticate(user=self.user)
+        created = self.create_item(self.template.id)
+
+        self.assertEqual(created.status_code, 201, created.data)
+        item = created.data["item"]
+        expected_template = {
+            "id": str(self.template.id),
+            "name": self.template.name,
+            "channel": "linkedin",
+            "version": 1,
+        }
+        self.assertEqual(item["channel"], "linkedin")
+        self.assertEqual(item["contentTemplate"], expected_template)
+        self.assertEqual(
+            ContentItem.objects.get(pk=item["id"]).content_template_id,
+            self.template.id,
+        )
+
+        self.template.is_active = False
+        self.template.save(update_fields=["is_active"])
+        ContentTemplate.objects.create(
+            key=self.template.key,
+            name=self.template.name,
+            channel=self.template.channel,
+            version=2,
+            body="[A newer generic structure]",
+        )
+
+        restored = self.client.get(
+            f"{CONTENT_ITEMS_URL}{item['id']}/context/"
+        )
+
+        self.assertEqual(restored.status_code, 200, restored.data)
+        self.assertEqual(restored.data["item"]["channel"], "linkedin")
+        self.assertEqual(restored.data["item"]["contentTemplate"], expected_template)
+
+    def test_legacy_item_returns_linkedin_and_null_template(self):
+        item = ContentItem.objects.create(
+            project=self.project,
+            brand_profile=self.profile,
+            brand_voice=self.voice,
+            created_by=self.user,
+            title="Legacy LinkedIn item",
+            goal="A pre-template item",
+            next_action="Review",
+        )
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.get(
+            CONTENT_ITEMS_URL, {"workspace": self.workspace.id}
+        )
+
+        self.assertEqual(response.status_code, 200)
+        item_data = next(value for value in response.data if value["id"] == str(item.id))
+        self.assertEqual(item_data["channel"], "linkedin")
+        self.assertIsNone(item_data["contentTemplate"])
+
+    def test_new_item_requires_a_template(self):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.create_item()
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("content_template", response.data)
+        self.assertEqual(ContentItem.objects.count(), 0)
+
+    def test_unknown_inactive_and_incompatible_templates_are_rejected(self):
+        self.client.force_authenticate(user=self.user)
+        unknown = self.create_item("00000000-0000-0000-0000-000000000001")
+        self.assertEqual(unknown.status_code, 400)
+
+        inactive_template = ContentTemplate.objects.create(
+            key="inactive_linkedin_template",
+            name="Inactive LinkedIn template",
+            channel=ContentTemplate.Channel.LINKEDIN,
+            version=1,
+            body="[Inactive]",
+            is_active=False,
+        )
+        inactive = self.create_item(inactive_template.id)
+        self.assertEqual(inactive.status_code, 400)
+        self.assertIn("content_template", inactive.data)
+
+        incompatible_template = ContentTemplate.objects.create(
+            key="incompatible_template",
+            name="Incompatible template",
+            channel="instagram",
+            version=1,
+            body="[Not LinkedIn]",
+        )
+        incompatible = self.create_item(incompatible_template.id)
+        self.assertEqual(incompatible.status_code, 400)
+        self.assertIn("content_template", incompatible.data)
+        self.assertEqual(ContentItem.objects.count(), 0)
+
+    def test_non_linkedin_channel_is_rejected_and_writer_role_remains_required(self):
+        self.client.force_authenticate(user=self.user)
+        valid_item = self.create_item(self.template.id)
+        self.assertEqual(valid_item.status_code, 201, valid_item.data)
+        payload = {
+            "project": str(self.project.id),
+            "brand_profile": str(self.profile.id),
+            "brand_voice": str(self.voice.id),
+            "title": "Wrong channel",
+            "goal": "Not LinkedIn",
+            "workflow_stage": "idea",
+            "next_action": "Review",
+            "decisions": [],
+            "open_questions": [],
+            "channel": "instagram",
+            "content_template": str(self.template.id),
+        }
+        invalid_channel = self.client.post(
+            CONTENT_ITEMS_URL, payload, format="json"
+        )
+        self.assertEqual(invalid_channel.status_code, 400)
+
+        self.client.force_authenticate(user=self.reader)
+        denied = self.create_item(self.template.id)
+
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(ContentItem.objects.count(), 1)
+
+
+@skipUnless(connection.vendor == "postgresql", "requires a PostgreSQL test database")
+class ContentTemplateMigrationTest(TransactionTestCase):
+    migrate_from = ("content", "0005_ia1_execution_context")
+    migrate_to = ("content", "0006_contenttemplate")
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_existing_item_backfill_forward_migration_and_rollback(self):
+        MigrationExecutor(connection).migrate([self.migrate_from])
+        old_apps = MigrationExecutor(connection).loader.project_state(
+            [self.migrate_from]
+        ).apps
+        Workspace = old_apps.get_model("tenancy", "Workspace")
+        BrandProfile = old_apps.get_model("brand", "BrandProfile")
+        BrandVoice = old_apps.get_model("brand", "BrandVoice")
+        Project = old_apps.get_model("content", "Project")
+        ContentItem = old_apps.get_model("content", "ContentItem")
+
+        workspace = Workspace.objects.create(name="Legacy template workspace")
+        profile = BrandProfile.objects.create(
+            workspace=workspace, name="Legacy template brand"
+        )
+        voice = BrandVoice.objects.create(
+            brand_profile=profile, version=1, is_active=True
+        )
+        project = Project.objects.create(workspace=workspace, name="Legacy project")
+        item = ContentItem.objects.create(
+            project=project,
+            brand_profile=profile,
+            brand_voice=voice,
+            title="Legacy item",
+            goal="Existing content",
+            next_action="Continue",
+        )
+
+        MigrationExecutor(connection).migrate([self.migrate_to])
+        current_apps = MigrationExecutor(connection).loader.project_state(
+            [self.migrate_to]
+        ).apps
+        CurrentContentItem = current_apps.get_model("content", "ContentItem")
+        self.assertEqual(
+            CurrentContentItem.objects.get(pk=item.pk).channel, "linkedin"
+        )
+        self.assertIsNone(
+            CurrentContentItem.objects.get(pk=item.pk).content_template_id
+        )
+        self.assertEqual(
+            current_apps.get_model("content", "ContentTemplate").objects.filter(
+                key="linkedin_text_post", version=1
+            ).count(),
+            1,
+        )
+
+        MigrationExecutor(connection).migrate([self.migrate_from])
+        rolled_back_apps = MigrationExecutor(connection).loader.project_state(
+            [self.migrate_from]
+        ).apps
+        self.assertEqual(
+            rolled_back_apps.get_model("content", "ContentItem")
+            .objects.get(pk=item.pk)
+            .title,
+            "Legacy item",
+        )
+        self.assertNotIn(
+            "content_contenttemplate",
+            connection.introspection.table_names(),
+        )
+
+        MigrationExecutor(connection).migrate([self.migrate_to])
+        restored_apps = MigrationExecutor(connection).loader.project_state(
+            [self.migrate_to]
+        ).apps
+        restored_item = restored_apps.get_model("content", "ContentItem").objects.get(
+            pk=item.pk
+        )
+        self.assertEqual(restored_item.channel, "linkedin")
+        self.assertIsNone(restored_item.content_template_id)

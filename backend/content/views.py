@@ -18,6 +18,7 @@ from .models import (
     ContentBrief,
     ContentDraft,
     ContentItem,
+    ContentTemplate,
     ExecutionCheckpoint,
     Project,
     ScheduledContent,
@@ -29,6 +30,7 @@ from .serializers import (
     ContentDraftSerializer,
     ContentItemReadSerializer,
     ContentItemWriteSerializer,
+    ContentTemplateSerializer,
     ProjectSerializer,
     ScheduledContentSerializer,
     execution_context,
@@ -298,14 +300,44 @@ class ProjectViewSet(viewsets.GenericViewSet):
         return Response(self.get_serializer(project).data, status=status.HTTP_201_CREATED)
 
 
+class ContentTemplateViewSet(viewsets.GenericViewSet):
+    serializer_class = ContentTemplateSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return ContentTemplate.objects.filter(
+            channel=ContentTemplate.Channel.LINKEDIN,
+            is_active=True,
+        )
+
+    def list(self, request):
+        workspace_id = _list_workspace(request)
+        if not Membership.objects.filter(
+            user=request.user,
+            workspace_id=workspace_id,
+        ).exists():
+            raise PermissionDenied(
+                "You do not have permission to list templates for this workspace."
+            )
+        return Response(self.get_serializer(self.get_queryset(), many=True).data)
+
+
 class ContentItemViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return ContentItem.objects.select_related("project", "brand_profile", "brand_voice").filter(
-            project__workspace__memberships__user=self.request.user,
-            brand_profile__workspace_id=F("project__workspace_id"),
-            brand_voice__brand_profile_id=F("brand_profile_id"),
+        return (
+            ContentItem.objects.select_related(
+                "project",
+                "brand_profile",
+                "brand_voice",
+                "content_template",
+            )
+            .filter(
+                project__workspace__memberships__user=self.request.user,
+                brand_profile__workspace_id=F("project__workspace_id"),
+                brand_voice__brand_profile_id=F("brand_profile_id"),
+            )
         )
 
     def list(self, request):
@@ -326,6 +358,24 @@ class ContentItemViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         _require_writer(request.user, serializer.validated_data["project"].workspace_id)
         with transaction.atomic():
+            template = (
+                ContentTemplate.objects.select_for_update()
+                .filter(pk=serializer.validated_data["content_template"].pk)
+                .first()
+            )
+            if (
+                template is None
+                or not template.is_active
+                or template.channel != ContentItem.Channel.LINKEDIN
+                or serializer.validated_data["channel"] != ContentItem.Channel.LINKEDIN
+            ):
+                raise APIValidationError(
+                    {
+                        "content_template": (
+                            "Select an active template compatible with the LinkedIn channel."
+                        )
+                    }
+                )
             profile = BrandProfile.objects.select_for_update().get(
                 pk=serializer.validated_data["brand_profile"].pk
             )
@@ -345,7 +395,11 @@ class ContentItemViewSet(viewsets.GenericViewSet):
                 raise APIValidationError(
                     {"brand_voice": "The selected voice is not an active, human-approved voice for this workspace."}
                 )
-            item = serializer.save(created_by=request.user)
+            item = serializer.save(
+                created_by=request.user,
+                channel=ContentItem.Channel.LINKEDIN,
+                content_template=template,
+            )
             checkpoint = ExecutionCheckpoint.objects.create(
                 content_item=item,
                 revision=1,
@@ -367,7 +421,7 @@ class ContentItemViewSet(viewsets.GenericViewSet):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         with transaction.atomic():
-            item = self.get_queryset().select_for_update().get(pk=item.pk)
+            item = self.get_queryset().select_for_update(of=("self",)).get(pk=item.pk)
             prior = item.checkpoints.filter(client_request_id=data["client_request_id"]).first()
             if prior:
                 snapshot_matches = prior.revision == data["expected_revision"] + 1 and all(
