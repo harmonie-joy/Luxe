@@ -190,6 +190,41 @@ class Approval(models.Model):
         return f"Approval for {self.draft} by {self.user} ({self.role})"
 
 
+class ContentTemplate(models.Model):
+    class Channel(models.TextChoices):
+        LINKEDIN = "linkedin", "LinkedIn"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    key = models.SlugField(max_length=100)
+    name = models.CharField(max_length=200)
+    channel = models.CharField(max_length=32, choices=Channel.choices)
+    version = models.PositiveIntegerField()
+    body = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("key", "-version")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["key", "version"],
+                name="unique_content_template_key_version",
+            ),
+            models.UniqueConstraint(
+                fields=["key"],
+                condition=models.Q(is_active=True),
+                name="unique_active_content_template_key",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(version__gte=1),
+                name="content_template_positive_version",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} v{self.version}"
+
+
 class Project(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workspace = models.ForeignKey(Workspace, on_delete=models.CASCADE, related_name="projects")
@@ -207,6 +242,9 @@ class Project(models.Model):
 
 
 class ContentItem(models.Model):
+    class Channel(models.TextChoices):
+        LINKEDIN = "linkedin", "LinkedIn"
+
     class Stage(models.TextChoices):
         IDEA = "idea", "Idea"
         DRAFTING = "drafting", "Drafting"
@@ -215,6 +253,18 @@ class ContentItem(models.Model):
     project = models.ForeignKey(Project, on_delete=models.PROTECT, related_name="content_items")
     brand_profile = models.ForeignKey(BrandProfile, on_delete=models.PROTECT, related_name="content_items")
     brand_voice = models.ForeignKey(BrandVoice, on_delete=models.PROTECT, related_name="content_items")
+    channel = models.CharField(
+        max_length=32,
+        choices=Channel.choices,
+        default=Channel.LINKEDIN,
+    )
+    content_template = models.ForeignKey(
+        ContentTemplate,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="content_items",
+    )
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     title = models.CharField(max_length=200)
     goal = models.TextField()

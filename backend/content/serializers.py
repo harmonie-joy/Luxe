@@ -7,6 +7,7 @@ from .models import (
     ContentBrief,
     ContentDraft,
     ContentItem,
+    ContentTemplate,
     Project,
     ScheduledContent,
 )
@@ -272,17 +273,50 @@ class ProjectSerializer(serializers.ModelSerializer):
         }
 
 
+class ContentTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContentTemplate
+        fields = ["id", "name", "channel", "version", "body"]
+        read_only_fields = fields
+
+    def to_representation(self, instance):
+        return {
+            **content_template_summary(instance),
+            "body": instance.body,
+        }
+
+
+def content_template_summary(template):
+    if template is None:
+        return None
+    return {
+        "id": str(template.id),
+        "name": template.name,
+        "channel": template.channel,
+        "version": template.version,
+    }
+
+
 class ContentItemWriteSerializer(serializers.ModelSerializer):
     goal = serializers.CharField(max_length=5000)
     next_action = serializers.CharField(max_length=500)
     decisions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
     open_questions = serializers.ListField(child=serializers.CharField(max_length=500), max_length=20)
+    channel = serializers.ChoiceField(
+        choices=ContentItem.Channel.choices,
+        default=ContentItem.Channel.LINKEDIN,
+    )
+    content_template = serializers.PrimaryKeyRelatedField(
+        queryset=ContentTemplate.objects.all(),
+        required=True,
+    )
 
     class Meta:
         model = ContentItem
         fields = [
             "project", "brand_profile", "brand_voice", "title", "goal",
             "workflow_stage", "next_action", "decisions", "open_questions",
+            "channel", "content_template",
         ]
 
     def get_fields(self):
@@ -299,9 +333,18 @@ class ContentItemWriteSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         project, profile, voice = attrs["project"], attrs["brand_profile"], attrs["brand_voice"]
+        template = attrs["content_template"]
         if profile.workspace_id != project.workspace_id or voice.brand_profile_id != profile.id:
             raise serializers.ValidationError(
                 "Project, brand profile, and voice must belong to the same workspace and profile."
+            )
+        if not template.is_active:
+            raise serializers.ValidationError(
+                {"content_template": "Select an active content template."}
+            )
+        if template.channel != attrs["channel"]:
+            raise serializers.ValidationError(
+                {"content_template": "Select a template compatible with the LinkedIn channel."}
             )
         if not voice.is_active:
             raise serializers.ValidationError({"brand_voice": "Select the active voice version."})
@@ -336,6 +379,8 @@ class ContentItemReadSerializer(serializers.ModelSerializer):
             "projectId": str(instance.project_id),
             "brandProfileId": str(instance.brand_profile_id),
             "brandVoiceId": str(instance.brand_voice_id),
+            "channel": instance.channel,
+            "contentTemplate": content_template_summary(instance.content_template),
             "title": instance.title,
             "goal": instance.goal,
             "workflowStage": instance.workflow_stage,

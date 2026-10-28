@@ -8,6 +8,7 @@ interface Creator {
   userId: number; email: string; displayName: string; workspaceId: number;
   workspaceName: string; profileId: string; voiceId: string; replacementVoiceId: string;
 }
+interface ContentTemplateFixture { id: string; key: string; name: string; channel: "linkedin"; version: number }
 interface State {
   postgresVersion: number;
   items: Array<Record<string, unknown>>;
@@ -15,8 +16,9 @@ interface State {
   approvals: Array<Record<string, unknown>>;
 }
 export interface Fixtures {
-  a: Creator; b: Creator; password: string;
+  a: Creator; b: Creator; template: ContentTemplateFixture; password: string;
   read: () => State;
+  advanceTemplate: () => Omit<ContentTemplateFixture, "key">;
 }
 
 function database(action: string, namespace: string, input = "") {
@@ -44,7 +46,14 @@ export const test = base.extend<{ fixtures: Fixtures }>({
     const data = JSON.parse(database("seed", namespace, password));
     const attach = safeTimeline(context, testInfo);
     await testInfo.attach("browser-engine", { body: `Chromium ${browser.version()}`, contentType: "text/plain" });
-    try { await provide({ ...data, password, read: () => JSON.parse(database("read", namespace)) }); }
+    try {
+      await provide({
+        ...data,
+        password,
+        read: () => JSON.parse(database("read", namespace)),
+        advanceTemplate: () => JSON.parse(database("advance-template", namespace)),
+      });
+    }
     finally { await attach(); database("cleanup", namespace); }
   },
 });
@@ -69,7 +78,17 @@ export async function post(page: Page, endpoint: string, data: object) {
 }
 
 export async function prepareCreation(page: Page, fixtures: Fixtures, title: string) {
+  const templatesResponse = page.waitForResponse((response) => response.url() === `${api}/api/content-templates/?workspace=${fixtures.a.workspaceId}` && response.request().method() === "GET");
   await page.getByRole("link", { name: "Create With Me", exact: true }).click();
+  const templates = await templatesResponse;
+  expect(templates.status()).toBe(200);
+  expect(await templates.json()).toContainEqual(expect.objectContaining({
+    id: fixtures.template.id,
+    name: fixtures.template.name,
+    channel: fixtures.template.channel,
+    version: fixtures.template.version,
+  }));
+  await page.getByRole("combobox", { name: "LinkedIn content template", exact: true }).selectOption(fixtures.template.id);
   await page.getByRole("textbox", { name: "New project name", exact: true }).fill("Synthetic editorial project");
   await page.getByRole("textbox", { name: "Title", exact: true }).fill(title);
   await page.getByRole("textbox", { name: "Content goal", exact: true }).fill("Explain our evidence-based launch approach.");

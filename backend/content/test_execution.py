@@ -10,7 +10,14 @@ from rest_framework.test import APITestCase
 from brand.models import BrandProfile, BrandVoice, BrandVoiceApproval
 from tenancy.models import Membership, Workspace
 
-from .models import ContentBrief, ContentDraft, ContentItem, ExecutionCheckpoint, Project
+from .models import (
+    ContentBrief,
+    ContentDraft,
+    ContentItem,
+    ContentTemplate,
+    ExecutionCheckpoint,
+    Project,
+)
 from .serializers import ContentItemWriteSerializer
 
 
@@ -26,6 +33,7 @@ class ExecutionAPITest(APITestCase):
         Membership.objects.create(user=self.user, workspace=self.workspace, role=Membership.Role.EDITOR)
         self.profile = BrandProfile.objects.create(workspace=self.workspace, name="Creator brand")
         self.voice = BrandVoice.objects.create(brand_profile=self.profile, version=1, is_active=True)
+        self.template = ContentTemplate.objects.get(key="linkedin_text_post", version=1)
         BrandVoiceApproval.objects.create(
             workspace=self.workspace,
             voice=self.voice,
@@ -50,6 +58,7 @@ class ExecutionAPITest(APITestCase):
             "next_action": "Write an outline",
             "decisions": ["Use a customer example"],
             "open_questions": ["Which example?"],
+            "content_template": str(self.template.id),
         }, format="json")
 
     def save_checkpoint(self, item_id, expected_revision=1, request_id=None, **changes):
@@ -230,6 +239,7 @@ class ExecutionAPITest(APITestCase):
             "next_action": "Write an outline",
             "decisions": [],
             "open_questions": [],
+            "content_template": str(self.template.id),
         }
         rejected = self.client.post(ITEMS_URL, payload, format="json")
         self.assertEqual(rejected.status_code, 400)

@@ -6,6 +6,7 @@ const projectId = "b1b26f01-c87e-4e88-9ea8-c08e69c74b94";
 const itemId = "af7b2241-fb63-45fa-a713-7f896723c285";
 const voiceId = "30889751-eaa2-46da-9898-ed3dd325468f";
 const profileId = "ee9a4bb1-8494-44b9-bcaa-ef6cb63f06ad";
+const template = { id: "6f010256-acfe-41ae-874e-2f96d833550e", name: "Synthetic LinkedIn structure", channel: "linkedin", version: 3, body: "Synthetic template body" };
 const savedAt = "2026-10-18T10:00:00Z";
 const session = {
   user: { id: "qa-user", username: "preview-reviewer", email: "preview@example.com", displayName: "Preview Reviewer" },
@@ -14,7 +15,7 @@ const session = {
 };
 const project = { id: projectId, workspaceId: 1, name: "Synthetic launch project", createdAt: savedAt, updatedAt: savedAt };
 const item = {
-  id: itemId, projectId, brandProfileId: profileId, brandVoiceId: voiceId,
+  id: itemId, projectId, brandProfileId: profileId, brandVoiceId: voiceId, channel: "linkedin", contentTemplate: { id: template.id, name: template.name, channel: template.channel, version: template.version },
   title: "A thoughtful launch: explaining the craft and decisions behind our next chapter",
   goal: "Introduce the next chapter with a clear, grounded explanation of the work behind it.",
   workflowStage: "drafting", nextAction: "Write an opening that connects the launch to a real customer question.",
@@ -34,6 +35,7 @@ test.beforeEach(async ({ page }) => {
     const data: Record<string, unknown> = {
       "/api/auth/me/": session,
       "/api/projects/": [project],
+      "/api/content-templates/": [template],
       "/api/content-items/": [item],
       [`/api/content-items/${itemId}/context/`]: context,
       "/api/brand-profiles/": [{ ...mockBrandVoiceSetup.profile, id: profileId, workspaceId: "1", name: "Synthetic editorial voice", activeVoiceId: voiceId }],
@@ -105,6 +107,7 @@ test("explicit acceptance and creation reach the same saved post home", async ({
   await page.getByRole("textbox", { name: "Title", exact: true }).fill(item.title);
   await page.getByRole("textbox", { name: "Content goal", exact: true }).fill(item.goal);
   await page.getByRole("textbox", { name: "Next action", exact: true }).fill(item.nextAction);
+  await page.getByLabel("LinkedIn content template").selectOption(template.id);
   await expect(page.getByRole("button", { name: "Create saved post", exact: true })).toBeDisabled();
   await page.getByRole("button", { name: "Review and accept version 2", exact: true }).click();
   await page.getByRole("button", { name: "Create saved post", exact: true }).click();
@@ -112,7 +115,7 @@ test("explicit acceptance and creation reach the same saved post home", async ({
   await expect(page.getByRole("heading", { name: item.title, exact: true })).toBeVisible();
   await page.waitForLoadState("networkidle");
   await expect(page).toHaveURL(new RegExp(`/content-items/${itemId}$`));
-  expect(payload).toMatchObject({ project: projectId, brand_profile: profileId, brand_voice: voiceId, title: item.title, goal: item.goal });
+  expect(payload).toMatchObject({ project: projectId, brand_profile: profileId, brand_voice: voiceId, title: item.title, goal: item.goal, channel: "linkedin", content_template: template.id });
 });
 
 test("dirty navigation and conflict reload require deliberate discard", async ({ page }, testInfo) => {

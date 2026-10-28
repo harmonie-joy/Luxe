@@ -1,4 +1,15 @@
 export type WorkflowStage = "idea" | "drafting";
+export type ContentItemChannel = "linkedin";
+
+export interface ContentTemplate {
+  id: string;
+  name: string;
+  channel: ContentItemChannel;
+  version: number;
+  body: string;
+}
+
+export type PinnedContentTemplate = Pick<ContentTemplate, "id" | "name" | "channel" | "version">;
 
 export interface Project {
   id: string;
@@ -21,6 +32,8 @@ export interface ContentItem extends CheckpointSnapshot {
   projectId: string;
   brandProfileId: string;
   brandVoiceId: string;
+  channel: ContentItemChannel;
+  contentTemplate: PinnedContentTemplate | null;
   title: string;
   revision: number;
   createdAt: string;

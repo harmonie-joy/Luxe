@@ -7,7 +7,31 @@ test("creator accepts exact voice, creates and saves a post, then restores Postg
   await screenshot(page, testInfo, "creator-home-desktop");
   const created = await createItem(page, fixtures, "Evidence-led launch post");
   const id = created.item.id;
-  expect(fixtures.read().items).toEqual([expect.objectContaining({ id, project__workspace_id: fixtures.a.workspaceId, brand_voice_id: fixtures.a.voiceId, revision: 1 })]);
+  const pinnedTemplate = { id: fixtures.template.id, name: fixtures.template.name, channel: fixtures.template.channel, version: fixtures.template.version };
+  expect(created.item).toMatchObject({ channel: "linkedin", contentTemplate: pinnedTemplate });
+  expect(fixtures.read().items).toEqual([expect.objectContaining({
+    id,
+    project__workspace_id: fixtures.a.workspaceId,
+    brand_voice_id: fixtures.a.voiceId,
+    content_template_id: fixtures.template.id,
+    content_template__name: fixtures.template.name,
+    content_template__channel: fixtures.template.channel,
+    content_template__version: fixtures.template.version,
+    revision: 1,
+  })]);
+  await expect(page.getByText(`${fixtures.template.name} · LinkedIn · version ${fixtures.template.version}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(`Template ID: ${fixtures.template.id}`, { exact: true })).toBeVisible();
+  const activeTemplate = fixtures.advanceTemplate();
+  expect(activeTemplate.version).toBe(2);
+  const activeTemplatesResponse = await page.request.get(`${api}/api/content-templates/?workspace=${fixtures.a.workspaceId}`);
+  const activeTemplates = await activeTemplatesResponse.json();
+  expect(activeTemplates).toContainEqual(expect.objectContaining(activeTemplate));
+  expect(activeTemplates).not.toContainEqual(expect.objectContaining({ id: fixtures.template.id }));
+  expect(fixtures.read().items).toEqual([expect.objectContaining({
+    id,
+    content_template_id: fixtures.template.id,
+    content_template__version: fixtures.template.version,
+  })]);
   await page.getByRole("button", { name: "Edit checkpoint", exact: true }).click();
   await page.getByRole("textbox", { name: "Content goal", exact: true }).fill("Explain the launch using a concrete customer question.");
   await page.getByRole("combobox", { name: /^Current stage/ }).selectOption("drafting");
@@ -43,6 +67,8 @@ test("creator accepts exact voice, creates and saves a post, then restores Postg
   await page.reload();
   await expect(page.getByRole("status")).toContainText("Saved checkpoint 2");
   await expect(page.getByText(snapshot.goal, { exact: true })).toBeVisible();
+  await expect(page.getByText(`${fixtures.template.name} · LinkedIn · version ${fixtures.template.version}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(`Template ID: ${fixtures.template.id}`, { exact: true })).toBeVisible();
   // A later real activation must not silently rebind existing work.
   expect((await post(page, `/api/brand-voices/${fixtures.a.replacementVoiceId}/activate/`, {})).status()).toBe(200);
   await page.getByRole("link", { name: "Open account page", exact: true }).click();
@@ -69,6 +95,8 @@ test("creator accepts exact voice, creates and saves a post, then restores Postg
     await expect(resumed).toHaveURL(new RegExp(`/content-items/${id}$`));
     await expect(resumed.getByRole("heading", { name: "Evidence-led launch post", exact: true })).toBeVisible();
     await expect(resumed.getByText("Current stage: Drafting · Stored checkpoint 2", { exact: true })).toBeVisible();
+    await expect(resumed.getByText(`${fixtures.template.name} · LinkedIn · version ${fixtures.template.version}`, { exact: true })).toBeVisible();
+    await expect(resumed.getByText(`Template ID: ${fixtures.template.id}`, { exact: true })).toBeVisible();
     await expect(resumed.getByRole("status")).toContainText("Saved checkpoint 2");
     for (const text of [snapshot.goal, snapshot.next_action, ...snapshot.decisions, ...snapshot.open_questions, "Version 2 · Human approved", `Voice ID: ${fixtures.a.voiceId}`]) {
       await expect(resumed.getByText(text, { exact: true })).toBeVisible();

@@ -6,11 +6,11 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { SurfaceCard } from "@/components/ui/surface-card";
 import { AUTH_SESSION_UPDATED_EVENT, bootstrapWorkspace } from "@/lib/api/auth";
 import { getBrandProfiles, getBrandVoices } from "@/lib/api/brand-voice";
-import { approveBrandVoice, createContentItem, createProject, getProjects } from "@/lib/api/creator";
+import { approveBrandVoice, createContentItem, createProject, getContentTemplates, getProjects } from "@/lib/api/creator";
 import { ApiError } from "@/lib/api/http-client";
 import { APP_ROUTES, contentItemRoute } from "@/lib/routes";
 import type { BrandProfile, BrandVoice } from "@/types/brand-profile";
-import type { Project } from "@/types/creator";
+import type { ContentTemplate, Project } from "@/types/creator";
 import { CheckpointFields, checkpointPayload, checkpointValidation, type CheckpointForm } from "./checkpoint-fields";
 import { useCreatorSession } from "./creator-session";
 import { useUnsavedChanges } from "./use-unsaved-changes";
@@ -20,6 +20,10 @@ export function ContentItemCreate() {
   const workspace = session.activeWorkspaceId;
   const router = useRouter();
   const [resources, setResources] = useState<{ projects: Project[]; profiles: BrandProfile[] } | null>(null);
+  const [templates, setTemplates] = useState<ContentTemplate[]>([]);
+  const [templateStatus, setTemplateStatus] = useState<"loading" | "ready" | "empty" | "unavailable" | "unauthorized">("loading");
+  const [templateId, setTemplateId] = useState("");
+  const [templateStale, setTemplateStale] = useState(false);
   const [profileId, setProfileId] = useState("");
   const [projectId, setProjectId] = useState("");
   const [projectName, setProjectName] = useState("");
@@ -33,12 +37,15 @@ export function ContentItemCreate() {
   const [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
   const [attempt, setAttempt] = useState(0);
+  const [templateAttempt, setTemplateAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
   const alive = useRef(true);
   const [uncertain, setUncertain] = useState(false);
   const [created, setCreated] = useState(false);
   const canWrite = session.workspaces.some((row) => row.id === workspace && ["owner", "admin", "editor"].includes(row.role));
+  const selectedTemplate = templates.find((row) => row.id === templateId && row.channel === "linkedin");
+  const templateReady = templateStatus === "ready" && Boolean(selectedTemplate) && !templateStale;
   useUnsavedChanges(!created && Boolean(title || form.goal || form.nextAction || form.decisions || form.openQuestions || projectName || form.workflowStage !== "idea"));
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
@@ -63,6 +70,29 @@ export function ContentItemCreate() {
     }).catch(() => { if (!cancelled) setLoadError("Brand Voice is unavailable. Try again before creating a post."); });
     return () => { cancelled = true; };
   }, [profileId, attempt]);
+  useEffect(() => {
+    let cancelled = false;
+    setTemplates([]);
+    setTemplateId("");
+    setTemplateStale(false);
+    setTemplateStatus("loading");
+    if (workspace) getContentTemplates(workspace).then((rows) => {
+      if (cancelled) return;
+      const linkedInTemplates = rows.filter((row) => row.channel === "linkedin");
+      setTemplates(linkedInTemplates);
+      setTemplateStatus(linkedInTemplates.length ? "ready" : "empty");
+    }).catch((failure) => {
+      if (cancelled) return;
+      setTemplateStatus(failure instanceof ApiError && [401, 403].includes(failure.status) ? "unauthorized" : "unavailable");
+    });
+    return () => { cancelled = true; };
+  }, [workspace, templateAttempt]);
+
+  function reloadTemplates() {
+    setTemplateId("");
+    setTemplateStale(false);
+    setTemplateAttempt((current) => current + 1);
+  }
 
   async function acceptVoice() {
     if (!voice || lock.current) return;
@@ -77,7 +107,7 @@ export function ContentItemCreate() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (!workspace || !voice || accepted !== voice.id || lock.current || !canWrite || uncertain) return;
+    if (!workspace || !voice || accepted !== voice.id || !templateReady || !selectedTemplate || lock.current || !canWrite || uncertain) return;
     const validation = checkpointValidation(form);
     if (!title.trim() || (!projectId && !projectName.trim()) || validation) { setError(validation || "Enter a title and project name."); return; }
     lock.current = true; setBusy(true); setError("");
@@ -90,14 +120,19 @@ export function ContentItemCreate() {
         setProjectId(project);
         setResources((current) => current ? { ...current, projects: [...current.projects, savedProject] } : current);
       }
-      const context = await createContentItem({ project, brand_profile: profileId, brand_voice: voice.id, title: title.trim(), ...checkpointPayload(form) });
+      const context = await createContentItem({ project, brand_profile: profileId, brand_voice: voice.id, title: title.trim(), channel: "linkedin", content_template: selectedTemplate.id, ...checkpointPayload(form) });
       if (!alive.current) return;
       setCreated(true);
       router.push(contentItemRoute(context.item.id));
     } catch (failure) {
       if (!alive.current) return;
-      if (!(failure instanceof ApiError) || failure.status >= 500) setUncertain(true);
-      setError(failure instanceof Error ? failure.message : "Creation failed. Your input is preserved.");
+      if (failure instanceof ApiError && failure.status === 400 && failure.message.includes("content_template")) {
+        setTemplateStale(true);
+        setError("");
+      } else {
+        if (!(failure instanceof ApiError) || failure.status >= 500) setUncertain(true);
+        setError(failure instanceof Error ? failure.message : "Creation failed. Your input is preserved.");
+      }
     } finally { lock.current = false; if (alive.current) setBusy(false); }
   }
 
@@ -115,11 +150,18 @@ export function ContentItemCreate() {
         {!canWrite && <p role="status">Your workspace role can view posts. An owner, admin or editor must create posts and accept voice versions.</p>}
         <label className="luxe-form-label block space-y-2">Project<select className="luxe-field h-12 w-full px-4" value={projectId} disabled={busy} onChange={(e) => setProjectId(e.target.value)}>{resources.projects.map((row) => <option key={row.id} value={row.id}>{row.name}</option>)}<option value="">New project</option></select></label>
         {!projectId && <label className="luxe-form-label block space-y-2">New project name<input className="luxe-field h-12 w-full px-4" required maxLength={200} value={projectName} onChange={(e) => setProjectName(e.target.value)} /></label>}
+        <label className="luxe-form-label block space-y-2">LinkedIn content template<select aria-invalid={templateStale} className="luxe-field h-12 w-full px-4" required value={templateId} disabled={busy || templateStatus !== "ready" || templateStale} onChange={(e) => { setTemplateId(e.target.value); setTemplateStale(false); }}><option value="">Choose a template</option>{templates.map((row) => <option key={row.id} value={row.id}>{row.name} · LinkedIn · version {row.version}</option>)}</select></label>
+        {templateStatus === "loading" && <p role="status">Loading LinkedIn templates…</p>}
+        {templateStatus === "empty" && <p role="status">No active LinkedIn templates are available for this workspace.</p>}
+        {templateStatus === "unavailable" && <div className="space-y-2"><p role="alert">Templates are unavailable. Try again before creating a post.</p><button type="button" className="luxe-secondary-action px-4 py-3" onClick={reloadTemplates}>Try templates again</button></div>}
+        {templateStatus === "unauthorized" && <div className="space-y-2"><p role="alert">You are not authorized to list templates for this workspace.</p><button type="button" className="luxe-secondary-action px-4 py-3" onClick={reloadTemplates}>Try templates again</button></div>}
+        {templateStale && <div className="space-y-2"><p role="alert">The selected template is no longer active. Reload templates and choose an active LinkedIn template; your input is preserved.</p><button type="button" className="luxe-secondary-action px-4 py-3" onClick={reloadTemplates}>Reload templates</button></div>}
+        {templateStatus === "ready" && !templateId && <p role="status">Choose an active LinkedIn template before creating this post.</p>}
         <label className="luxe-form-label block space-y-2">Title<input className="luxe-field h-12 w-full px-4" required maxLength={200} value={title} onChange={(e) => setTitle(e.target.value)} /></label>
         <CheckpointFields value={form} onChange={setForm} />
         {error && <p role="alert" className="break-words">{error}</p>}
         {uncertain && <div className="space-y-3" role="alert"><p>The request may have reached the server. Check saved posts and projects before starting again; creation cannot be retried safely automatically. Your input stays here until you choose to leave.</p><Link href={APP_ROUTES.dashboard} target="_blank" rel="noopener" className="luxe-secondary-action inline-block px-4 py-3">Check saved posts in a new tab</Link><button type="button" className="luxe-secondary-action px-4 py-3" onClick={() => { if (window.confirm("Have you checked saved posts and projects? Creating again may duplicate a successful request.")) { setUncertain(false); setAttempt((n) => n + 1); } }}>I checked; allow another attempt</button></div>}
-        <button className="luxe-primary-action luxe-focus-ring px-5 py-3" disabled={busy || !voice || accepted !== voice.id || !canWrite || uncertain} type="submit">{busy ? "Working…" : "Create saved post"}</button>
+        <button className="luxe-primary-action luxe-focus-ring px-5 py-3" disabled={busy || !voice || accepted !== voice.id || !templateReady || !canWrite || uncertain} type="submit">{busy ? "Working…" : "Create saved post"}</button>
       </SurfaceCard>
       <SurfaceCard className="min-w-0 space-y-5 break-words">
         <h2 className="luxe-section-title">Pin a Brand Voice</h2>
