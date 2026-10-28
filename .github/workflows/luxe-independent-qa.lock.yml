@@ -55,6 +55,9 @@
 
 name: "THE LUXE Independent QA"
 on:
+  # bots: # Bots processed as bot check in pre-activation job
+  # - ${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }} # Bots processed as bot check in pre-activation job
+  # - github-actions[bot] # Bots processed as bot check in pre-activation job
   pull_request:
     branches:
       - master
@@ -62,6 +65,9 @@ on:
       - opened
       - reopened
       - synchronize
+  repository_dispatch:
+    types:
+      - luxe-repair-ci-complete
   # roles: # Roles processed as role check in pre-activation job
   # - admin # Roles processed as role check in pre-activation job
   # - maintainer # Roles processed as role check in pre-activation job
@@ -295,6 +301,7 @@ jobs:
         id: sanitized
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
+          GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }},github-actions[bot]"
           GH_AW_ALLOWED_DOMAINS: "api.snapcraft.io,archive.ubuntu.com,azure.archive.ubuntu.com,crl.geotrust.com,crl.globalsign.com,crl.identrust.com,crl.sectigo.com,crl.thawte.com,crl.usertrust.com,crl.verisign.com,crl3.digicert.com,crl4.digicert.com,crls.ssl.com,json-schema.org,json.schemastore.org,keyserver.ubuntu.com,ocsp.digicert.com,ocsp.geotrust.com,ocsp.globalsign.com,ocsp.identrust.com,ocsp.sectigo.com,ocsp.ssl.com,ocsp.thawte.com,ocsp.usertrust.com,ocsp.verisign.com,packagecloud.io,packages.cloud.google.com,packages.microsoft.com,ppa.launchpad.net,s.symcb.com,s.symcd.com,security.ubuntu.com,ts-crl.ws.symantec.com,ts-ocsp.ws.symantec.com,www.googleapis.com"
         with:
           script: |
@@ -1974,6 +1981,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           GH_AW_REQUIRED_ROLES: "admin,maintainer,write"
+          GH_AW_ALLOWED_BOTS: "${{ vars.LUXE_REPAIR_APP_BOT_LOGIN }},github-actions[bot]"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

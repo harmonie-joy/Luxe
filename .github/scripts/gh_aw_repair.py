@@ -22,12 +22,15 @@ COMMIT = """mutation($input: CreateCommitOnBranchInput!) {
   createCommitOnBranch(input: $input) { commit { oid } }
 }"""
 MAX_BYTES = 32768
-ATTEMPT_MARKER = "<!-- luxe-autonomy:gh-aw-repair:v1 -->"
+ATTEMPT_MARKER = "<!-- luxe-autonomy:gh-aw-repair-attempt:v1 -->"
+RESERVATION_MARKER = "<!-- luxe-autonomy:gh-aw-repair:v1 -->"
+RUN_TITLE_PREFIX = "THE LUXE Bounded Repair for "
 
 
 def consumed(comments):
     # Even malformed or foreign repair records cause a human hold, not a reset.
     return any(ATTEMPT_MARKER in (c.get("body") or "")
+               or RESERVATION_MARKER in (c.get("body") or "")
                or ("<!-- luxe-autonomy:event:v1 -->" in (c.get("body") or "")
                    and "repair-reserved" in c["body"]) for c in comments)
 
@@ -38,7 +41,62 @@ def evidence_checks(checks, required):
                 and has_review_evidence(c.get("evidence")) for c in checks.values()), "unverified QA checks")
 
 
-def repair_binding(api, data, policy, *, allow_reservation=None):
+def prior_apply_attempt(api, branch, current_run_id):
+    title = RUN_TITLE_PREFIX + branch
+    current = api.request("GET", f"{ROOT}/actions/runs/{current_run_id}")
+    require(current.get("path") == REPAIR_PATH and current.get("event") == "workflow_run"
+            and current.get("id") == current_run_id and current.get("display_title") == title
+            and positive_int(current.get("run_number")) and positive_int(current.get("run_attempt")),
+            "current repair run identity is unverified")
+
+    workflow_file = REPAIR_PATH.rsplit("/", 1)[-1]
+    runs = api.pages(
+        f"{ROOT}/actions/workflows/{workflow_file}/runs?event=workflow_run", "workflow_runs",
+    )
+    relevant = {}
+    seen_numbers = {}
+    for run in runs:
+        require(isinstance(run, dict) and positive_int(run.get("id"))
+                and run.get("path") == REPAIR_PATH and positive_int(run.get("run_number"))
+                and positive_int(run.get("run_attempt"))
+                and isinstance(run.get("display_title"), str) and run["display_title"],
+                "incomplete prior repair run history")
+        prior_id = seen_numbers.setdefault(run["run_number"], run["id"])
+        require(prior_id == run["id"], "ambiguous prior repair run ordering")
+        if run["run_number"] > current["run_number"]:
+            continue
+        if run.get("display_title") != title:
+            continue
+        if run["id"] == current_run_id:
+            require(run["run_number"] == current["run_number"]
+                    and run["run_attempt"] == current["run_attempt"],
+                    "current repair run history changed")
+        relevant[run["id"]] = run
+    if current_run_id not in relevant:
+        relevant[current_run_id] = current
+
+    def check_attempts(run_id, attempts):
+        for attempt in attempts:
+            jobs = api.pages(
+                f"{ROOT}/actions/runs/{run_id}/attempts/{attempt}/jobs?filter=latest", "jobs",
+            )
+            proposal_jobs = [job for job in jobs if job.get("name") == "propose_repair"]
+            require(len(proposal_jobs) == 1, "incomplete prior repair run evidence")
+            if (proposal_jobs[0].get("status") != "completed"
+                    or proposal_jobs[0].get("conclusion") != "skipped"):
+                raise Blocked("previous repair attempt or uncertain run")
+
+    for run_id, run in relevant.items():
+        attempt_count = run["run_attempt"]
+        require(positive_int(attempt_count), "invalid prior repair run evidence")
+        previous_attempts = range(1, attempt_count + 1)
+        if run_id == current_run_id:
+            previous_attempts = range(1, current["run_attempt"])
+        for attempt in previous_attempts:
+            check_attempts(run_id, [attempt])
+
+
+def repair_binding(api, data, policy, *, run_id, allow_attempt=None, allow_reservation=None):
     binding, scope, reviews = data["binding"], data["scope"], data["reviews"]
     require(bool(policy["qa_reviewer_ids"]) and bool(policy["qa_bot_ids"])
             and positive_int(policy["repair_bot_id"]), "repair identities not configured")
@@ -46,15 +104,20 @@ def repair_binding(api, data, policy, *, allow_reservation=None):
             "pilot supports one exact allowed file only")
     path = scope["allowed_files"][0]
     require(not protected(path), "protected repair file")
-    require(data["pr"]["head"]["ref"].startswith("luxe-pilot/"), "repair branch is outside pilot")
+    branch = data["pr"]["head"]["ref"]
+    require(branch == f"luxe-pilot/{binding['issue']}", "repair branch does not identify its issue")
     require(all(f.get("status") == "modified" and f["filename"] == path
                 and "previous_filename" not in f for f in data["files"]), "repair supports existing-file edits only")
+    require(positive_int(run_id), "missing current repair workflow run")
+    prior_apply_attempt(api, branch, run_id)
     comments = data["comments"]
-    if allow_reservation is not None:
-        own = [c for c in comments if c.get("id") == allow_reservation]
+    allowed_records = {record_id for record_id in (allow_attempt, allow_reservation) if record_id is not None}
+    for record_id in allowed_records:
+        own = [c for c in comments if c.get("id") == record_id]
         require(len(own) == 1 and own[0].get("user", {}).get("id") == policy["repair_bot_id"],
                 "reservation disappeared or identity changed")
-        comments = [c for c in comments if c.get("id") != allow_reservation]
+    if allowed_records:
+        comments = [c for c in comments if c.get("id") not in allowed_records]
     require(not consumed(comments), "issue repair allowance already consumed or uncertain")
     require(binding["ci"]["passed"], "current CI is not fully successful")
     bots = [r for r in reviews if r.get("user", {}).get("id") in policy["qa_bot_ids"]
@@ -106,7 +169,7 @@ def repair_binding(api, data, policy, *, allow_reservation=None):
     return {**binding, "key": qa_key, "qa_review_id": qa["id"],
             "qa_sha256": attestation["qa_sha256"], "attestation_id": human["id"],
             "attestation_sha256": hashlib.sha256(human["body"].encode()).hexdigest(),
-            "file": path, "branch": data["pr"]["head"]["ref"]}
+            "file": path, "branch": branch}
 
 
 def proposal_content(api, binding, proposal):
@@ -157,18 +220,42 @@ def confirmed_reservation(record, expected_body, bot_id):
             "repair reservation response is uncertain")
 
 
+def confirmed_attempt(record, expected_body, bot_id):
+    require(isinstance(record, dict) and positive_int(record.get("id")) and record.get("body") == expected_body
+            and record.get("user", {}).get("id") == bot_id and record["user"].get("type") == "Bot"
+            and bool(record.get("created_at")) and record["created_at"] == record.get("updated_at"),
+            "repair attempt record is uncertain")
+
+
 def apply_repair(api, expected, proposal, policy, *, run_id):
     require(positive_int(run_id), "unverified repair run")
     data = snapshot(api, expected["pr"], expected["head"], policy)
-    require(repair_binding(api, data, policy) == expected, "repair evidence changed after inference")
+    require(repair_binding(api, data, policy, run_id=run_id) == expected,
+            "repair evidence changed after inference")
     content = proposal_content(api, expected, proposal)
     run_url = f"https://github.com/{REPO}/actions/runs/{run_id}"
+    content_hash = hashlib.sha256(base64.b64decode(content, validate=True)).hexdigest()
+    attempt_body = encode("gh-aw-repair-attempt", {
+        "attempt": 1, "binding": expected, "content_sha256": content_hash, "run_id": run_id,
+    }) + f"\n\nRecorded before the reservation by [THE LUXE gh-aw bounded repair]({run_url}). Never retry automatically."
+    # Persist an issue-bound attempt before the reservation write can become uncertain.
+    attempt = api.request("POST", f"{ROOT}/issues/{expected['issue']}/comments", {"body": attempt_body})
+    confirmed_attempt(attempt, attempt_body, policy["repair_bot_id"])
+    persisted_attempt = api.request("GET", f"{ROOT}/issues/comments/{attempt['id']}")
+    confirmed_attempt(persisted_attempt, attempt_body, policy["repair_bot_id"])
+    current = snapshot(api, expected["pr"], expected["head"], policy)
+    own_attempt = [c for c in current["comments"] if c.get("id") == attempt["id"]]
+    require(len(own_attempt) == 1, "attempt record no longer visible")
+    confirmed_attempt(own_attempt[0], attempt_body, policy["repair_bot_id"])
+    require(repair_binding(
+        api, current, policy, run_id=run_id, allow_attempt=attempt["id"],
+    ) == expected, "source or approvals changed after attempt record")
+
     body = encode("gh-aw-repair", {
-        "attempt": 1, "binding": expected,
-        "content_sha256": hashlib.sha256(base64.b64decode(content, validate=True)).hexdigest(),
+        "attempt": 1, "binding": expected, "content_sha256": content_hash,
         "run_id": run_id,
     }) + f"\n\nReserved by [THE LUXE gh-aw bounded repair]({run_url}). Never retry automatically."
-    # Reserve before committing. A lost response consumes the allowance.
+    # A lost response consumes the allowance; the earlier attempt record survives it.
     reservation = api.request("POST", f"{ROOT}/issues/{expected['issue']}/comments", {"body": body})
     confirmed_reservation(reservation, body, policy["repair_bot_id"])
     persisted = api.request("GET", f"{ROOT}/issues/comments/{reservation['id']}")
@@ -177,7 +264,10 @@ def apply_repair(api, expected, proposal, policy, *, run_id):
     own = [c for c in current["comments"] if c.get("id") == reservation["id"]]
     require(len(own) == 1, "reservation no longer visible")
     confirmed_reservation(own[0], body, policy["repair_bot_id"])
-    require(repair_binding(api, current, policy, allow_reservation=reservation["id"]) == expected,
+    require(repair_binding(
+        api, current, policy, run_id=run_id,
+        allow_attempt=attempt["id"], allow_reservation=reservation["id"],
+    ) == expected,
             "source or approvals changed after reservation")
     # GitHub atomically rejects a head change between the last read and this write.
     response = api.request("POST", "/graphql", {"query": COMMIT, "variables": {"input": {
@@ -249,7 +339,9 @@ def main():
         api = GitHub(os.environ["GH_TOKEN"])
         event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())
         pr, head = event_pr(api, event, os.environ["GITHUB_EVENT_NAME"], repair=True)
-        binding = repair_binding(api, snapshot(api, pr, head, policy), policy)
+        binding = repair_binding(
+            api, snapshot(api, pr, head, policy), policy, run_id=int(os.environ["GITHUB_RUN_ID"]),
+        )
         with open(os.environ["GITHUB_OUTPUT"], "a") as stream:
             stream.write("binding=" + json.dumps(binding, separators=(",", ":")) + "\n")
 
