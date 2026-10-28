@@ -583,12 +583,7 @@ def execute(api, settings, *, run_url):
         write(f"{ROOT}/pulls/{action['pr']}/requested_reviewers", {"reviewers": ["copilot-pull-request-reviewer[bot]"]})
         record(action, "qa-requested")
     elif action["kind"] == "repair":
-        record(action, "repair-reserved")
-        recheck_revision()
-        write(f"{ROOT}/issues/{action['pr']}/comments", {"body":
-            f"@copilot Address independent review {action['review_id']} within approved issue #{number} "
-            f"scope {action['digest']}. This is the only automatic repair. Never approve, merge or deploy."})
-        record(action, "repair-requested")
+        raise Blocked("automatic repair dispatch is disabled until a verified API and credential boundary exist")
     else:
         record(action, "awaiting-human")
     return plan
