@@ -1,26 +1,21 @@
 # Autonomous Development Controller
 
-## PR-triggered independent QA (issue #69 draft)
+## PR-triggered independent QA
 
-`.github/workflows/autonomous-qa.md` is a separate gh-aw v0.93.5 source;
-`autonomous-qa.lock.yml` is the compiled Actions workflow. It listens only to
-PR `opened`, `reopened`, `ready_for_review` and `synchronize` events targeting
-`master` from branches in `harmonie-joy/Luxe`. Fork PRs need human QA because
-the read-only PR token cannot publish the review. Per-PR cancellation limits duplicate review
-runs. The explicit `on.bots` allowlist admits the GitHub Copilot Coding Agent
-on PR open and push. It uses read-only GitHub tools, no PR checkout or code execution, and a
-separate safe-output job that can submit **COMMENT** reviews only. The review
-waits up to five minutes for the current-head CI run to complete before review;
-missing or incomplete CI after that wait yields Blocked. The review
-names the exact head/base, linked approved issue, scope, current CI evidence,
-findings, verdict and human next action. A post-agent live revision check fails
-the agent job and suppresses safe outputs if the PR changed; gh-aw also pins
-the submitted review to the event head commit. The separate safe-output job
-rechecks the live head/base/open state just before publication. These checks
-are not atomic with GitHub's final write; the existing controller still rejects
-stale bot evidence. Any older review is stale after
-a push. Missing evidence yields Blocked, never acceptance. A failed engine or
-safe-output job is visible in Actions and requires human intervention.
+`.github/workflows/luxe-independent-qa.md` is the sole independent QA source;
+`.github/workflows/luxe-independent-qa.lock.yml` is its compiled Actions
+workflow. It handles PR changes and CI completion for `luxe-pilot/**` branches.
+The PR-triggered preflight fails closed while current-head CI is pending; the
+CI-completion trigger then re-reads the live PR and all four required checks.
+The redundant legacy `autonomous-qa` source and compiled workflow are removed
+to prevent duplicate QA runs and reviews.
+
+The workflow uses read-only GitHub tools, does not check out or execute PR code,
+and can publish one **COMMENT** review pinned to the exact head only after
+scope, approval, native issue relationships, CI, and structured QA validation
+pass. Missing or changed evidence blocks publication. The existing controller
+still requires a separate allowlisted human QA attestation; a bot review is
+advisory and cannot become `luxe-autonomy:qa:v1` acceptance evidence.
 
 This QA review is advisory. The existing controller still requires a separate
 allowlisted human QA attestation and remains disabled; no bot review silently
@@ -76,15 +71,15 @@ after one new commit. Have an independent human check the diff and CI before
 Founder merge. For a controlled repair exercise, use mocked controller tests;
 a live repair requires the separately approved activation gate above.
 
-**Rollback:** disable `.github/workflows/autonomous-qa.lock.yml` in repository
+**Rollback:** disable `.github/workflows/luxe-independent-qa.lock.yml` in repository
 Actions settings or revert the source and lock workflow in a reviewed PR. This
 does not affect CI or the dormant controller. Leave `LUXE_AUTONOMY_ENABLED`
 unset and `max_repairs: 0`.
 
-Status: disabled implementation for independent QA. Founder authorization on
-2026-10-26 permits implementation, tests, documentation and a draft PR only.
-It excludes activation, security-setting changes, privileged credential
-creation, live Copilot assignment and merging. Base: `039e7833` on `master`.
+Status: independent QA is implemented but requires the repository activation
+variable and organization Copilot CLI inference/billing configuration. Keep
+`LUXE_GH_AW_QA_ENABLED=false` until those prerequisites are verified; repair
+and autonomous dispatch remain disabled.
 
 ## Boundary and proposed D-0019
 
