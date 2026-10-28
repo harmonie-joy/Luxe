@@ -9,7 +9,8 @@ to the whole product.
 - [ ] Identify the scoped change and the exact code revision reviewed.
 - [ ] Link the tests, browser captures, or verification report that support each
   functional claim. State what was actually exercised and where evidence is
-  absent.
+  absent; a configured CI job or passing unit tests alone do not establish that
+  browser coverage ran.
 - [ ] Distinguish real-service persistence and authorization evidence from
   synthetic tests or visual captures; neither is a substitute for the other.
 - [ ] Record observed failures, known limitations, and unverified behavior.
