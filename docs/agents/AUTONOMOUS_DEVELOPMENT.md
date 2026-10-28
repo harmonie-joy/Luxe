@@ -1,5 +1,86 @@
 # Autonomous Development Controller
 
+## PR-triggered independent QA (issue #69 draft)
+
+`.github/workflows/autonomous-qa.md` is a separate gh-aw v0.93.5 source;
+`autonomous-qa.lock.yml` is the compiled Actions workflow. It listens only to
+PR `opened`, `reopened`, `ready_for_review` and `synchronize` events targeting
+`master` from branches in `harmonie-joy/Luxe`. Fork PRs need human QA because
+the read-only PR token cannot publish the review. Per-PR cancellation limits duplicate review
+runs. The explicit `on.bots` allowlist admits the GitHub Copilot Coding Agent
+on PR open and push. It uses read-only GitHub tools, no PR checkout or code execution, and a
+separate safe-output job that can submit **COMMENT** reviews only. The review
+waits up to five minutes for the current-head CI run to complete before review;
+missing or incomplete CI after that wait yields Blocked. The review
+names the exact head/base, linked approved issue, scope, current CI evidence,
+findings, verdict and human next action. A post-agent live revision check fails
+the agent job and suppresses safe outputs if the PR changed; gh-aw also pins
+the submitted review to the event head commit. The separate safe-output job
+rechecks the live head/base/open state just before publication. These checks
+are not atomic with GitHub's final write; the existing controller still rejects
+stale bot evidence. Any older review is stale after
+a push. Missing evidence yields Blocked, never acceptance. A failed engine or
+safe-output job is visible in Actions and requires human intervention.
+
+This QA review is advisory. The existing controller still requires a separate
+allowlisted human QA attestation and remains disabled; no bot review silently
+becomes a `luxe-autonomy:qa:v1` acceptance record. The current `master` ruleset
+requires the four CI jobs and has automatic Copilot code review enabled for
+drafts and new pushes, but requires zero formal approving reviews. Founder-only
+merge remains an operating rule and must be checked by the Founder.
+
+The workflow requires both `LUXE_GH_AW_QA_ENABLED=true` and
+`.github/gh-aw-policy.json`'s `qa_enabled: true` before inference and again
+before publishing. Its `luxe-autonomous-qa-advisory-v1` protocol marker keeps these
+reviews separate from controller evidence; malformed controller reviews still
+block replay checks.
+
+**Activation prerequisite:** the organization must allow GitHub Actions to use
+Copilot inference with `copilot-requests: write` and billing. On 2026-10-27,
+the read-only billing API reported `cli: unconfigured` and zero Copilot seats;
+a live gh-aw inference/review has not been demonstrated. Also,
+`.github/autonomy.json` has `approver_ids: []`. The Founder must separately
+approve the numeric GitHub identity configuration before any issue can satisfy
+the current approval contract. Until both gates are met, the workflow can only
+publish Blocked reviews; it cannot claim Accepted. Do not add a token as a
+workaround. Configure the organization entitlement and Founder identity first,
+then run one synthetic L0 PR pilot. Public-repository content is visible to the agent; keep
+NDA-restricted designs, creator data and secrets out of issues and PRs.
+
+The first run on the workflow's own draft PR (#80) failed safely in gh-aw
+activation because its source Markdown is absent from the current `master` base
+commit. gh-aw intentionally loads PR workflow configuration from the base,
+so the new workflow can be exercised on a later PR only after the Founder
+reviews and merges this draft. Do not change activation to load untrusted PR
+head files. [Run 40578956565](https://github.com/harmonie-joy/Luxe/actions/runs/40578956565)
+records the exact bootstrap failure; no agent or safe-output job ran.
+
+**Repair remains disabled:** `.github/autonomy.json` has `enabled: false` and
+`max_repairs: 0`. The existing planner tests exact scope, current human QA,
+current CI, safety checks, one repair reservation and replay persistence. Its
+old unverified `@copilot` comment dispatch is now a hard block before any write.
+gh-aw documents `push-to-pull-request-branch`, but an exact per-issue dynamic
+file allowlist, credential-isolated dispatch to the original branch and task
+completion semantics have not been demonstrated here. Its default
+`GITHUB_TOKEN` push does not trigger CI, so a separate narrow credential or
+verified CI trigger is also required for the re-review loop. Activation needs
+a separate Founder-approved PR proving these boundaries and independent
+security QA. No automatic repair is attempted by this draft.
+
+**L0 pilot:** after human merge and Copilot inference setup, create one public,
+synthetic documentation-only leaf issue with the exact handoff/approval contract
+below, a current approval by the configured Founder account, and an allowed open
+parent other than #58. Open a draft PR linked to it. Observe the gh-aw Actions run and a COMMENT
+review for that exact head/base; verify Blocked on missing CI and a fresh review
+after one new commit. Have an independent human check the diff and CI before
+Founder merge. For a controlled repair exercise, use mocked controller tests;
+a live repair requires the separately approved activation gate above.
+
+**Rollback:** disable `.github/workflows/autonomous-qa.lock.yml` in repository
+Actions settings or revert the source and lock workflow in a reviewed PR. This
+does not affect CI or the dormant controller. Leave `LUXE_AUTONOMY_ENABLED`
+unset and `max_repairs: 0`.
+
 Status: disabled implementation for independent QA. Founder authorization on
 2026-10-26 permits implementation, tests, documentation and a draft PR only.
 It excludes activation, security-setting changes, privileged credential

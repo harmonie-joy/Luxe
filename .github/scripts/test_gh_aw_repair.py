@@ -12,7 +12,7 @@ from unittest.mock import patch
 import urllib.error
 
 from autonomous_development import Blocked, ROOT, REPO, encode
-from gh_aw_policy import CHECKS, QA_PATH, REPAIR_PATH, encode_qa, snapshot
+from gh_aw_policy import ADVISORY_QA_ENVELOPE, CHECKS, QA_PATH, encode_qa, snapshot
 from test_gh_aw_policy import API, BASE, FILE, HEAD, POLICY
 from gh_aw_repair import (
     ATTEMPT_MARKER, COMMIT, RESERVATION_MARKER, SafeOutputGitHub, apply_repair, main,
@@ -353,6 +353,28 @@ class RepairTests(unittest.TestCase):
                     repair_binding(
                         self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY, run_id=600,
                     )
+
+    def test_advisory_review_does_not_shadow_controller_qa(self):
+        advisory = {
+            "protocol": ADVISORY_QA_ENVELOPE,
+            "pr": 91,
+            "head": HEAD,
+            "base": BASE,
+            "run_id": 301,
+        }
+        review = {
+            "id": 402, "user": {"id": 30, "type": "Bot"}, "state": "COMMENTED",
+            "commit_id": HEAD, "submitted_at": "2026-10-27T03:00:00Z",
+            "body": f"Advisory review.\n```json\n{json.dumps(advisory)}\n```",
+        }
+        self.api.data[f"{ROOT}/pulls/91/reviews"].append(review)
+        result = repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY)
+        self.assertEqual(result["qa_review_id"], self.api.qa["id"])
+
+        advisory["head"] = "invalid"
+        review["body"] = f"Advisory review.\n```json\n{json.dumps(advisory)}\n```"
+        with self.assertRaises(Blocked):
+            repair_binding(self.api, snapshot(self.api, 91, HEAD, POLICY), POLICY)
 
     def test_sensitive_or_unverified_qa_not_repairable(self):
         for change in ("security", "missing-safety", "placeholder", "category", "file", "blocked", "run"):
