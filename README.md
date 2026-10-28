@@ -100,11 +100,12 @@ make manage cmd="seed_demo"
 
 3. Open http://localhost:3000.
 
-4. Use the product flow:
-
-```text
-Homepage -> Signup/Login -> Dashboard -> Brand Voice -> Create Brief -> Draft Studio
-```
+4. For the current pilot walkthrough, follow the
+   [Pilot Demo Checklist](docs/pilot/DEMO_CHECKLIST.md). It covers Creator Home
+   → explicitly accepted BrandVoice version → persisted Project/ContentItem →
+   saved checkpoint and resume → next action. Review
+   [Known Limitations](docs/pilot/KNOWN_LIMITATIONS.md) and capture manual
+   notes with the [Feedback Template](docs/pilot/FEEDBACK_TEMPLATE.md).
 
 5. For live API-backed Brand Voice data, `infra/docker-compose.yml` sets this under `frontend.environment`:
 
