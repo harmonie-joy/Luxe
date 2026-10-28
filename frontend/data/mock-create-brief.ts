@@ -1,38 +1,18 @@
 import type { BrandProfile } from "@/types/brand-profile";
 
 import { baseVoiceDnaProfileFields } from "./mock-brand-profiles";
-import type {
-  CampaignGoal,
-  ContentBrief,
-  ContentChannel,
-} from "@/types/content";
+import type { ContentBrief } from "@/types/content";
 
-export interface CreateBriefPageCopy {
-  eyebrow: string;
-  title: string;
-  description: string;
-}
-
-export interface CreateBriefSelectableOption<TValue extends string> {
-  value: TValue;
-  label: string;
-  description: string;
-  selected: boolean;
-}
-
-export interface CreateBriefWorkspaceOption {
+interface CreateBriefWorkspaceOption {
   id: string;
   name: string;
   selected: boolean;
 }
 
-export interface CreateBriefPageData {
-  pageHeader: CreateBriefPageCopy;
+export interface CreateBriefDemoData {
   workspaces: readonly CreateBriefWorkspaceOption[];
   brandProfiles: readonly BrandProfile[];
   brief: ContentBrief;
-  campaignGoalOptions: readonly CreateBriefSelectableOption<CampaignGoal>[];
-  channelOptions: readonly CreateBriefSelectableOption<ContentChannel>[];
 }
 
 const workspaceTheLuxe = "11111111-1111-4111-8111-111111111111";
@@ -144,21 +124,7 @@ const brief: ContentBrief = {
   updatedAt: "2026-06-04T08:00:00.000Z",
 };
 
-function isSelectedGoal(goal: CampaignGoal) {
-  return brief.campaignGoal === goal;
-}
-
-function isSelectedChannel(channel: ContentChannel) {
-  return brief.targetChannels.includes(channel);
-}
-
-export const mockCreateBriefPage = {
-  pageHeader: {
-    eyebrow: "Create Brief",
-    title: "Shape the strategy before the first draft exists.",
-    description:
-      "Select the workspace and brand voice, then capture the objective, audience, angle, constraints, and channels that will guide every downstream draft.",
-  },
+export const mockCreateBriefDemoData: CreateBriefDemoData = {
   workspaces: [
     {
       id: workspaceTheLuxe,
@@ -173,74 +139,4 @@ export const mockCreateBriefPage = {
   ],
   brandProfiles,
   brief,
-  campaignGoalOptions: [
-    {
-      value: "educate",
-      label: "Educate",
-      description: "Clarify a concept, launch context, or client narrative.",
-      selected: isSelectedGoal("educate"),
-    },
-    {
-      value: "announce",
-      label: "Announce",
-      description: "Reveal a launch, partnership, event, or milestone.",
-      selected: isSelectedGoal("announce"),
-    },
-    {
-      value: "promote",
-      label: "Promote",
-      description: "Drive attention toward a collection, offer, or service.",
-      selected: isSelectedGoal("promote"),
-    },
-    {
-      value: "fundraise",
-      label: "Fundraise",
-      description: "Support a development, donor, or patronage initiative.",
-      selected: isSelectedGoal("fundraise"),
-    },
-    {
-      value: "thought_leadership",
-      label: "Thought Leadership",
-      description: "Position the brand as a trusted editorial authority.",
-      selected: isSelectedGoal("thought_leadership"),
-    },
-  ],
-  channelOptions: [
-    {
-      value: "linkedin",
-      label: "LinkedIn",
-      description: "Executive-facing brand and partnership messaging.",
-      selected: isSelectedChannel("linkedin"),
-    },
-    {
-      value: "instagram",
-      label: "Instagram",
-      description: "Visual-first storytelling and campaign moments.",
-      selected: isSelectedChannel("instagram"),
-    },
-    {
-      value: "blog",
-      label: "Blog",
-      description: "Long-form editorial framing and brand narrative.",
-      selected: isSelectedChannel("blog"),
-    },
-    {
-      value: "newsletter",
-      label: "Newsletter",
-      description: "Direct client and prospect communication.",
-      selected: isSelectedChannel("newsletter"),
-    },
-    {
-      value: "x",
-      label: "X",
-      description: "Timely short-form commentary and launch signals.",
-      selected: isSelectedChannel("x"),
-    },
-    {
-      value: "short_video",
-      label: "Short Video",
-      description: "Motion-led storytelling for teaser or reveal moments.",
-      selected: isSelectedChannel("short_video"),
-    },
-  ],
-} as const satisfies CreateBriefPageData;
+};
