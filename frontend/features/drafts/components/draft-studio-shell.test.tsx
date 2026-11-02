@@ -8,6 +8,7 @@ import * as aiApi from "@/lib/api/ai";
 import * as authApi from "@/lib/api/auth";
 import * as contentBriefsApi from "@/lib/api/content-briefs";
 import * as contentDraftsApi from "@/lib/api/content-drafts";
+import { APP_ROUTES } from "@/lib/routes";
 import { mockSession, router } from "@/test/setup";
 import type { ContentBrief, ContentDraft } from "@/types/content";
 
@@ -32,10 +33,22 @@ const briefB: ContentBrief = {
   workspaceId: "ws-1",
   contentObjective: "Second brief objective",
 };
+const foreignBrief: ContentBrief = {
+  ...mockDraftStudioPage.brief,
+  id: "foreign-brief",
+  workspaceId: "ws-2",
+  contentObjective: "Foreign workspace objective",
+};
 const draftA: ContentDraft = {
   ...mockDraftStudioPage.drafts[0],
   id: "draft-a",
   briefId: "brief-a",
+};
+const draftB: ContentDraft = {
+  ...draftA,
+  id: "draft-b",
+  briefId: "brief-b",
+  title: "Second brief draft",
 };
 const linkedinDraft: ContentDraft = {
   ...draftA,
@@ -202,30 +215,22 @@ describe("DraftStudioShell", () => {
       />,
     );
 
-    expect(
-      screen.getByRole<HTMLButtonElement>("button", {
-        name: "Copy LinkedIn draft",
-      }).disabled,
-    ).toBe(true);
+    expect(screen.getByText("Loading persisted briefs.")).toBeTruthy();
+    expect(screen.queryByLabelText("Draft title")).toBeNull();
   });
 
-  it("keeps copying unavailable for demo drafts", async () => {
+  it("does not show seeded drafts when the session API is unavailable", async () => {
     vi.mocked(authApi.getSession).mockRejectedValue(new Error("offline"));
     render(
       <DraftStudioShell
         data={{ ...mockDraftStudioPage, drafts: [linkedinDraft] }}
       />,
     );
-    await screen.findByText("Demo");
 
-    expect(
-      screen.getByRole<HTMLButtonElement>("button", {
-        name: "Copy LinkedIn draft",
-      }).disabled,
-    ).toBe(true);
-    expect(
-      screen.getByText("Copy is available only for a persisted LinkedIn draft."),
-    ).toBeTruthy();
+    expect((await screen.findByRole("alert")).textContent).toContain("offline");
+    expect(screen.queryByText("Demo")).toBeNull();
+    expect(screen.queryByLabelText("Draft title")).toBeNull();
+    expect(contentDraftsApi.getContentDrafts).not.toHaveBeenCalled();
   });
 
   it("keeps copying unavailable when the persisted LinkedIn text is empty", async () => {
@@ -404,9 +409,106 @@ describe("DraftStudioShell", () => {
     expect(contentDraftsApi.getContentDrafts).toHaveBeenCalledWith("brief-a");
   });
 
+  it("only offers briefs belonging to the active workspace", async () => {
+    vi.mocked(authApi.getSession).mockResolvedValue({
+      ...mockSession,
+      activeWorkspaceId: "ws-1",
+    });
+    vi.mocked(contentBriefsApi.getContentBriefs).mockResolvedValue([
+      foreignBrief,
+      briefA,
+      briefB,
+    ]);
+
+    render(<DraftStudioShell data={mockDraftStudioPage} />);
+
+    const selector = await screen.findByLabelText<HTMLSelectElement>("Switch brief");
+    expect(Array.from(selector.options).map((option) => option.value)).toEqual([
+      "brief-a",
+      "brief-b",
+    ]);
+    expect(screen.queryByText("Foreign workspace objective")).toBeNull();
+    expect(contentDraftsApi.getContentDrafts).toHaveBeenCalledWith("brief-a");
+  });
+
+  it("shows a real empty state when only foreign-workspace briefs exist", async () => {
+    vi.mocked(authApi.getSession).mockResolvedValue({
+      ...mockSession,
+      activeWorkspaceId: "ws-1",
+    });
+    vi.mocked(contentBriefsApi.getContentBriefs).mockResolvedValue([
+      foreignBrief,
+    ]);
+
+    render(<DraftStudioShell data={mockDraftStudioPage} />);
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "No briefs in this workspace yet.",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Create With Me" }).getAttribute("href"),
+    ).toBe(APP_ROUTES.contentItemNew);
+    expect(screen.queryByText("Demo")).toBeNull();
+    expect(screen.queryByText("Foreign workspace objective")).toBeNull();
+    expect(contentDraftsApi.getContentDrafts).not.toHaveBeenCalled();
+  });
+
+  it.each(["foreign-brief", "missing-brief"])(
+    "ignores the %s brief query and selects an active-workspace brief",
+    async (initialBriefId) => {
+      vi.mocked(authApi.getSession).mockResolvedValue({
+        ...mockSession,
+        activeWorkspaceId: "ws-1",
+      });
+      vi.mocked(contentBriefsApi.getContentBriefs).mockResolvedValue([
+        foreignBrief,
+        briefA,
+      ]);
+
+      render(
+        <DraftStudioShell
+          data={mockDraftStudioPage}
+          initialBriefId={initialBriefId}
+        />,
+      );
+
+      expect(
+        await screen.findByRole("heading", { name: briefA.contentObjective }),
+      ).toBeTruthy();
+      expect(screen.queryByText("Foreign workspace objective")).toBeNull();
+      expect(contentDraftsApi.getContentDrafts).toHaveBeenCalledWith("brief-a");
+      expect(router.replace).toHaveBeenCalledWith("/drafts?brief=brief-a");
+    },
+  );
+
+  it("shows API failures and retries loading persisted briefs", async () => {
+    vi.mocked(contentBriefsApi.getContentBriefs)
+      .mockRejectedValueOnce(new Error("Brief service unavailable"))
+      .mockResolvedValueOnce([briefA]);
+    const user = userEvent.setup();
+
+    render(<DraftStudioShell data={mockDraftStudioPage} />);
+
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Brief service unavailable",
+    );
+    expect(screen.queryByText("Demo")).toBeNull();
+    expect(screen.queryByText(briefA.contentObjective)).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(
+      await screen.findByRole("heading", { name: briefA.contentObjective }),
+    ).toBeTruthy();
+    expect(contentBriefsApi.getContentBriefs).toHaveBeenCalledTimes(2);
+  });
+
   it("switches briefs and reloads their drafts", async () => {
     const user = userEvent.setup();
-    await renderLive();
+    await renderLive([draftA]);
+    vi.mocked(contentDraftsApi.getContentDrafts).mockResolvedValueOnce([draftB]);
 
     await user.selectOptions(screen.getByLabelText("Switch brief"), "brief-b");
 
@@ -417,6 +519,48 @@ describe("DraftStudioShell", () => {
     expect(
       screen.getByRole("heading", { name: "Second brief objective" }),
     ).toBeTruthy();
+    expect(
+      screen.getByLabelText<HTMLInputElement>("Draft title").value,
+    ).toBe(draftB.title);
+  });
+
+  it("keeps the most recently selected brief when draft requests resolve out of order", async () => {
+    let resolveBriefB!: (drafts: ContentDraft[]) => void;
+    let resolveBriefA!: (drafts: ContentDraft[]) => void;
+    const user = userEvent.setup();
+    await renderLive([draftA]);
+    vi.mocked(contentDraftsApi.getContentDrafts)
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveBriefB = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveBriefA = resolve;
+        }),
+      );
+
+    await user.selectOptions(screen.getByLabelText("Switch brief"), "brief-b");
+    await user.selectOptions(screen.getByLabelText("Switch brief"), "brief-a");
+
+    await act(async () => {
+      resolveBriefA([draftA]);
+    });
+    expect(
+      screen.getByLabelText<HTMLInputElement>("Draft title").value,
+    ).toBe(draftA.title);
+
+    await act(async () => {
+      resolveBriefB([draftB]);
+    });
+
+    expect(
+      screen.getByRole("heading", { name: briefA.contentObjective }),
+    ).toBeTruthy();
+    expect(
+      screen.getByLabelText<HTMLInputElement>("Draft title").value,
+    ).toBe(draftA.title);
   });
 
   it("saves title and content edits through the drafts API", async () => {
@@ -468,19 +612,14 @@ describe("DraftStudioShell", () => {
     });
   });
 
-  it("blocks generation in demo mode", async () => {
+  it("does not offer generation when the session API is unavailable", async () => {
     vi.mocked(authApi.getSession).mockRejectedValue(new Error("offline"));
-    const user = userEvent.setup();
     render(<DraftStudioShell data={mockDraftStudioPage} />);
-    await screen.findByText("Demo");
 
-    await user.click(screen.getByRole("button", { name: "Generate Drafts" }));
-
+    expect((await screen.findByRole("alert")).textContent).toContain("offline");
     expect(
-      await screen.findByText(
-        "Sign in and load a persisted brief before generating drafts.",
-      ),
-    ).toBeTruthy();
+      screen.queryByRole("button", { name: "Generate Drafts" }),
+    ).toBeNull();
     expect(aiApi.generateDrafts).not.toHaveBeenCalled();
   });
 

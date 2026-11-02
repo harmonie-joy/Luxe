@@ -26,7 +26,7 @@ interface DraftStudioShellProps {
   initialBriefId?: string;
 }
 
-type DataSource = "loading" | "api" | "mock";
+type DataSource = "loading" | "api" | "empty" | "error";
 type RequestStatus = "idle" | "loading" | "success" | "error";
 type DraftMutation = "idle" | "saving" | "generating";
 
@@ -42,13 +42,15 @@ const DRAFT_STATUS_TONES = {
 const DATA_SOURCE_LABELS = {
   loading: "Loading",
   api: "Live",
-  mock: "Demo",
+  empty: "Live",
+  error: "Unavailable",
 } as const satisfies Record<DataSource, string>;
 
 const DATA_SOURCE_TONES = {
   loading: "info",
   api: "success",
-  mock: "neutral",
+  empty: "info",
+  error: "critical",
 } as const satisfies Record<DataSource, StatusIndicatorTone>;
 
 const DELETE_WARNING_ITEMS = [
@@ -111,16 +113,20 @@ function generatedDraftToContentDraft(
 export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps) {
   const router = useRouter();
   const draftMutationInFlight = useRef(false);
-  const [briefs, setBriefs] = useState<ContentBrief[]>([data.brief]);
-  const [brief, setBrief] = useState<ContentBrief>(data.brief);
-  const [drafts, setDrafts] = useState<ContentDraft[]>([...data.drafts]);
+  const briefDraftRequestIdRef = useRef(0);
+  const preferredBriefIdRef = useRef(initialBriefId);
+  const lastInitialBriefIdRef = useRef(initialBriefId);
+  const [briefs, setBriefs] = useState<ContentBrief[]>([]);
+  const [brief, setBrief] = useState<ContentBrief | null>(null);
+  const [drafts, setDrafts] = useState<ContentDraft[]>([]);
   const [persistedDraftContents, setPersistedDraftContents] = useState<
     Record<string, string>
   >({});
-  const [activeDraftId, setActiveDraftId] = useState(data.drafts[0]?.id ?? "");
+  const [activeDraftId, setActiveDraftId] = useState("");
   const [savedDraftId, setSavedDraftId] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<DataSource>("loading");
-  const [loadMessage, setLoadMessage] = useState("Loading persisted drafts.");
+  const [loadMessage, setLoadMessage] = useState("Loading persisted briefs.");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [generationStatus, setGenerationStatus] =
     useState<RequestStatus>("idle");
   const [draftMutation, setDraftMutation] = useState<DraftMutation>("idle");
@@ -141,7 +147,14 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   useEffect(() => {
     let cancelled = false;
 
-    async function loadLiveDrafts() {
+    async function loadLiveData() {
+      if (initialBriefId !== lastInitialBriefIdRef.current) {
+        lastInitialBriefIdRef.current = initialBriefId;
+        preferredBriefIdRef.current = initialBriefId;
+      }
+      setDataSource("loading");
+      setLoadMessage("Loading persisted briefs.");
+
       try {
         const [session, briefs] = await Promise.all([
           getSession(),
@@ -150,24 +163,33 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
         const workspaceBriefs = briefs.filter(
           (item) => item.workspaceId === session.activeWorkspaceId,
         );
-        const availableBriefs = workspaceBriefs.length > 0 ? workspaceBriefs : briefs;
-        const selectedBrief =
-          availableBriefs.find((item) => item.id === initialBriefId) ??
-          availableBriefs[0];
+        if (cancelled) return;
 
-        if (!selectedBrief) {
-          if (!cancelled) {
-            setDataSource("mock");
-            setLoadMessage("No persisted briefs found. Showing demo draft data.");
-          }
+        setBriefs(workspaceBriefs);
+
+        if (workspaceBriefs.length === 0) {
+          setBrief(null);
+          setDrafts([]);
+          setPersistedDraftContents({});
+          setActiveDraftId("");
+          setDataSource("empty");
+          setLoadMessage("No briefs in this workspace yet.");
           return;
+        }
+
+        const selectedBrief =
+          workspaceBriefs.find(
+            (item) => item.id === preferredBriefIdRef.current,
+          ) ?? workspaceBriefs[0];
+        preferredBriefIdRef.current = selectedBrief.id;
+        setBrief(selectedBrief);
+        if (initialBriefId && initialBriefId !== selectedBrief.id) {
+          router.replace(draftStudioRoute(selectedBrief.id));
         }
 
         const selectedDrafts = await getContentDrafts(selectedBrief.id);
         if (cancelled) return;
 
-        setBriefs(availableBriefs);
-        setBrief(selectedBrief);
         setDrafts(selectedDrafts);
         setPersistedDraftContents(getPersistedDraftContents(selectedDrafts));
         setActiveDraftId(selectedDrafts[0]?.id ?? "");
@@ -178,24 +200,19 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
             : "No drafts have been generated for this brief yet.",
         );
       } catch (error) {
-        if (process.env.NODE_ENV === "development") {
-          console.warn(
-            `[DraftStudioShell] API unavailable, using mock data. Reason: ${errorMessage(error)}`,
-          );
-        }
         if (!cancelled) {
-          setDataSource("mock");
-          setLoadMessage("API unavailable. Showing demo draft data.");
+          setDataSource("error");
+          setLoadMessage(errorMessage(error));
         }
       }
     }
 
-    void loadLiveDrafts();
+    void loadLiveData();
 
     return () => {
       cancelled = true;
     };
-  }, [data.brief, initialBriefId]);
+  }, [initialBriefId, loadAttempt, router]);
 
   const currentDraft = getDraftById(drafts, activeDraftId);
   const activeStatusLabel = currentDraft
@@ -207,19 +224,29 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   const savedCurrentDraft = currentDraft ? savedDraftId === currentDraft.id : false;
   const canGenerate =
     generationStatus !== "loading" &&
-    dataSource !== "loading" &&
+    dataSource === "api" &&
     draftMutation === "idle";
-  const canDelete = deleteStatus !== "loading" && dataSource !== "loading";
-  const targetChannelLabels = brief.targetChannels
+  const canDelete =
+    deleteStatus !== "loading" && dataSource === "api" && brief !== null;
+  const targetChannelLabels = brief?.targetChannels
     .map((channel) => CONTENT_CHANNEL_LABELS[channel])
-    .join(", ");
+    .join(", ") ?? "";
   const hasExistingDrafts = drafts.length > 0;
+
+  function handleRetry() {
+    briefDraftRequestIdRef.current += 1;
+    setDataSource("loading");
+    setLoadMessage("Retrying persisted brief loading.");
+    setLoadAttempt((attempt) => attempt + 1);
+  }
 
   async function selectBrief(nextBriefId: string) {
     const selectedBrief = briefs.find((item) => item.id === nextBriefId);
     if (!selectedBrief) return;
 
+    const requestId = ++briefDraftRequestIdRef.current;
     invalidateCopyRequest();
+    preferredBriefIdRef.current = selectedBrief.id;
     setBrief(selectedBrief);
     setDrafts([]);
     setPersistedDraftContents({});
@@ -235,15 +262,12 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
     setDeleteMessage("");
     router.replace(draftStudioRoute(selectedBrief.id));
 
-    if (dataSource !== "api") {
-      setLoadMessage("Demo brief selected.");
-      return;
-    }
-
     setLoadMessage("Loading drafts for the selected brief.");
 
     try {
       const selectedDrafts = await getContentDrafts(selectedBrief.id);
+      if (requestId !== briefDraftRequestIdRef.current) return;
+
       setDrafts(selectedDrafts);
       setPersistedDraftContents(getPersistedDraftContents(selectedDrafts));
       setActiveDraftId(selectedDrafts[0]?.id ?? "");
@@ -253,23 +277,22 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
           : "No drafts have been generated for this brief yet.",
       );
     } catch (error) {
-      setDataSource("mock");
-      setPersistedDraftContents({});
+      if (requestId !== briefDraftRequestIdRef.current) return;
+
+      setDataSource("error");
       setLoadMessage(errorMessage(error));
     }
   }
 
   async function handleDeleteBrief() {
-    if (!canDelete) return;
+    if (!canDelete || !brief) return;
 
     invalidateCopyRequest();
     setDeleteStatus("loading");
     setDeleteMessage("Deleting brief.");
 
     try {
-      if (dataSource === "api") {
-        await deleteContentBrief(brief.id);
-      }
+      await deleteContentBrief(brief.id);
 
       const remainingBriefs = briefs.filter((item) => item.id !== brief.id);
       const nextBrief = remainingBriefs[0];
@@ -281,9 +304,7 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       setSavedDraftId(null);
       setDeleteDialogOpen(false);
       setDeleteStatus("success");
-      setDeleteMessage(
-        dataSource === "api" ? "Brief deleted." : "Demo brief deleted locally.",
-      );
+      setDeleteMessage("Brief deleted.");
       setGenerationStatus("idle");
       setGenerationMessage("");
       setSaveStatus("idle");
@@ -292,17 +313,16 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
       setCopyMessage("");
 
       if (!nextBrief) {
+        setBrief(null);
+        setDataSource("empty");
+        setLoadMessage("No briefs in this workspace yet.");
         router.push(APP_ROUTES.create);
         return;
       }
 
       setBrief(nextBrief);
+      preferredBriefIdRef.current = nextBrief.id;
       router.replace(draftStudioRoute(nextBrief.id));
-
-      if (dataSource !== "api") {
-        setLoadMessage("Demo brief selected.");
-        return;
-      }
 
       const nextDrafts = await getContentDrafts(nextBrief.id);
       setDrafts(nextDrafts);
@@ -330,11 +350,11 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   }
 
   async function handleGenerateDrafts() {
-    if (!canGenerate || draftMutationInFlight.current) return;
+    if (!brief || !canGenerate || draftMutationInFlight.current) return;
 
     if (dataSource !== "api") {
       setGenerationStatus("error");
-      setGenerationMessage("Sign in and load a persisted brief before generating drafts.");
+      setGenerationMessage("Load a persisted brief before generating drafts.");
       return;
     }
 
@@ -391,21 +411,10 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
   async function handleSave() {
     if (
       !currentDraft ||
+      dataSource !== "api" ||
       draftMutation !== "idle" ||
       draftMutationInFlight.current
     ) {
-      return;
-    }
-
-    const updatedAt = new Date().toISOString();
-
-    if (dataSource !== "api") {
-      setDrafts((currentDrafts) =>
-        updateDraftById(currentDrafts, currentDraft.id, { updatedAt }),
-      );
-      setSavedDraftId(currentDraft.id);
-      setSaveStatus("success");
-      setSaveMessage("Demo draft saved locally.");
       return;
     }
 
@@ -488,6 +497,73 @@ export function DraftStudioShell({ data, initialBriefId }: DraftStudioShellProps
           : currentDraft.content.trim().length === 0
             ? "Add draft text before copying."
             : "";
+
+  if (!brief || dataSource !== "api") {
+    const loading = dataSource === "loading";
+    const empty = dataSource === "empty";
+
+    return (
+      <div className="flex min-h-full flex-col gap-8">
+        <header className="max-w-4xl">
+            <p className="luxe-eyebrow">{data.pageHeader.eyebrow}</p>
+            <h1 className="luxe-page-title mt-3">{data.pageHeader.title}</h1>
+            <p className="luxe-page-description mt-4">
+              {data.pageHeader.description}
+            </p>
+        </header>
+
+        <SurfaceCard
+            className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            padding="sm"
+        >
+            <div>
+              <p className="luxe-eyebrow">Persisted Briefs</p>
+              <h2 className="luxe-section-title mt-2">
+                {loading
+                  ? "Loading your workspace briefs"
+                  : empty
+                    ? "No briefs in this workspace yet."
+                    : "Could not load persisted briefs and drafts."}
+              </h2>
+              <p
+                aria-live={dataSource === "error" ? "assertive" : "polite"}
+                className={
+                  dataSource === "error"
+                    ? "mt-2 text-sm font-medium text-(--color-danger)"
+                    : "luxe-form-help mt-2"
+                }
+                role={dataSource === "error" ? "alert" : "status"}
+              >
+                {loadMessage}
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 sm:items-end">
+              <StatusIndicator
+                label={DATA_SOURCE_LABELS[dataSource]}
+                tone={DATA_SOURCE_TONES[dataSource]}
+              />
+              {dataSource === "error" ? (
+                <button
+                  className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold"
+                  onClick={handleRetry}
+                  type="button"
+                >
+                  Retry
+                </button>
+              ) : null}
+              {empty ? (
+                <Link
+                  className="luxe-primary-action luxe-focus-ring rounded-sm px-5 py-3 text-sm font-semibold"
+                  href={APP_ROUTES.contentItemNew}
+                >
+                  Create With Me
+                </Link>
+              ) : null}
+            </div>
+        </SurfaceCard>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-col gap-8">
