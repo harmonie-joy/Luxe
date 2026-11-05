@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { StageFlowNavigation } from "@/app/pocs/components/stage-flow-navigation";
-import { StageFlowFooter } from "@/app/pocs/components/stage-flow-footer";
+import { StageFlowFooter } from "@/components/pocs/stage-flow-footer";
 import { completeStageFlowStep } from "@/app/pocs/components/stage-flow-state";
 import { APP_ROUTES } from "@/lib/routes";
 import { mockWelcomeHome } from "@/lib/mock-data/pocs-data";
@@ -14,7 +14,7 @@ export default function WelcomePage() {
   const router = useRouter();
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} stage-one-page`}>
       <StageFlowNavigation currentStep="welcome" />
       <section aria-labelledby="welcome-title" className={styles.hero}>
         <div className={styles.topline}>
@@ -49,21 +49,37 @@ export default function WelcomePage() {
           </div>
         </div>
 
+        <section aria-label="Choose your goal" className="grid gap-6 sm:grid-cols-3 mb-6">
+          {mockWelcomeHome.paths.map((path) => (
+            <Card key={path.id} padding="none">
+              <Button aria-label={path.title} className="stage-flow-feature-action" variant="ghost" type="button" onClick={() => {
+                completeStageFlowStep("welcome");
+                router.push(APP_ROUTES.pocsDiscoverMe);
+              }}>
+                <span className="text-text-primary font-bold">{path.title}</span>
+                <span className="stage-flow-caption">{path.description}</span>
+              </Button>
+            </Card>
+          ))}
+        </section>
         <section aria-label="Workspace benefits" className={styles.features} id="welcome-features">
           {mockWelcomeHome.features.map((feature) => (
-            <Card aria-label={feature.title} className={styles.feature} key={feature.id} padding="sm">
+            <Card aria-label={feature.title} className={`${styles.feature} bg-bg-surface text-text-primary border-border-subtle`} key={feature.id} padding="none">
+              <div className="stage-flow-feature-action">
               <span aria-hidden="true" className={styles.featureIcon}>{feature.icon}</span>
               <span className={styles.featureTitle}>{feature.title}</span>
               <span className={styles.featureDescription}>{feature.description}</span>
+              </div>
             </Card>
           ))}
         </section>
       </section>
       <StageFlowFooter
-        backHref={APP_ROUTES.home}
+        prevRoute={APP_ROUTES.home}
+        currentStep={1}
+        totalSteps={5}
         completeStep="welcome"
-        nextHref={APP_ROUTES.pocsDiscoverMe}
-        nextLabel="Get Started"
+        nextRoute={APP_ROUTES.pocsDiscoverMe}
       />
     </div>
   );

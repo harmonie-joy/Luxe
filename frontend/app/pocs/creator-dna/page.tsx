@@ -4,15 +4,15 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { StageFlowFooter } from "@/app/pocs/components/stage-flow-footer";
+import { StageFlowFooter } from "@/components/pocs/stage-flow-footer";
 import { StageFlowNavigation } from "@/app/pocs/components/stage-flow-navigation";
-import { saveStageFlowProfile, useStageFlowProfile } from "@/app/pocs/components/stage-flow-state";
+import { useStageContext } from "@/lib/state/stage-context";
 import { APP_ROUTES } from "@/lib/routes";
 import { mockCreatorDNA, type CreatorDnaDimension } from "@/lib/mock-data/pocs-data";
 import styles from "./page.module.css";
 
 export default function CreatorDnaPage() {
-  const profile = useStageFlowProfile();
+  const { profile, saveProfile: saveStageProfile } = useStageContext();
   const [selectedDimensionId, setSelectedDimensionId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedSummaries, setEditedSummaries] = useState<Record<string, string>>({});
@@ -26,7 +26,7 @@ export default function CreatorDnaPage() {
           : undefined;
     return {
       ...dimension,
-          summary: editedSummaries[dimension.id] ?? profile.dimensionSummaries[dimension.id] ?? sourceSummary ?? dimension.summary,
+          summary: editedSummaries[dimension.id] ?? profile.dimensionSummaries[dimension.id] ?? (sourceSummary || dimension.summary),
     };
   });
   const selectedDimension = dimensions.find(
@@ -41,13 +41,13 @@ export default function CreatorDnaPage() {
     const communicationStyle = editedSummaries["communication-style"] ?? dimensions.find((dimension) => dimension.id === "communication-style")?.summary ?? "";
     const tone = editedSummaries["voice-tone"] ?? dimensions.find((dimension) => dimension.id === "voice-tone")?.summary ?? "";
     const dimensionSummaries = Object.fromEntries(dimensions.map((dimension) => [dimension.id, dimension.summary]));
-    saveStageFlowProfile({ ...profile, communicationStyle, tone, dimensionSummaries });
+    saveStageProfile({ ...profile, communicationStyle, tone, dimensionSummaries });
     setEditedSummaries({});
     setIsEditing(false);
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} stage-one-page`}>
       <StageFlowNavigation currentStep="creator-dna" />
       <header className={styles.pageHeader}>
         <div>
@@ -143,10 +143,11 @@ export default function CreatorDnaPage() {
       </div>
 
       <StageFlowFooter
-        backHref={APP_ROUTES.pocsDiscoverMe}
+        prevRoute={APP_ROUTES.pocsDiscoverMe}
+        currentStep={3}
+        totalSteps={5}
         completeStep="creator-dna"
-        nextHref={APP_ROUTES.pocsBrandKit}
-        nextLabel="Confirm DNA & Open Brand Kit"
+        nextRoute={APP_ROUTES.pocsBrandKit}
       />
     </div>
   );

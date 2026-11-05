@@ -74,7 +74,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
 ### Stage 2: Workspace Ingestion & Setup
 
-* \[ \] **Page 5 — Brand Asset Kit**
+* \[x \] **Page 5 — Brand Asset Kit**
 
   * **Spec:** Organized library of logos, fonts, media, and template overlays.
 
@@ -82,7 +82,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** Storage meter, category filters (Logos, Fonts, Media, Templates, Documents), asset preview drawer, drag-and-drop upload zone.
 
-* \[ \] **Page 6 — Web Content Portal**
+* \[x \] **Page 6 — Web Content Portal**
 
   * **Spec:** Live website preview and site-specific content manager.
 
@@ -90,7 +90,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** Website preview iframe container, page list manager, Brand Assets summary bar, SEO health score widget.
 
-* \[ \] **Page 7 — Import My World (Wizard Flow)**
+* \[ x\] **Page 7 — Import My World (Wizard Flow)**
 
   * **Spec:** Multi-step ingestion wizard connecting existing drives and platforms.
 
@@ -98,7 +98,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** 5-step status checklist, source connector cards (Google Drive, Dropbox, Notion, Instagram, YouTube), auto-categorization progress animation.
 
-* \[ \] **Page 8 — The Tornado (Creative Workspace Transition)**
+* \[ x\] **Page 8 — The Tornado (Creative Workspace Transition)**
 
   * **Spec:** Visual representation of assets transforming into an organized state ("Chaos to Clarity").
 
@@ -108,7 +108,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
 ### Stage 3: Core Content Engine
 
-* \[ \] **Page 9 — Content Workspace / Project Pipeline**
+* \[x\] **Page 9 — Content Workspace / Project Pipeline**
 
   * **Spec:** The core Phase 1 creation entry hub.
 
@@ -116,7 +116,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** 3 main entry path cards ("Create With Me", "Quick Draft", "Bring Something In"), "Continue Where You Left Off" carousel, quick mobile/desktop voice capture bar.
 
-* \[ \] **Page 10 — Single-Post Creation Loop (5 Sub-Layers)**
+* \[x\] **Page 10 — Single-Post Creation Loop (5 Sub-Layers)**
 
   * **Spec:** End-to-end single content object lifecycle engine.
 

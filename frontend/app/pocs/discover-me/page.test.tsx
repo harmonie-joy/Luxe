@@ -29,6 +29,10 @@ describe("Discover Me prototype", () => {
     expect(screen.getByText("Screen sharing preview")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "End call" }));
     expect(screen.getByRole("button", { name: "Resume call" })).toBeDefined();
+    const footer = within(screen.getByRole("region", { name: "Wizard actions" }));
+    expect(footer.getByRole("button", { name: /Save & Generate DNA/ }).hasAttribute("disabled")).toBe(false);
+    fireEvent.click(footer.getByRole("button", { name: /Save & Generate DNA/ }));
+    expect(router.push).toHaveBeenCalledWith("/pocs/creator-dna");
   });
 
   it("saves all chat answers and enables the next wizard step", () => {

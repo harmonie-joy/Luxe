@@ -4,9 +4,10 @@ import { useState, type FormEvent } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { StageFlowFooter } from "@/app/pocs/components/stage-flow-footer";
+import { Input } from "@/components/ui/input";
+import { StageFlowFooter } from "@/components/pocs/stage-flow-footer";
 import { StageFlowNavigation } from "@/app/pocs/components/stage-flow-navigation";
-import { saveStageFlowProfile, useStageFlowProfile } from "@/app/pocs/components/stage-flow-state";
+import { useStageContext } from "@/lib/state/stage-context";
 import { APP_ROUTES } from "@/lib/routes";
 import {
   mockDiscoverMe,
@@ -25,7 +26,7 @@ const screenLabels: Record<DiscoverMeScreen, string> = {
 };
 
 export default function DiscoverMePage() {
-  const profile = useStageFlowProfile();
+  const { profile, saveProfile } = useStageContext();
   const [screen, setScreen] = useState<DiscoverMeScreen>("choice");
   const chatAnswers = profile.answers;
   const chatStep = Math.min(chatAnswers.length, mockDiscoverMe.chat.questions.length - 1);
@@ -44,7 +45,7 @@ export default function DiscoverMePage() {
   const chatComplete = chatAnswers.length === mockDiscoverMe.chat.questions.length;
   const consultationComplete = completedAgenda.size === mockDiscoverMe.consultation.agenda.length;
   const activeScreen = screen === "choice" && chatAnswers.length > 0 ? "chat" : screen;
-  const canContinue = (activeScreen === "chat" && chatComplete) || (activeScreen === "consultation" && consultationComplete);
+  const canContinue = (activeScreen === "chat" && chatComplete) || (activeScreen === "consultation" && (consultationComplete || !isCallLive));
 
   function choosePath(path: DiscoverMePath) {
     setScreen(path);
@@ -64,12 +65,12 @@ export default function DiscoverMePage() {
 
   function saveAnswer(answer: string) {
     const answers = [...chatAnswers, answer].slice(0, mockDiscoverMe.chat.questions.length);
-    saveStageFlowProfile({
+    saveProfile({
       answers,
       tone: answers[2] ?? "Warm and direct",
       communicationStyle: answers[1] ?? answers[0] ?? "",
       completedSteps: profile.completedSteps,
-      dimensionSummaries: profile.dimensionSummaries,
+      dimensionSummaries: Object.fromEntries(Object.entries(profile.dimensionSummaries).filter(([id]) => !["north-star", "communication-style", "voice-tone"].includes(id))),
     });
   }
 
@@ -83,7 +84,7 @@ export default function DiscoverMePage() {
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} stage-one-page`}>
       <StageFlowNavigation currentStep="discover-me" />
       <header className={styles.pageHeader}>
         <div>
@@ -99,7 +100,8 @@ export default function DiscoverMePage() {
           <ol className={styles.steps}>
             {screenOrder.map((step, index) => (
               <li key={step}>
-                <button
+                <Button
+                  variant="ghost"
                   aria-current={activeScreen === step ? "step" : undefined}
                   className={styles.stepButton}
                   onClick={() => setScreen(step)}
@@ -111,7 +113,7 @@ export default function DiscoverMePage() {
                     <small>{step === "choice" ? "Find your starting point" : step === "chat" ? "Share your story" : "Explore your vision"}</small>
                   </span>
                   <span aria-hidden="true" className={styles.stepChevron}>›</span>
-                </button>
+                </Button>
               </li>
             ))}
           </ol>
@@ -203,7 +205,7 @@ export default function DiscoverMePage() {
                       </div>
                       <form className={styles.chatForm} onSubmit={submitAnswer}>
                         <label className={styles.srOnly} htmlFor="chat-answer">Your answer</label>
-                        <input
+                        <Input
                           id="chat-answer"
                           onChange={(event) => setTypedAnswer(event.target.value)}
                           placeholder={mockDiscoverMe.chat.inputPlaceholder}
@@ -227,7 +229,8 @@ export default function DiscoverMePage() {
                       <div><p className={styles.sidebarLabel}>VOICE PREVIEW</p><h3>{mockDiscoverMe.chat.voiceLabel}</h3></div>
                       <span className={styles.voiceMark} aria-hidden="true">≈</span>
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
                       aria-label={isVoicePlaying ? "Pause voice sample" : "Play voice sample"}
                       aria-pressed={isVoicePlaying}
                       className={`${styles.waveButton} ${isVoicePlaying ? styles.wavePlaying : ""}`}
@@ -235,7 +238,7 @@ export default function DiscoverMePage() {
                       type="button"
                     >
                       {Array.from({ length: 31 }, (_, index) => <span key={index} style={{ "--bar": `${((index * 7) % 9) + 3}` } as React.CSSProperties} />)}
-                    </button>
+                    </Button>
                     <p aria-live="polite">{isVoicePlaying ? "Playing a short sample" : mockDiscoverMe.chat.voiceSample}</p>
                   </Card>
                 </aside>
@@ -284,7 +287,8 @@ export default function DiscoverMePage() {
                   <Card className={styles.notesPanel} padding="none">
                     <div aria-label="Consultation workspace tabs" className={styles.tabs} role="tablist">
                       {mockDiscoverMe.consultation.tabs.map((tab) => (
-                        <button
+                        <Button
+                          variant="ghost"
                           aria-selected={activeTab === tab.id}
                           className={styles.tab}
                           id={`tab-${tab.id}`}
@@ -292,13 +296,13 @@ export default function DiscoverMePage() {
                           onClick={() => setActiveTab(tab.id)}
                           role="tab"
                           type="button"
-                        >{tab.label}</button>
+                        >{tab.label}</Button>
                       ))}
                     </div>
                     <div aria-labelledby={`tab-${activeTab}`} className={styles.tabContent} role="tabpanel">
                       {activeTab === "notes" && <ul className={styles.noteList}>{mockDiscoverMe.consultation.notes.map((note) => <li key={note}>{note}</li>)}</ul>}
                       {activeTab === "assistant" && <p>{mockDiscoverMe.consultation.assistant}</p>}
-                      {activeTab === "actions" && <ul className={styles.noteList}>{mockDiscoverMe.consultation.actions.map((action) => <li key={action}><label><input type="checkbox" />{action}</label></li>)}</ul>}
+                      {activeTab === "actions" && <ul className={styles.noteList}>{mockDiscoverMe.consultation.actions.map((action) => <li key={action}><label><Input type="checkbox" />{action}</label></li>)}</ul>}
                     </div>
                   </Card>
                 </div>
@@ -312,10 +316,10 @@ export default function DiscoverMePage() {
                         return (
                           <li key={item.id}>
                             <span className={styles.agendaTime}>{item.time}</span>
-                            <button aria-pressed={complete} className={styles.agendaItem} onClick={() => toggleAgendaItem(item.id)} type="button">
+                            <Button variant="ghost" aria-pressed={complete} className={styles.agendaItem} onClick={() => toggleAgendaItem(item.id)} type="button">
                               <span className={complete ? styles.agendaCheckComplete : styles.agendaCheck}>{complete ? "✓" : "○"}</span>
                               <span>{item.title}</span>
-                            </button>
+                            </Button>
                           </li>
                         );
                       })}
@@ -336,11 +340,13 @@ export default function DiscoverMePage() {
         </main>
       </div>
       <StageFlowFooter
-        backHref={APP_ROUTES.pocsWelcome}
+        prevRoute={APP_ROUTES.pocsWelcome}
+        currentStep={2}
+        totalSteps={5}
         completeStep="discover-me"
         nextDisabled={!canContinue}
         nextHint={!canContinue ? "Complete the chat or the consultation agenda to continue." : undefined}
-        nextHref={APP_ROUTES.pocsCreatorDNA}
+        nextRoute={APP_ROUTES.pocsCreatorDNA}
         nextLabel="Save & Generate DNA"
       />
     </div>

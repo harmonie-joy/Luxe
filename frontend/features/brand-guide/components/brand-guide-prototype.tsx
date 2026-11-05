@@ -117,11 +117,11 @@ export function BrandGuidePrototype({ guide }: { guide: BrandGuideData }) {
                 <div className={view === "grid" ? styles.chapterGrid : styles.chapterList}>
                   {filteredChapters.map((item) => (
                     <Card className={`${styles.chapterCard} ${item.id === "tone" ? styles.featured : ""}`} key={item.id} padding="none">
-                      <button onClick={() => navigate(item.id)} type="button" aria-label={`Open ${item.title}`}>
+                      <Button variant="ghost" onClick={() => navigate(item.id)} type="button" aria-label={`Open ${item.title}`}>
                         <span className={styles.cardTop}><span>{String(guide.chapters.indexOf(item) + 1).padStart(2, "0")}</span><span aria-hidden="true">&#8599;</span></span>
                         <h3>{item.title}</h3><p>{item.description}</p>
                         {item.id === "tone" && <span className={styles.continue}>Explore your voice <span aria-hidden="true">&#8594;</span></span>}
-                      </button>
+                      </Button>
                     </Card>
                   ))}
                 </div>

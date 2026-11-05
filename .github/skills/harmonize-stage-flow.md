@@ -1,57 +1,52 @@
 ---
 name: harmonize-stage-flow
-description: Audits UI consistency, enforces theme tokens, standardizes UI primitives, and wires up sequential navigation routes to build a unified, clickable prototype flow across targeted screens or combined stages.
+description: Audits UI consistency, enforces theme tokens, standardizes UI primitives, builds a shared state context, and connects isolated prototype mockups into a continuous, stateful, and clickable multi-screen application flow.
 ---
 
-# Skill: Harmonize Stage Flow
+# Skill: Harmonize Stage Flow (v2)
 
 ## Purpose
-Takes a set of generated prototype screens, audits them for visual consistency against the theme system, standardizes UI primitive usage, and wires up primary CTAs to create a seamless, clickable multi-screen flow.
+Transforms isolated prototype screens into a unified, stateful application flow. Audits visual design tokens, refactors raw HTML elements into shared UI primitives, creates state continuity between screens, and implements sequential navigation bridges so users can walk through the entire experience using in-page actions.
 
-## Inputs Required
-1. **Target Stage Scope:** (e.g., `Stage 1`, `Stage 2`, or `Combined Stage 1 + 2`)
-2. **Page List:** List of target `.tsx` files in `frontend/app/pocs/`
-3. **Sequential Flow Order:** Ordered list of route transitions (e.g., `/pocs/route-a` → `/pocs/route-b` → `/pocs/route-c`)
+## Core Directives for Executing Agents
 
----
+### 1. Autonomous Navigation & Flow Inference
+- **Eliminate Dead-End Actions:** Scan all buttons (e.g., "Get Started", "Start Chat", "End Call", "Save Profile", "Explore Asset Kit"). Ensure EVERY primary action button performs a state update or navigates to the logical next route rather than serving as a static mock trigger.
+- **Sub-View Resolution:** For multi-step pages (e.g., `Discover Me` path choice -> chat -> live call), ensure completion of the sub-views automatically advances the user to the next parent route (`Creator DNA`).
+- **Inject Persistent Flow Footer:** Create and include a standardized `<StageFlowFooter>` component at the bottom of target pages:
+  - `← Previous Step` button (routing to N-1).
+  - Step counter breadcrumb (e.g., `Step 2 of 5`).
+  - `Next Step →` primary CTA button (routing to N+1).
 
-## Execution Guardrails & Rules
+### 2. Stateful Data Continuity
+- **Shared Stage Context:** Build or update a shared React state/context (`frontend/lib/state/use-stage-store.ts` or React Context) so user inputs in early screens (e.g., chat choices in `Discover Me`) dynamically populate data fields in downstream screens (`Creator DNA`, `Brand Kit`).
 
-1. **Theme Tokens Only:** 
-   - Mandatory check for hardcoded hex values (e.g., `#ffffff`, `#1e293b`). Replace ALL hardcoded colors with Tailwind theme utility classes (`bg-bg-app`, `bg-bg-surface`, `text-text-primary`, `text-text-secondary`, `border-border-subtle`, `bg-accent`).
-2. **Primitive Component Enforcement:**
-   - Standardize all inline buttons to `<Button>` components from `frontend/components/ui/button.tsx`.
-   - Wrap major structural containers in standard `<Card>` components or `bg-bg-surface border border-border-subtle rounded-[var(--radius-card)] p-6`.
-3. **Dark Mode Verification:**
-   - Ensure every text label, panel background, input border, and badge updates dynamically when `.dark` mode is active on the root layout.
-4. **Navigation Wiring:**
-   - Wire up primary "Continue / Next Step" buttons on each page to push to the next sequential route using `next/link` or Next.js `useRouter`.
-   - Add a subtle step progress header across pages in the sequence (e.g., `[Stage Name] - Step X of Y`).
-5. **Zero Context Sprawl:**
-   - Do NOT create markdown logs, doc updates, or GitHub issues during code execution. Output ONLY refactored `.tsx` code.
+### 3. Strict Design Token & Component Standardization
+- **Zero Hex Codes:** Enforce theme utility classes ONLY (`bg-bg-app`, `bg-bg-surface`, `text-text-primary`, `text-text-secondary`, `border-border-subtle`, `bg-accent`).
+- **Primitive Enforcement:** Replace raw `<button>`, `<input>`, `<card>`, and `<div>` containers with UI primitives from `frontend/components/ui/` (`Button`, `Card`, `Badge`, `Input`, `Tabs`).
+- **Typography & Grid Hierarchy:** Standardize title sizes (`text-2xl font-bold tracking-tight text-text-primary`), body copy (`text-sm text-text-secondary`), card padding (`p-6`), and grid gaps (`gap-6`).
+- **Dark Mode Synchronization:** Ensure all backgrounds, panels, and borders respond dynamically to `.dark` class toggles.
 
 ---
 
-## Step-by-Step Execution Workflow
+## Step-by-Step Execution Protocol
 
-### Step 1: Scan & Audit Target Pages
-Read all target page components in `frontend/app/pocs/`. Identify:
-- Inconsistent heading sizes (standardize to `text-2xl font-semibold tracking-tight text-text-primary`).
-- Non-standard card padding or missing borders.
-- Broken or missing CTA routing links.
+### Step 1: Shared Flow State & Footer Setup
+1. Create `frontend/components/pocs/stage-flow-footer.tsx`:
+   - Accepts `prevRoute`, `nextRoute`, `currentStep`, `totalSteps`, `nextLabel`.
+   - Renders a fixed/sticky bottom action bar styled with theme tokens.
+2. Create `frontend/lib/state/stage-context.tsx`:
+   - Stores user selections across screens (e.g., brand voice, onboarding choices, target goals).
 
-### Step 2: Apply Theme & Primitive Standardizations
-Refactor JSX styling across all target files:
-- Replace raw `<button>` elements with `<Button variant="...">`.
-- Unify input fields, drop-down menus, and badges using `frontend/components/ui/`.
-- Ensure flex containers and grid gaps match standard spacing tokens (`gap-4` or `gap-6`).
+### Step 2: In-Page Route & Action Wiring
+1. Scan target `.tsx` files in `frontend/app/pocs/`.
+2. Wire all primary hero buttons (e.g., "Get Started" in `welcome/page.tsx`) to push the router to the next page.
+3. Attach `<StageFlowFooter>` to the bottom of each page component inside the stage scope.
 
-### Step 3: Wire Sequential Route Connections
-Using the provided **Sequential Flow Order**:
-- On Page N, set the primary CTA click handler or `<Link>` `href` to point directly to Page N+1.
-- On Page N+1, include a "← Back" button pointing to Page N.
-- Add/update the step breadcrumb header at the top of each page content area.
+### Step 3: Visual & Token Refactoring
+1. Sweep all target `.tsx` files to remove hardcoded color codes (`#ffffff`, `#1e293b`, etc.).
+2. Standardize cards, headers, borders, and input fields to use `frontend/components/ui/` primitives.
 
-### Step 4: Verification
-- Execute TypeScript check (`npm run type-check` or `tsc --noEmit`).
-- Verify clean compilation with zero linting errors.
+### Step 4: Compilation Verification
+1. Run `npm run type-check` or `tsc --noEmit`.
+2. Confirm zero lint or TypeScript errors across modified files.

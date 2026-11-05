@@ -14,7 +14,13 @@ describe("Welcome / Home prototype", () => {
     expect(screen.queryByRole("textbox")).toBeNull();
     expect(screen.getAllByRole("region", { name: /AI-powered|Everything organized|Built for creators|Your data stays private/i })).toHaveLength(4);
 
-    fireEvent.click(within(screen.getByRole("region", { name: "Wizard actions" })).getByRole("button", { name: /Get Started/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Get Started/ }));
+    for (const name of ["Build", "Scale", "Automate"]) {
+      fireEvent.click(screen.getByRole("button", { name }));
+      expect(router.push).toHaveBeenLastCalledWith("/pocs/discover-me");
+    }
+    expect(screen.getByText("Step 1 of 5")).toBeDefined();
+    fireEvent.click(within(screen.getByRole("region", { name: "Wizard actions" })).getByRole("button", { name: "Continue" }));
     expect(router.push).toHaveBeenCalledWith("/pocs/discover-me");
     fireEvent.click(screen.getByRole("button", { name: /Back/ }));
     expect(router.push).toHaveBeenCalledWith("/");

@@ -1,3 +1,238 @@
+import type { ContentChannel, DraftStatus } from "@/types/content";
+
+export interface CalendarPost extends GalleryPost {
+  scheduledAt: string;
+  calendarStage: "Ready" | "Scheduled" | "Published" | "Draft";
+}
+
+export const mockCalendar = {
+  referenceDate: "2026-11-10",
+  timezone: "Europe/Berlin",
+  posts: ([
+    { id: "calendar-001", title: "Morning Mindset", channel: "instagram", status: "approved", calendarStage: "Ready", format: "Image", image: "/pocs/inspiration/mountains.jpg", alt: "Open mountain horizon", scheduledAt: "2026-11-09T09:00:00+01:00" },
+    { id: "calendar-002", title: "AI Workshop Takeaway", channel: "instagram", status: "scheduled", calendarStage: "Scheduled", format: "Carousel", image: "/pocs/inspiration/coast.jpg", alt: "Mountain lake framed by trees", scheduledAt: "2026-11-10T10:00:00+01:00" },
+    { id: "calendar-003", title: "Productivity Rituals", channel: "linkedin", status: "published", calendarStage: "Published", format: "Carousel", image: "/pocs/inspiration/workspace.jpg", alt: "Notebook and laptop in a creative workspace", scheduledAt: "2026-11-11T12:00:00+01:00" },
+    { id: "calendar-004", title: "Day in the Life", channel: "short_video", status: "draft", calendarStage: "Draft", format: "Video", image: "/pocs/inspiration/interior.jpg", alt: "Light-filled creative studio", scheduledAt: "2026-11-12T10:00:00+01:00" },
+    { id: "calendar-005", title: "Direction Over Distraction", channel: "instagram", status: "approved", calendarStage: "Ready", format: "Image", image: "/pocs/inspiration/mountains.jpg", alt: "Layered mountains in evening light", scheduledAt: "2026-11-13T10:00:00+01:00" },
+    { id: "calendar-006", title: "Weekend Reminder", channel: "short_video", status: "scheduled", calendarStage: "Scheduled", format: "Video", image: "/pocs/inspiration/interior.jpg", alt: "Sunlit studio with natural textures", scheduledAt: "2026-11-14T12:00:00+01:00" },
+    { id: "calendar-007", title: "Protect Your Peace", channel: "short_video", status: "published", calendarStage: "Published", format: "Image", image: "/pocs/inspiration/coast.jpg", alt: "Calm mountain lake", scheduledAt: "2026-11-09T17:00:00+01:00" },
+    { id: "calendar-008", title: "Plan with Purpose", channel: "linkedin", status: "scheduled", calendarStage: "Scheduled", format: "Image", image: "/pocs/inspiration/mountains.jpg", alt: "Mountain landscape at sunset", scheduledAt: "2026-11-10T18:00:00+01:00" },
+  ] satisfies Omit<CalendarPost, "workspaceId" | "createdAt" | "updatedAt" | "stage">[]).map((post): CalendarPost => ({ ...post, stage: post.calendarStage === "Draft" ? "In Progress" : post.calendarStage, workspaceId: "workspace-sample-001", createdAt: "2026-11-05T09:00:00Z", updatedAt: "2026-11-05T10:00:00Z" })),
+};
+
+export type GalleryStage = "Ideas" | "In Progress" | "Review" | "Ready" | "Scheduled" | "Published";
+
+export interface GalleryPost {
+  id: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  channel: ContentChannel;
+  status: DraftStatus;
+  stage: GalleryStage;
+  format: "Image" | "Carousel" | "Video" | "Text";
+  image: string;
+  alt: string;
+}
+
+export const mockPostsGallery: readonly GalleryPost[] = ([
+  { id: "gallery-001", title: "AI Workshop Takeaway", channel: "instagram", status: "draft", stage: "In Progress", format: "Carousel", image: "/pocs/inspiration/coast.jpg", alt: "Mountain lake framed by trees" },
+  { id: "gallery-002", title: "Morning Mindset", channel: "instagram", status: "in_review", stage: "Review", format: "Image", image: "/pocs/inspiration/mountains.jpg", alt: "Open mountain horizon" },
+  { id: "gallery-003", title: "Productivity Rituals", channel: "linkedin", status: "approved", stage: "Ready", format: "Carousel", image: "/pocs/inspiration/workspace.jpg", alt: "Notebook and laptop in a creative workspace" },
+  { id: "gallery-004", title: "Direction Over Distraction", channel: "short_video", status: "scheduled", stage: "Scheduled", format: "Video", image: "/pocs/inspiration/interior.jpg", alt: "Light-filled creative studio" },
+  { id: "gallery-005", title: "Weekend Reminder", channel: "instagram", status: "published", stage: "Published", format: "Image", image: "/pocs/inspiration/mountains.jpg", alt: "Layered mountains in the evening light" },
+  { id: "gallery-006", title: "Day in the Life", channel: "short_video", status: "published", stage: "Published", format: "Video", image: "/pocs/inspiration/workspace.jpg", alt: "A quiet workspace with a notebook" },
+  { id: "gallery-007", title: "Protect Your Peace", channel: "linkedin", status: "published", stage: "Published", format: "Image", image: "/pocs/inspiration/interior.jpg", alt: "Sunlit interior with natural textures" },
+  { id: "gallery-008", title: "A More Intentional Week", channel: "linkedin", status: "draft", stage: "Ideas", format: "Text", image: "/pocs/inspiration/coast.jpg", alt: "Calm lake as a reference for an intentional week" },
+] satisfies Omit<GalleryPost, "workspaceId" | "createdAt" | "updatedAt">[]).map((post, index) => ({
+  ...post,
+  workspaceId: "workspace-sample-001",
+  createdAt: `2026-10-${String(28 - index).padStart(2, "0")}T09:00:00Z`,
+  updatedAt: `2026-11-${String(5 - Math.floor(index / 2)).padStart(2, "0")}T10:00:00Z`,
+}));
+
+export type IdeaCategory = "Storytelling" | "Content series" | "Creative practice" | "Business";
+export type IdeaStage = "idea" | "drafting";
+
+export interface IdeaBoxIdea {
+  id: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  note: string;
+  category: IdeaCategory;
+  tags: readonly string[];
+  stage: IdeaStage;
+  storyboard: readonly string[];
+}
+
+export const mockIdeaBoxIdeas: readonly IdeaBoxIdea[] = [
+  {
+    id: "idea-001",
+    workspaceId: "workspace-sample-001",
+    createdAt: "2026-11-02T09:00:00Z",
+    updatedAt: "2026-11-04T14:20:00Z",
+    title: "A more honest launch story",
+    note: "What changed when I stopped polishing the messy middle out of my process?",
+    category: "Storytelling",
+    tags: ["Behind the scenes", "Personal"],
+    stage: "idea",
+    storyboard: ["The version I planned to tell", "The moment things changed", "What I know now"],
+  },
+  {
+    id: "idea-002",
+    workspaceId: "workspace-sample-001",
+    createdAt: "2026-11-01T11:30:00Z",
+    updatedAt: "2026-11-04T10:15:00Z",
+    title: "Turn one client question into three posts",
+    note: "A repeatable series: the question, the real answer, and one small next step.",
+    category: "Content series",
+    tags: ["Repurpose", "LinkedIn"],
+    stage: "idea",
+    storyboard: ["The question I hear most", "The assumption behind it", "One useful next step"],
+  },
+  {
+    id: "idea-003",
+    workspaceId: "workspace-sample-001",
+    createdAt: "2026-10-30T08:45:00Z",
+    updatedAt: "2026-11-03T16:05:00Z",
+    title: "A reset ritual for creative blocks",
+    note: "Share the three-minute walk and voice memo that help me return to a stuck idea.",
+    category: "Creative practice",
+    tags: ["Routine", "Voice note"],
+    stage: "idea",
+    storyboard: ["Name the block", "Step away for three minutes", "Return with one question"],
+  },
+  {
+    id: "idea-004",
+    workspaceId: "workspace-sample-001",
+    createdAt: "2026-10-28T13:10:00Z",
+    updatedAt: "2026-11-02T09:25:00Z",
+    title: "Notes from the first 100 customers",
+    note: "Patterns I did not expect, and what they changed about the offer.",
+    category: "Business",
+    tags: ["Lessons learned", "Offer"],
+    stage: "idea",
+    storyboard: ["What I expected", "What customers actually needed", "What I changed"],
+  },
+  {
+    id: "idea-005",
+    workspaceId: "workspace-sample-001",
+    createdAt: "2026-10-27T09:00:00Z",
+    updatedAt: "2026-11-04T15:40:00Z",
+    title: "A weekly field note from the studio",
+    note: "Collect one observation, one lesson, and one question from the work week.",
+    category: "Content series",
+    tags: ["Weekly", "Studio"],
+    stage: "drafting",
+    storyboard: ["One moment from the week", "The lesson it revealed", "A question to take forward"],
+  },
+];
+
+export interface SinglePostVersion {
+  id: string;
+  label: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface SinglePostLoopData {
+  id: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  channel: "instagram";
+  original: string;
+  versions: readonly SinglePostVersion[];
+  slides: readonly { id: string; image: string; alt: string; headline: string; subtitle: string }[];
+  templates: readonly string[];
+  layers: readonly string[];
+  suggestedSlot: { date: string; time: string; timezone: string };
+}
+
+export const mockSinglePostLoop: SinglePostLoopData = {
+  id: "post-sample-0624",
+  workspaceId: "workspace-sample-001",
+  createdAt: "2026-11-05T09:00:00Z",
+  updatedAt: "2026-11-05T10:42:00Z",
+  title: "AI Workshop Takeaway",
+  channel: "instagram",
+  original: "Biggest takeaway from today's AI workshop:\n\nAI amplifies your thinking, not replaces it.\n\n3 actions I'm taking this week: protect focus, create with purpose, and reflect on what works.",
+  versions: [
+    { id: "caption-v1", label: "V1", createdAt: "2026-11-05T09:20:00Z", text: "Here's the biggest takeaway from today's AI workshop:\n\nAI doesn't replace our thinking. It amplifies it.\n\n3 actions I'm taking this week: protect my focus, create with purpose, and reflect on what works.\n\nWhat's one small step you'll take?" },
+    { id: "caption-v2", label: "V2", createdAt: "2026-11-05T09:40:00Z", text: "Small steps. Consistent action. Big results.\n\nAI amplifies your thinking, not replaces it. This week, I'm making room to focus, create, and reflect.\n\nWhich one will you start with?" },
+    { id: "caption-v3", label: "V3", createdAt: "2026-11-05T10:00:00Z", text: "You don't need to do more. You need to give your best ideas room to grow.\n\nMy AI workshop takeaway: protect your focus, create with purpose, and let technology amplify your thinking.\n\nOne intentional step at a time." },
+  ],
+  slides: [
+    { id: "slide-focus", image: "/pocs/inspiration/coast.jpg", alt: "Mountain lake framed by trees and distant peaks", headline: "FOCUS.\nCREATE.", subtitle: "Make an impact." },
+    { id: "slide-plan", image: "/pocs/inspiration/mountains.jpg", alt: "Open mountain horizon", headline: "PLAN", subtitle: "with purpose." },
+    { id: "slide-execute", image: "/pocs/inspiration/workspace.jpg", alt: "Notebook and laptop in a creative workspace", headline: "EXECUTE", subtitle: "with focus." },
+    { id: "slide-review", image: "/pocs/inspiration/interior.jpg", alt: "Sunlit studio interior", headline: "REVIEW", subtitle: "what matters." },
+  ],
+  templates: ["Editorial", "Minimal", "Statement"],
+  layers: ["Headline", "Accent line", "Brand signature"],
+  suggestedSlot: { date: "2026-11-12", time: "10:00", timezone: "Europe/Berlin" },
+};
+
+export interface WebPortalPage {
+  id: string;
+  title: string;
+  path: string;
+  status: "published" | "draft";
+  headline: string;
+  body: string;
+  seoTitle: string;
+  seoDescription: string;
+  updatedAt: string;
+}
+
+export const mockWebPortal = {
+  id: "website-sample-001",
+  workspaceId: "workspace-sample-001",
+  createdAt: "2026-11-01T09:00:00Z",
+  updatedAt: "2026-11-05T09:00:00Z",
+  brand: "THE LUXE STUDIO",
+  domain: "theluxe-studio.example",
+  image: "/pocs/inspiration/interior.jpg",
+  imageAlt: "Sunlit studio interior with natural textures and sculptural furniture",
+  assets: [
+    { id: "asset-interior", image: "/pocs/inspiration/interior.jpg", alt: "Studio interior brand reference" },
+    { id: "asset-workspace", image: "/pocs/inspiration/workspace.jpg", alt: "Creative workspace brand reference" },
+    { id: "asset-coast", image: "/pocs/inspiration/coast.jpg", alt: "Landscape brand reference" },
+  ],
+  colors: [
+    { name: "Ink", token: "--color-on-surface" },
+    { name: "Iris", token: "--color-primary" },
+    { name: "Lilac", token: "--color-primary-fixed-dim" },
+    { name: "Peach", token: "--color-secondary-container" },
+    { name: "Sage", token: "--color-tertiary-container" },
+  ],
+  typography: { heading: "Libre Caslon Text", body: "Inter" },
+  metrics: [
+    { label: "Visitors", value: "8.2K", change: "+12.5%", weekValue: "2.1K", weekChange: "+4.2%" },
+    { label: "Page views", value: "12.4K", change: "+18.4%", weekValue: "3.2K", weekChange: "+6.1%" },
+    { label: "Avg. visit", value: "02:31", change: "+8.2%", weekValue: "02:18", weekChange: "+2.8%" },
+    { label: "Conversions", value: "156", change: "+15.7%", weekValue: "38", weekChange: "+5.6%" },
+  ],
+  activity: { month: [35, 52, 44, 67, 58, 80, 72, 95, 78, 88, 70, 92], week: [42, 58, 48, 76, 64, 85, 92] },
+  suggestions: [
+    { title: "How living spaces shape our days", pageId: "web-blog", kind: "Blog" },
+    { title: "Behind our design process", pageId: "web-services", kind: "Services" },
+    { title: "Meet the studio", pageId: "web-about", kind: "About" },
+  ],
+  pages: ([
+    { id: "web-home", title: "Home", path: "/", status: "published", headline: "Your Vision. Our Strategy. Timeless Impact.", body: "We help creators and brands build purposeful identities and spaces that reflect who they are.", seoTitle: "THE LUXE STUDIO | Intentional brand design", seoDescription: "Discover a thoughtful design studio creating purposeful brand identities, considered spaces, and meaningful experiences for founders and creators." },
+    { id: "web-about", title: "About", path: "/about", status: "published", headline: "A studio built on intention.", body: "We are a small team of designers and strategists who believe the most enduring work starts with listening.", seoTitle: "About our studio | THE LUXE STUDIO", seoDescription: "Meet the designers and strategists behind THE LUXE STUDIO and explore our considered approach to purposeful brands and lasting creative partnerships." },
+    { id: "web-services", title: "Services", path: "/services", status: "published", headline: "Make room for what comes next.", body: "From brand strategy to website design, we bring clarity and a distinctive point of view to every touchpoint.", seoTitle: "Brand strategy and website design | THE LUXE STUDIO", seoDescription: "Explore brand strategy, visual identity, and website design services shaped around your goals, your audience, and the next chapter of your business." },
+    { id: "web-work", title: "Work", path: "/work", status: "published", headline: "Considered work. Lasting connections.", body: "A selection of original identities and experiences, developed in close collaboration with ambitious founders.", seoTitle: "Selected creative work | THE LUXE STUDIO", seoDescription: "Browse selected brand identities and digital experiences created in collaboration with founders who value clarity, thoughtful design, and lasting impact." },
+    { id: "web-blog", title: "Blog", path: "/journal", status: "draft", headline: "Notes from the studio.", body: "Ideas on design, creative practice, and building something that matters.", seoTitle: "", seoDescription: "" },
+    { id: "web-contact", title: "Contact", path: "/contact", status: "published", headline: "Let's build something meaningful.", body: "Tell us about your next chapter. We would love to hear what you have in mind.", seoTitle: "Contact the studio | THE LUXE STUDIO", seoDescription: "Start a conversation with THE LUXE STUDIO about your brand, your website, or a new creative collaboration. Share your vision and meet your design team." },
+  ] satisfies Omit<WebPortalPage, "updatedAt">[]).map((page) => ({ ...page, updatedAt: "2026-11-05T09:00:00Z" })),
+};
+
 export type InspirationCategory = "Mood & Vibe" | "Color Palettes" | "Typography" | "Photography" | "Campaigns" | "Content Styles" | "Videos";
 
 export interface InspirationItem {
@@ -343,3 +578,238 @@ export const mockBrandGuide: BrandGuideData = {
     interpretation: "Your tone is best described as Empowering, Clear, Warm, Confident. The AI will use this to guide your voice in captions, emails, and content.",
   },
 };
+
+export type BrandAssetCategory = "Logos" | "Fonts" | "Media" | "Templates" | "Documents";
+export type BrandAssetPreviewKind = "logo" | "font" | "image" | "video" | "audio" | "template" | "document";
+
+export interface BrandKitAsset {
+  id: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  category: BrandAssetCategory;
+  format: string;
+  sizeLabel: string;
+  description: string;
+  previewKind: BrandAssetPreviewKind;
+  image?: string;
+  alt?: string;
+}
+
+export const mockBrandAssetKit = {
+  storageUsedPercent: 68,
+  storageUsedLabel: "6.8 GB",
+  storageLimitLabel: "10 GB",
+  assets: [
+    { id: "asset-logo-primary", workspaceId: "workspace-sample-001", createdAt: "2026-10-12T10:00:00Z", updatedAt: "2026-10-29T14:30:00Z", name: "Primary Logo", category: "Logos", format: "SVG", sizeLabel: "2.4 MB", description: "Approved master mark for light backgrounds.", previewKind: "logo" },
+    { id: "asset-logo-reverse", workspaceId: "workspace-sample-001", createdAt: "2026-10-12T10:00:00Z", updatedAt: "2026-10-27T09:10:00Z", name: "Reverse Logo", category: "Logos", format: "PNG", sizeLabel: "1.8 MB", description: "Light mark for use on dark backgrounds.", previewKind: "logo" },
+    { id: "asset-logo-icon", workspaceId: "workspace-sample-001", createdAt: "2026-10-12T10:00:00Z", updatedAt: "2026-10-21T11:45:00Z", name: "Brand Symbol", category: "Logos", format: "SVG", sizeLabel: "840 KB", description: "Standalone symbol for compact placements.", previewKind: "logo" },
+    { id: "asset-font-sora", workspaceId: "workspace-sample-001", createdAt: "2026-10-14T08:30:00Z", updatedAt: "2026-10-28T15:00:00Z", name: "Sora SemiBold", category: "Fonts", format: "OTF", sizeLabel: "1.2 MB", description: "Primary sans-serif for interface and body copy.", previewKind: "font" },
+    { id: "asset-font-caslon", workspaceId: "workspace-sample-001", createdAt: "2026-10-14T08:30:00Z", updatedAt: "2026-10-28T15:00:00Z", name: "Libre Caslon Text", category: "Fonts", format: "TTF", sizeLabel: "980 KB", description: "Editorial serif for display headings.", previewKind: "font" },
+    { id: "asset-media-editorial", workspaceId: "workspace-sample-001", createdAt: "2026-10-19T13:15:00Z", updatedAt: "2026-10-26T16:20:00Z", name: "Editorial Portrait", category: "Media", format: "JPG", sizeLabel: "8.6 MB", description: "Natural-light editorial reference image.", previewKind: "image", image: "/pocs/brand-guide-editorial.jpg", alt: "Editorial portrait in a softly lit studio" },
+    { id: "asset-media-campaign", workspaceId: "workspace-sample-001", createdAt: "2026-10-20T09:00:00Z", updatedAt: "2026-10-25T10:05:00Z", name: "Launch Film", category: "Media", format: "MP4", sizeLabel: "184 MB", description: "Launch campaign video master.", previewKind: "video", image: "/pocs/brand-guide-editorial.jpg", alt: "Launch film poster" },
+    { id: "asset-media-audio", workspaceId: "workspace-sample-001", createdAt: "2026-10-20T09:00:00Z", updatedAt: "2026-10-23T12:40:00Z", name: "Audio Signature", category: "Media", format: "WAV", sizeLabel: "12.1 MB", description: "Short audio signature for branded video.", previewKind: "audio" },
+    { id: "asset-template-social", workspaceId: "workspace-sample-001", createdAt: "2026-10-16T12:00:00Z", updatedAt: "2026-10-29T11:30:00Z", name: "Social Quote", category: "Templates", format: "FIG", sizeLabel: "4.1 MB", description: "Square quote layout with approved logo placement.", previewKind: "template" },
+    { id: "asset-template-story", workspaceId: "workspace-sample-001", createdAt: "2026-10-16T12:00:00Z", updatedAt: "2026-10-24T10:15:00Z", name: "Story Cover", category: "Templates", format: "PSD", sizeLabel: "16.3 MB", description: "Portrait title card for story sequences.", previewKind: "template" },
+    { id: "asset-template-presentation", workspaceId: "workspace-sample-001", createdAt: "2026-10-16T12:00:00Z", updatedAt: "2026-10-22T08:50:00Z", name: "Pitch Deck", category: "Templates", format: "PPTX", sizeLabel: "9.7 MB", description: "Presentation master with the current type system.", previewKind: "template" },
+    { id: "asset-document-guidelines", workspaceId: "workspace-sample-001", createdAt: "2026-10-17T14:00:00Z", updatedAt: "2026-10-30T09:25:00Z", name: "Brand Guidelines", category: "Documents", format: "PDF", sizeLabel: "5.2 MB", description: "Reference guide for using the approved identity.", previewKind: "document" },
+    { id: "asset-document-license", workspaceId: "workspace-sample-001", createdAt: "2026-10-17T14:00:00Z", updatedAt: "2026-10-18T16:45:00Z", name: "Image License Notes", category: "Documents", format: "PDF", sizeLabel: "640 KB", description: "Usage notes for licensed campaign photography.", previewKind: "document" },
+  ] satisfies readonly BrandKitAsset[],
+} as const;
+
+export type ImportWorldConnectorId = "google-drive" | "dropbox" | "notion" | "instagram" | "youtube";
+
+export interface ImportWorldConnector {
+  id: ImportWorldConnectorId;
+  name: string;
+  mark: string;
+  kind: string;
+  sampleCount: number;
+  description: string;
+}
+
+export interface ImportWorldCategory {
+  id: string;
+  name: string;
+  sampleCount: number;
+  description: string;
+}
+
+export const mockImportWorld = {
+  id: "import-world-sample-001",
+  workspaceId: "workspace-sample-001",
+  createdAt: "2026-10-30T09:00:00Z",
+  updatedAt: "2026-10-30T09:00:00Z",
+  steps: [
+    { id: "connect", label: "Connect sources", description: "Choose where your work lives." },
+    { id: "select", label: "Choose content", description: "Select what to bring in." },
+    { id: "organize", label: "Organize", description: "Sort and categorize your content." },
+    { id: "review", label: "Review", description: "Check what is ready to import." },
+    { id: "complete", label: "Complete", description: "Your world is ready." },
+  ],
+  connectors: [
+    { id: "google-drive", name: "Google Drive", mark: "G", kind: "Drive", sampleCount: 1241, description: "Documents, images, and brand files." },
+    { id: "dropbox", name: "Dropbox", mark: "D", kind: "Drive", sampleCount: 563, description: "Creative files and working folders." },
+    { id: "notion", name: "Notion", mark: "N", kind: "Workspace", sampleCount: 32, description: "Notes, plans, and knowledge pages." },
+    { id: "instagram", name: "Instagram", mark: "◎", kind: "Social", sampleCount: 247, description: "Posts, reels, and saved highlights." },
+    { id: "youtube", name: "YouTube", mark: "▶", kind: "Video", sampleCount: 68, description: "Videos, descriptions, and transcripts." },
+  ] satisfies readonly ImportWorldConnector[],
+  categories: [
+    { id: "brand", name: "Brand assets", sampleCount: 86, description: "Logos, guidelines, templates, and visual references." },
+    { id: "content", name: "Content & stories", sampleCount: 542, description: "Published work, drafts, and creator stories." },
+    { id: "strategy", name: "Strategy & notes", sampleCount: 118, description: "Ideas, plans, and audience insights." },
+  ] satisfies readonly ImportWorldCategory[],
+  organizingTasks: ["Categorizing files", "Generating tags", "Connecting insights", "Detecting duplicates"],
+} as const;
+
+export interface TornadoWorkspaceMetric {
+  id: string;
+  label: string;
+  value: string;
+  detail: string;
+  mark: string;
+}
+
+export interface TornadoWorkspaceAsset {
+  id: string;
+  name: string;
+  source: string;
+  mark: string;
+}
+
+export interface TornadoWorkspaceFocusItem {
+  id: string;
+  title: string;
+  category: string;
+  due: string;
+}
+
+export const mockTornadoWorkspace = {
+  id: "tornado-workspace-sample-001",
+  workspaceId: "workspace-sample-001",
+  createdAt: "2026-11-05T09:00:00Z",
+  updatedAt: "2026-11-05T09:00:00Z",
+  creatorName: "Harmonie",
+  metrics: [
+    { id: "projects", label: "Projects", value: "7", detail: "Active", mark: "P" },
+    { id: "tasks", label: "Tasks", value: "12", detail: "This week", mark: "T" },
+    { id: "content", label: "Content items", value: "1,248", detail: "Organized", mark: "C" },
+    { id: "insights", label: "Insights", value: "92", detail: "This week", mark: "I" },
+  ] satisfies readonly TornadoWorkspaceMetric[],
+  scatteredAssets: [
+    { id: "asset-drive", name: "Launch notes", source: "Drive", mark: "D" },
+    { id: "asset-notion", name: "Audience map", source: "Notion", mark: "N" },
+    { id: "asset-social", name: "Founder story", source: "Instagram", mark: "IG" },
+    { id: "asset-video", name: "Studio interview", source: "YouTube", mark: "YT" },
+    { id: "asset-dropbox", name: "Brand references", source: "Dropbox", mark: "Db" },
+  ] satisfies readonly TornadoWorkspaceAsset[],
+  collections: ["Brand assets", "Stories", "Campaigns"],
+  focus: [
+    { id: "focus-review", title: "Review new brand references", category: "Brand foundation", due: "10 min" },
+    { id: "focus-launch", title: "Shape the spring launch idea", category: "Spring campaign", due: "Today" },
+    { id: "focus-image", title: "Choose a hero image", category: "Founder story", due: "Today" },
+  ] satisfies readonly TornadoWorkspaceFocusItem[],
+} as const;
+
+export interface ContentWorkspacePath {
+  id: "guided" | "quick-draft" | "bring-in";
+  title: string;
+  description: string;
+  details: readonly string[];
+  icon: string;
+  action: string;
+  accent: "primary" | "secondary" | "tertiary";
+}
+
+export interface ContentWorkspaceItem {
+  id: string;
+  workspaceId: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  channel: string;
+  status: string;
+  updatedLabel: string;
+  nextAction: string;
+  image: string;
+  imageAlt: string;
+}
+
+export const mockContentWorkspace = {
+  id: "content-workspace-sample-001",
+  workspaceId: "workspace-sample-001",
+  createdAt: "2026-11-05T09:00:00Z",
+  updatedAt: "2026-11-05T09:00:00Z",
+  creatorName: "Sandra",
+  paths: [
+    {
+      id: "guided",
+      title: "Create With Me",
+      description: "Shape one idea into work that sounds like you.",
+      details: ["Guided, one step at a time", "Your accepted voice stays in view", "Pick up where you left off"],
+      icon: "✦",
+      action: "Start guided",
+      accent: "primary",
+    },
+    {
+      id: "quick-draft",
+      title: "Quick Draft",
+      description: "Start with a thought and find its shape.",
+      details: ["Begin with a rough idea", "Keep your point of view", "Refine it when you are ready"],
+      icon: "↗",
+      action: "Explore quick draft",
+      accent: "secondary",
+    },
+    {
+      id: "bring-in",
+      title: "Bring Something In",
+      description: "Keep a link, note, or reference close to your work.",
+      details: ["Bring a source into focus", "Add context as you go", "Nothing is uploaded in this preview"],
+      icon: "＋",
+      action: "Explore import",
+      accent: "tertiary",
+    },
+  ] satisfies readonly ContentWorkspacePath[],
+  items: [
+    {
+      id: "content-item-sample-001",
+      workspaceId: "workspace-sample-001",
+      createdAt: "2026-11-03T09:00:00Z",
+      updatedAt: "2026-11-04T15:20:00Z",
+      title: "Founder story: finding a steadier pace",
+      channel: "LinkedIn post",
+      status: "In progress",
+      updatedLabel: "Yesterday",
+      nextAction: "Add the moment that changed your approach",
+      image: "/pocs/inspiration/workspace.jpg",
+      imageAlt: "Notebook and laptop on a calm creative workspace",
+    },
+    {
+      id: "content-item-sample-002",
+      workspaceId: "workspace-sample-001",
+      createdAt: "2026-11-02T11:30:00Z",
+      updatedAt: "2026-11-04T10:15:00Z",
+      title: "Leadership is a daily practice",
+      channel: "Instagram post",
+      status: "In review",
+      updatedLabel: "Yesterday",
+      nextAction: "Revisit the opening line",
+      image: "/pocs/inspiration/interior.jpg",
+      imageAlt: "Sunlit interior with natural textures and sculptural furniture",
+    },
+    {
+      id: "content-item-sample-003",
+      workspaceId: "workspace-sample-001",
+      createdAt: "2026-10-30T08:45:00Z",
+      updatedAt: "2026-11-03T16:40:00Z",
+      title: "Monthly note on making room to grow",
+      channel: "Newsletter",
+      status: "Scheduled",
+      updatedLabel: "Nov 3",
+      nextAction: "Review the saved outline",
+      image: "/pocs/inspiration/coast.jpg",
+      imageAlt: "Quiet coastline beneath a wide open sky",
+    },
+  ] satisfies readonly ContentWorkspaceItem[],
+} as const;

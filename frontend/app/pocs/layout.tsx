@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { APP_ROUTES } from "@/lib/routes";
+import { StageProvider } from "@/lib/state/stage-context";
 import "./sandbox.css";
 
 export default function SandboxLayout({ children }: { children: ReactNode }) {
@@ -22,7 +23,15 @@ export default function SandboxLayout({ children }: { children: ReactNode }) {
           <Link href={APP_ROUTES.pocsCreatorDNA}>Creator DNA</Link>
           <Link href={APP_ROUTES.pocsBrandKit}>Brand Kit</Link>
           <Link href={APP_ROUTES.pocsBrandAssetKit}>Brand Asset Kit</Link>
+          <Link href={APP_ROUTES.pocsImportWorld}>Import My World</Link>
+          <Link href={APP_ROUTES.pocsTornadoWorkspace}>Tornado Workspace</Link>
+          <Link href={APP_ROUTES.pocsContentWorkspace}>Content Workspace</Link>
           <Link href={APP_ROUTES.pocsAestheticBoard}>Aesthetic Board</Link>
+          <Link href={APP_ROUTES.pocsWebPortal}>Web Content Portal</Link>
+          <Link href={APP_ROUTES.pocsSinglePost}>Single-Post Loop</Link>
+          <Link href={APP_ROUTES.pocsPostsGallery}>Posts Gallery</Link>
+          <Link href={APP_ROUTES.pocsCalendar}>Content Calendar</Link>
+          <Link href={APP_ROUTES.pocsIdeaBox}>Idea Box</Link>
           <span aria-disabled="true" title="Coming soon">Layouts</span>
           <span aria-disabled="true" title="Coming soon">Patterns</span>
         </nav>
@@ -38,7 +47,7 @@ export default function SandboxLayout({ children }: { children: ReactNode }) {
         </Button>
       </header>
       <main className="luxe-pocs-main" id="sandbox-main" tabIndex={-1}>
-        <div className="luxe-pocs-content">{children}</div>
+        <div className="luxe-pocs-content"><StageProvider>{children}</StageProvider></div>
       </main>
     </div>
   );

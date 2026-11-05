@@ -10,7 +10,7 @@ describe("Brand Asset Kit wizard step", () => {
 
     expect(screen.getByText(/not connected to storage/)).toBeDefined();
     const footer = within(screen.getByRole("region", { name: "Wizard actions" }));
-    fireEvent.click(footer.getByRole("button", { name: /Complete Foundation/ }));
+    fireEvent.click(footer.getByRole("button", { name: "Continue" }));
     expect(router.push).toHaveBeenCalledWith("/pocs/import-world");
     fireEvent.click(footer.getByRole("button", { name: /Back/ }));
     expect(router.push).toHaveBeenCalledWith("/pocs/brand-kit");
