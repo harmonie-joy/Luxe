@@ -1,0 +1,247 @@
+.page {
+  --page-accent-wash: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-text-primary);
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.pageHeader {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.pageHeader h1,
+.sectionHeading h2,
+.dimensionCard h3,
+.healthTitleBlock h2,
+.dialog h2 {
+  color: var(--color-text-primary);
+  font-family: var(--font-luxe-serif);
+  font-weight: 400;
+  margin: 0;
+}
+
+.pageHeader h1 {
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.eyebrow,
+.navLabel {
+  color: var(--color-accent-primary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  margin: 0 0 var(--space-2);
+}
+
+.eyebrow span { color: var(--color-text-secondary); padding: 0 var(--space-1); }
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin: var(--space-2) 0 0;
+}
+
+.sourceBanner {
+  align-items: center;
+  background:
+    radial-gradient(ellipse at 8% 8%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 42%),
+    radial-gradient(ellipse at 94% 24%, color-mix(in srgb, var(--color-secondary) 15%, transparent), transparent 40%),
+    var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  display: flex;
+  gap: var(--space-4);
+  min-width: 0;
+  padding: var(--space-5) var(--space-6);
+}
+
+.sourceMark,
+.dimensionIcon,
+.healthIcon,
+.dialogIcon {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-bg-surface));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+  border-radius: var(--radius-full);
+  color: var(--color-accent-primary);
+  display: inline-flex;
+  flex: 0 0 2.5rem;
+  height: 2.5rem;
+  justify-content: center;
+  width: 2.5rem;
+}
+
+.sourceMark { font-size: 1.15rem; }
+.sourceTitle { font-size: 0.9375rem; font-weight: 650; margin: 0; }
+.sourceText { color: var(--color-text-secondary); font-size: 0.8125rem; margin: var(--space-1) 0 0; }
+.sampleBadge { margin-left: auto; }
+
+.workspace {
+  align-items: start;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: minmax(12rem, 0.25fr) minmax(0, 1fr);
+}
+
+.navigation {
+  background: color-mix(in srgb, var(--color-bg-surface) 82%, transparent);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.navLabel { margin: 0 0 var(--space-2); padding: 0 var(--space-2); }
+
+.navButton {
+  justify-content: flex-start;
+  min-height: 2.5rem;
+  text-align: left;
+  white-space: normal;
+  width: 100%;
+}
+
+.navButton > span {
+  color: var(--color-accent-primary);
+  flex: 0 0 1.25rem;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.content { display: grid; gap: var(--space-4); min-width: 0; }
+
+.sectionHeading {
+  align-items: end;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.sectionHeading h2 { font-size: 1.375rem; }
+.dimensionCount { color: var(--color-text-secondary); font-size: 0.75rem; white-space: nowrap; }
+
+.dimensionGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dimensionCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.featuredCard {
+  background:
+    linear-gradient(125deg, var(--page-accent-wash), transparent 52%),
+    var(--color-bg-surface);
+  grid-column: 1 / -1;
+}
+
+.dimensionTopline { align-items: center; display: flex; justify-content: space-between; margin-bottom: var(--space-3); }
+.dimensionIcon { flex-basis: 2.25rem; font-size: 1rem; height: 2.25rem; width: 2.25rem; }
+.cardIndex { color: var(--color-text-secondary); font-size: 0.6875rem; }
+.dimensionCard h3 { font-family: var(--font-luxe-sans); font-size: 0.9375rem; font-weight: 650; line-height: 1.35; }
+.dimensionSummary { color: var(--color-text-secondary); font-size: 0.8125rem; line-height: 1.55; margin: var(--space-2) 0 0; }
+
+.detailList {
+  color: var(--color-text-primary);
+  display: grid;
+  font-size: 0.8125rem;
+  gap: var(--space-2);
+  line-height: 1.5;
+  margin: var(--space-4) 0 0;
+  padding-left: 1.125rem;
+}
+
+.detailList li::marker { color: var(--color-accent-primary); }
+.viewButton { align-self: flex-start; margin: auto 0 0 calc(var(--space-2) * -1); padding-top: var(--space-3); }
+.viewButton span { color: var(--color-accent-primary); }
+.detailView { display: grid; gap: var(--space-3); }
+.backButton { justify-self: start; }
+.detailView .dimensionCard { min-height: 16rem; }
+.detailView .dimensionSummary { font-size: 0.9375rem; max-width: 42rem; }
+.detailView .detailList { font-size: 0.875rem; }
+
+.healthCard { display: grid; gap: var(--space-4); }
+.healthHeader { align-items: center; display: flex; gap: var(--space-3); min-width: 0; }
+.healthIcon { flex-basis: 2.25rem; height: 2.25rem; width: 2.25rem; }
+.healthTitleBlock { min-width: 0; }
+.healthTitleBlock h2 { font-family: var(--font-luxe-sans); font-size: 0.875rem; font-weight: 650; }
+.healthTitleBlock p { color: var(--color-text-secondary); font-size: 0.75rem; margin: var(--space-1) 0 0; }
+.progressTrack { background: var(--color-bg-element); border-radius: var(--radius-pill); height: 0.375rem; margin-left: auto; max-width: 10rem; overflow: hidden; width: 24%; }
+.progressTrack span { background: var(--color-accent-primary); border-radius: inherit; display: block; height: 100%; }
+.healthSignals { border-top: 1px solid var(--color-border-subtle); display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5); list-style: none; margin: 0; padding: var(--space-3) 0 0; }
+.healthSignals li { align-items: center; color: var(--color-text-secondary); display: inline-flex; font-size: 0.75rem; gap: var(--space-2); }
+.healthSignals li span { color: var(--status-success); font-weight: 700; }
+
+.dialogBackdrop {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-on-background) 48%, transparent);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: var(--space-4);
+  position: fixed;
+  z-index: 50;
+}
+
+.dialog {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-panel);
+  display: grid;
+  gap: var(--space-3);
+  max-width: 28rem;
+  padding: var(--space-6);
+  width: 100%;
+}
+
+.dialogIcon { margin-bottom: var(--space-1); }
+.dialog .eyebrow { margin-bottom: 0; }
+.dialog h2 { font-size: 1.5rem; }
+.dialog p:not(.eyebrow) { color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.6; margin: 0 0 var(--space-2); }
+.dialog button { justify-self: start; }
+
+@media (max-width: 58rem) {
+  .workspace { grid-template-columns: minmax(10rem, 0.32fr) minmax(0, 1fr); }
+  .dimensionGrid { grid-template-columns: minmax(0, 1fr); }
+  .featuredCard { grid-column: auto; }
+}
+
+@media (max-width: 44rem) {
+  .page { gap: var(--space-4); }
+  .pageHeader { align-items: flex-start; }
+  .pageHeader h1 { font-size: 1.75rem; }
+  .pageHeader > button { flex: 0 0 auto; }
+  .sourceBanner { align-items: flex-start; flex-wrap: wrap; padding: var(--space-4); }
+  .sourceBanner > div { flex: 1 1 calc(100% - 4rem); }
+  .sampleBadge { margin-left: 3.25rem; }
+  .workspace { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+  .navigation { box-sizing: border-box; display: flex; flex: 0 1 100%; gap: var(--space-2); max-width: 100%; min-width: 0; overflow-x: auto; padding: var(--space-3); position: static; width: 100%; }
+  .navLabel { align-self: center; flex: 0 0 auto; margin: 0; }
+  .navButton { flex: 0 0 auto; justify-content: center; width: auto; white-space: nowrap; }
+  .navButton > span { flex-basis: auto; }
+  .content { width: 100%; }
+  .healthHeader { flex-wrap: wrap; }
+  .progressTrack { flex: 1 1 100%; margin-left: 3.25rem; max-width: none; width: auto; }
+}
+
+@media (max-width: 28rem) {
+  .pageHeader { align-items: stretch; flex-direction: column; }
+  .pageHeader > button { align-self: flex-start; }
+  .sectionHeading { align-items: flex-start; flex-direction: column; gap: var(--space-1); }
+  .healthSignals { gap: var(--space-3); }
+  .dialog { padding: var(--space-5); }
+}

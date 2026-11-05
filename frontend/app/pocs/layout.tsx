@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { APP_ROUTES } from "@/lib/routes";
 import "./sandbox.css";
 
 export default function SandboxLayout({ children }: { children: ReactNode }) {
@@ -15,8 +16,13 @@ export default function SandboxLayout({ children }: { children: ReactNode }) {
       <header className="luxe-pocs-header">
         <Badge className="luxe-pocs-title">⚡ DESIGN SYSTEM PLAYGROUND</Badge>
         <nav aria-label="Sandbox pages" className="luxe-pocs-nav">
-          <Link href="/pocs/welcome">Welcome / Home</Link>
+          <Link href={APP_ROUTES.pocsWelcome}>Welcome / Home</Link>
+          <Link href={APP_ROUTES.pocsDiscoverMe}>Discover Me</Link>
           <Link href="/pocs/components">Components</Link>
+          <Link href={APP_ROUTES.pocsCreatorDNA}>Creator DNA</Link>
+          <Link href={APP_ROUTES.pocsBrandKit}>Brand Kit</Link>
+          <Link href={APP_ROUTES.pocsBrandAssetKit}>Brand Asset Kit</Link>
+          <Link href={APP_ROUTES.pocsAestheticBoard}>Aesthetic Board</Link>
           <span aria-disabled="true" title="Coming soon">Layouts</span>
           <span aria-disabled="true" title="Coming soon">Patterns</span>
         </nav>

@@ -25,7 +25,7 @@
 }
 
 .luxe-pocs-title { justify-self: start; }
-.luxe-pocs-nav { display: flex; gap: var(--space-5); min-width: 0; }
+.luxe-pocs-nav { display: flex; gap: var(--space-5); min-width: 0; overflow-x: auto; white-space: nowrap; }
 .luxe-pocs-nav a { color: var(--color-text-primary); text-underline-offset: var(--space-1); }
 .luxe-pocs-nav [aria-disabled] { color: var(--color-text-secondary); cursor: not-allowed; }
 .luxe-pocs-theme-toggle { min-width: 7rem; }
@@ -51,6 +51,8 @@
 .luxe-pocs-muted { color: var(--color-text-secondary); font-size: 0.875rem; }
 .luxe-pocs-error { color: var(--status-danger); font-size: 0.875rem; }
 .luxe-pocs [aria-invalid="true"] { border-color: var(--status-danger); }
+.luxe-pocs .stage-flow-title { color: var(--color-text-primary); font-family: var(--font-luxe-sans), sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: 0; line-height: 1.25; }
+.luxe-pocs .stage-flow-caption { color: var(--color-text-secondary); font-size: 0.875rem; }
 .luxe-pocs-card-content { display: grid; gap: var(--space-2); overflow-wrap: anywhere; }
 .luxe-pocs-card-content[data-unpadded] { padding: var(--space-4); }
 .luxe-pocs-panel { padding: var(--space-4) 0; }

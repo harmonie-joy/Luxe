@@ -15,6 +15,14 @@ export const APP_ROUTES = {
   compliance: "/compliance",
   calendar: "/calendar",
   account: "/account",
+  pocsWelcome: "/pocs/welcome",
+  pocsDiscoverMe: "/pocs/discover-me",
+  pocsCreatorDNA: "/pocs/creator-dna",
+  pocsBrandKit: "/pocs/brand-kit",
+  pocsBrandAssetKit: "/pocs/brand-asset-kit",
+  pocsImportWorld: "/pocs/import-world",
+  pocsBrandGuide: "/pocs/brand-guide",
+  pocsAestheticBoard: "/pocs/aesthetic-board",
 } as const;
 
 /** Dynamic route for a single brand asset sample detail page. */

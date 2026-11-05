@@ -22,7 +22,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
 ### Stage 1: Onboarding & Brand Foundation
 
-* \[ \] **Page 1 — Welcome / Home**
+* \[x\] **Page 1 — Welcome / Home**
 
   * **Spec:** Entry point setting the tone for the workspace.
 
@@ -30,7 +30,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** Hero text, "Get Started" / "Explore the Space" CTAs, 4 feature cards (AI Intelligence, Organized, Built for Creators, Data Private).
 
-* \[ \] **Page 2 — Discover Me (3 Screens)**
+* \[x\] **Page 2 — Discover Me (3 Screens)**
 
   * **Spec:** Creator DNA capture flow.
 
@@ -38,13 +38,13 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:**
 
-    * \[ \] `2a`: Choice screen (Chat Experience vs. Consultation Call).
+    * \[x\] `2a`: Choice screen (Chat Experience vs. Consultation Call).
 
-    * \[ \] `2b`: Interactive Chat Experience with voice preview wave.
+    * \[x\] `2b`: Interactive Chat Experience with voice preview wave.
 
-    * \[ \] `2c`: Live Brand Consultation video room view with transcript agenda.
+    * \[x\] `2c`: Live Brand Consultation video room view with transcript agenda.
 
-* \[ \] **Page 3 — Creator DNA (Profile)**
+* \[x\] **Page 3 — Creator DNA (Profile)**
 
   * **Spec:** Reusable identity profile reading from Discover Me.
 
@@ -52,7 +52,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** "My North Star" hero block, grid of core cards (Core Values, Communication Style, Voice & Tone, Visual Identity, Workflow), DNA Health Check bar.
 
-* \[ \] **Page 4 — Brand Kit Guide (2 Views)**
+* \[x\] **Page 4 — Brand Kit Guide (2 Views)**
 
   * **Spec:** Referenceable playbook for brand rules.
 
@@ -60,11 +60,11 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:**
 
-    * \[ \] `4a`: Playbook Home (Chapter overview cards: Story, Mission, Tone, Color System, Typography, Photography).
+    * \[x\] `4a`: Playbook Home (Chapter overview cards: Story, Mission, Tone, Color System, Typography, Photography).
 
-    * \[ \] `4b`: Chapter View ("Tone of Voice" breakdown with Voice Pillars, Words to Use/Avoid, Sample Captions, AI Confidence Meter).
+    * \[x\] `4b`: Chapter View ("Tone of Voice" breakdown with Voice Pillars, Words to Use/Avoid, Sample Captions, AI Confidence Meter).
 
-* \[ \] **Candidate 1 — Aesthetic & Inspiration Board**
+* \[x\] **Candidate 1 — Aesthetic & Inspiration Board**
 
   * **Spec:** Visual moodboard hub distinct from strict brand kit rules.
 

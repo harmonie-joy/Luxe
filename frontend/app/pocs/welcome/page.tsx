@@ -1,20 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { StageFlowNavigation } from "@/app/pocs/components/stage-flow-navigation";
+import { StageFlowFooter } from "@/app/pocs/components/stage-flow-footer";
+import { completeStageFlowStep } from "@/app/pocs/components/stage-flow-state";
 import { APP_ROUTES } from "@/lib/routes";
-import { mockWelcomeHome, type WelcomePathId } from "@/lib/mock-data/pocs-data";
+import { mockWelcomeHome } from "@/lib/mock-data/pocs-data";
 import styles from "./page.module.css";
 
 export default function WelcomePage() {
   const router = useRouter();
-  const [isInvitationOpen, setIsInvitationOpen] = useState(false);
-  const [selectedPath, setSelectedPath] = useState<WelcomePathId | null>(null);
 
   return (
     <div className={styles.page}>
+      <StageFlowNavigation currentStep="welcome" />
       <section aria-labelledby="welcome-title" className={styles.hero}>
         <div className={styles.topline}>
           <span aria-hidden="true" className={styles.wordmark}>{mockWelcomeHome.title}</span>
@@ -26,19 +27,20 @@ export default function WelcomePage() {
         <div className={styles.intro}>
           <span aria-hidden="true" className={styles.sparkle}>✧</span>
           <p className={styles.welcome}>Welcome to</p>
-          <h1 className={styles.title} id="welcome-title">{mockWelcomeHome.title}</h1>
-          <p className={styles.subtitle}>{mockWelcomeHome.subtitle}</p>
-          <p className={styles.supportingLine}>{mockWelcomeHome.supportingLine}</p>
+          <h1 className={`${styles.title} stage-flow-title`} id="welcome-title">{mockWelcomeHome.title}</h1>
+          <p className={`${styles.subtitle} stage-flow-caption`}>{mockWelcomeHome.subtitle}</p>
+          <p className={`${styles.supportingLine} stage-flow-caption`}>{mockWelcomeHome.supportingLine}</p>
           <div className={styles.actions}>
             <Button
-              aria-controls="welcome-invitation"
-              aria-expanded={isInvitationOpen}
               className={styles.startButton}
-              onClick={() => setIsInvitationOpen((open) => !open)}
+              onClick={() => {
+                completeStageFlowStep("welcome");
+                router.push(APP_ROUTES.pocsDiscoverMe);
+              }}
               size="lg"
               type="button"
             >
-              {isInvitationOpen ? "Close invitation" : "Get Started"}
+              Get Started
               <span aria-hidden="true">→</span>
             </Button>
             <a className={styles.exploreButton} href="#welcome-features">
@@ -46,29 +48,6 @@ export default function WelcomePage() {
             </a>
           </div>
         </div>
-
-        {isInvitationOpen && (
-          <div aria-labelledby="invitation-title" className={styles.invitation} id="welcome-invitation">
-            <p className={styles.invitationPrompt} id="invitation-title">{mockWelcomeHome.invitation}</p>
-            <div aria-label="Choose a creative direction" className={styles.paths} role="group">
-              {mockWelcomeHome.paths.map((path) => (
-                <Button
-                  aria-pressed={selectedPath === path.id}
-                  key={path.id}
-                  onClick={() => setSelectedPath(path.id)}
-                  size="sm"
-                  type="button"
-                  variant={selectedPath === path.id ? "primary" : "outline"}
-                >
-                  {path.title}
-                </Button>
-              ))}
-            </div>
-            <p aria-live="polite" className={styles.pathDescription}>
-              {mockWelcomeHome.paths.find((path) => path.id === selectedPath)?.description ?? "Choose the pace that feels right for you."}
-            </p>
-          </div>
-        )}
 
         <section aria-label="Workspace benefits" className={styles.features} id="welcome-features">
           {mockWelcomeHome.features.map((feature) => (
@@ -80,6 +59,12 @@ export default function WelcomePage() {
           ))}
         </section>
       </section>
+      <StageFlowFooter
+        backHref={APP_ROUTES.home}
+        completeStep="welcome"
+        nextHref={APP_ROUTES.pocsDiscoverMe}
+        nextLabel="Get Started"
+      />
     </div>
   );
 }

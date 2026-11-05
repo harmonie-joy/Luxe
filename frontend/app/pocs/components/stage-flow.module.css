@@ -1,0 +1,158 @@
+.stepper {
+  margin-bottom: var(--space-6);
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+.stepList {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0;
+}
+
+.stepItem {
+  align-items: center;
+  display: flex;
+  flex: 1 0 auto;
+  gap: var(--space-2);
+}
+
+.stepLink {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  flex: 1 0 auto;
+  gap: var(--space-2);
+  min-height: 2.75rem;
+  text-decoration: none;
+}
+
+.stepLink[aria-current="step"] {
+  color: var(--color-text-primary);
+  font-weight: 700;
+}
+
+.stepLink:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+.stepMarker {
+  align-items: center;
+  background: var(--color-bg-app);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  flex: 0 0 1.75rem;
+  font-size: 0.75rem;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.stepLink[aria-current="step"] .stepMarker {
+  background: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-bg-app);
+}
+
+.stepLink[data-complete="true"] .stepMarker {
+  background: var(--color-bg-surface);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.stepLabel {
+  white-space: nowrap;
+}
+
+.stepArrow {
+  color: var(--color-text-secondary);
+  flex: 0 0 auto;
+}
+
+.footer {
+  align-items: center;
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin-top: var(--space-8);
+  position: sticky;
+  z-index: 15;
+}
+
+.footerActions {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.footerHint {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+@media (max-width: 40rem) {
+  .stepList {
+    display: grid;
+    gap: var(--space-1);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .stepItem {
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+  }
+
+  .stepLink {
+    flex-direction: column;
+    font-size: 0.625rem;
+    gap: var(--space-1);
+    min-width: 0;
+    text-align: center;
+  }
+
+  .stepMarker {
+    flex-basis: 1.5rem;
+    height: 1.5rem;
+    width: 1.5rem;
+  }
+
+  .stepLabel {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .stepArrow {
+    display: none;
+  }
+
+  .footer {
+    align-items: stretch;
+    bottom: var(--space-2);
+    flex-wrap: wrap;
+    padding: var(--space-4);
+  }
+
+  .footerActions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+
+  .footerActions button {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
