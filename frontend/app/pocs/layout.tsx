@@ -15,6 +15,7 @@ export default function SandboxLayout({ children }: { children: ReactNode }) {
       <header className="luxe-pocs-header">
         <Badge className="luxe-pocs-title">⚡ DESIGN SYSTEM PLAYGROUND</Badge>
         <nav aria-label="Sandbox pages" className="luxe-pocs-nav">
+          <Link href="/pocs/welcome">Welcome / Home</Link>
           <Link href="/pocs/components">Components</Link>
           <span aria-disabled="true" title="Coming soon">Layouts</span>
           <span aria-disabled="true" title="Coming soon">Patterns</span>
