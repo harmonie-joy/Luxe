@@ -19,7 +19,7 @@ export const APP_ROUTES = {
   pocsDiscoverMe: "/pocs/discover-me",
   pocsCreatorDNA: "/pocs/creator-dna",
   pocsBrandKit: "/pocs/brand-kit",
-  pocsBrandAssetKit: "/pocs/brand-assets",
+  pocsBrandAssetKit: "/pocs/brand-asset-kit",
   pocsStageOneBrandAssetKit: "/pocs/brand-asset-kit",
   pocsImportWorld: "/pocs/import-world",
   pocsTornadoWorkspace: "/pocs/tornado-workspace",

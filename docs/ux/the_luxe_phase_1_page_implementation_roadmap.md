@@ -1,10 +1,24 @@
 # THE LUXE Phase 1 MVP — Page Implementation Roadmap
 
 > **Specification Source:** `THE_LUXE_Mario_Spec.pdf`
+> Local Draft 1 reconciliation: 2026-11-06, `pocs/archive/THE_LUXE_Mario_Spec.pdf`, SHA-256 `b091f24777a5856c74e3a73ca01c4c6c71f0e08555ac742c9a1d565ec5cff569`.
 >
 > **Target Path:** `frontend/app/pocs/`
 >
 > **Execution Strategy:** Use the `build-luxe-page` agent skill to build each route modularly with Tailwind v4 design tokens and theme-aware UI primitives (`frontend/components/ui/`).
+
+This roadmap tracks browser-local synthetic prototypes, not production feature
+completion, API persistence, design acceptance, or publishing integrations. The
+owner explicitly approved this consolidation on 2026-11-06. The historical UX
+baseline and production backlog remain unchanged.
+
+Canonical sidebar: **Home, Plan, Create, Calendar, Impact, Library, Brand/DNA**.
+Settings controls the sandbox theme; Quick Create remains accessible. `/pocs`
+opens `/pocs/home`. Onboarding remains available through the screen switcher.
+
+Canonical walkthrough:
+`welcome -> discover-me -> creator-dna -> brand-kit -> brand-asset-kit -> import-world -> tornado -> home -> plan -> content-workspace -> single-post -> posts-gallery -> impact`.
+Calendar and Web Portal are contextual destinations, not forced creation stages.
 
 ## Agent Prompt Command Template
 
@@ -56,7 +70,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Spec:** Referenceable playbook for brand rules.
 
-  * **Route:** `frontend/app/pocs/brand-guide`
+  * **Route:** `frontend/app/pocs/brand-kit`; `/pocs/brand-guide` retains the same playbook as a compatibility destination.
 
   * **Key Elements:**
 
@@ -78,13 +92,13 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Spec:** Organized library of logos, fonts, media, and template overlays.
 
-  * **Route:** `frontend/app/pocs/brand-assets`
+  * **Route:** `frontend/app/pocs/brand-asset-kit`; `/pocs/brand-assets` remains a compatibility destination.
 
   * **Key Elements:** Storage meter, category filters (Logos, Fonts, Media, Templates, Documents), asset preview drawer, drag-and-drop upload zone.
 
 * \[x \] **Page 6 — Web Content Portal**
 
-  * **Spec:** Live website preview and site-specific content manager.
+  * **Spec:** Synthetic website preview and site-specific content manager; no live site writes.
 
   * **Route:** `frontend/app/pocs/web-portal`
 
@@ -102,7 +116,7 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Spec:** Visual representation of assets transforming into an organized state ("Chaos to Clarity").
 
-  * **Route:** `frontend/app/pocs/tornado-workspace`
+  * **Route:** `frontend/app/pocs/tornado`; `/pocs/tornado-workspace` remains compatible.
 
   * **Key Elements:** Transition graphic panel, Torando command center dashboard, metrics summary, Today's Focus checklist.
 
@@ -116,49 +130,49 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** 3 main entry path cards ("Create With Me", "Quick Draft", "Bring Something In"), "Continue Where You Left Off" carousel, quick mobile/desktop voice capture bar.
 
-* \[x\] **Page 10 — Single-Post Creation Loop (5 Sub-Layers)**
+* \[x\] **Page 10 — Single-Post Hub and Four Focused Layers**
 
   * **Spec:** End-to-end single content object lifecycle engine.
 
   * **Route:** `frontend/app/pocs/single-post`
 
-  * **Sub-View Tabs:**
+  * **State-driven overlays, not tabs or separate page routes:**
 
-    * \[ \] `10a (Dashboard)`: Persistent home showing post status timeline ($Idea \rightarrow Assets \rightarrow Message \rightarrow Visual \rightarrow Review \rightarrow Ready$).
+    * \[x\] `10a (Dashboard)`: Persistent Original/Working comparison, post status timeline, one next action, copy/share/source utilities, dates, and truthful browser-save status.
 
-    * \[ \] `10b (Caption/Text Editor)`: Side-by-side original vs. AI-suggested text editor with version history (V1, V2, V3) and action buttons (Accept/Reject/Adjust).
+    * \[x\] `10b (TextEditorDrawer)`: Original vs. sample suggestion, caption versions, Accept/Reject/Adjust, Save & Return.
 
-    * \[ \] `10c (Visual/Asset Editor)`: Canvas inspector with locked original asset vs. working version, layer list, and template selector.
+    * \[x\] `10c (VisualEditorDrawer)`: Preserved source assets, working headline/template/layers, explicit visual acceptance. This is a visual recipe preview, not professional media rendering.
 
-    * \[ \] `10d (Review/Final Preview)`: Post package validation checklist, platform preview (1:1 / 9:16 carousel), and "Approve & Mark Ready" action.
+    * \[x\] `10d (ReviewModal)`: Exact caption/visual package, version selection, 1:1 / 9:16 preview, prerequisite checklist, explicit local approval. Edits invalidate approval and scheduling.
 
-    * \[ \] `10e (Ready/Schedule)`: Confirmation screen with date/time picker, scheduling options, and calendar router.
+    * \[x\] `10e (ScheduleModal)`: Timezone-aware future slot validation, browser-local Ready/Scheduled state, Calendar routing, and local JSON package handoff. No publishing provider is connected.
 
 ### Stage 4: Management & Distribution Hubs
 
-* \[ \] **Page 11 — Posts Gallery / Content Library**
+* \[x\] **Page 11 — Posts Gallery / Content Library**
 
   * **Spec:** Master content library displaying all past and current posts.
 
   * **Route:** `frontend/app/pocs/posts-gallery`
 
-  * **Key Elements:** Status pill filters (All, Ideas, In Progress, Review, Ready, Scheduled, Published), post card grid with platform badges and "Repurpose" action dropdown.
+  * **Key Elements:** Status/search/sort filters, saved post package and resume, platform badges, synthetic fixture gallery, non-destructive local Repurpose. Saved and illustrative entries are distinguished.
 
-* \[ \] **Page 12 — Content Calendar / Planning View**
+* \[x\] **Page 12 — Content Calendar / Planning View**
 
   * **Spec:** Weekly and monthly content scheduling view.
 
   * **Route:** `frontend/app/pocs/calendar`
 
-  * **Key Elements:** Week/Month view switcher, platform color-coded post blocks, quick popover details drawer on card click.
+  * **Key Elements:** Week/Month switcher, date traversal, platform filters, details drawer, saved schedule/Ready queue, timezone-aware labels, and same-post resume.
 
-* \[ \] **Page 13 — Idea Box**
+* \[x\] **Page 13 — Plan & Capture**
 
-  * **Spec:** Rapid capture inbox and visual sticky-note canvas.
+  * **Spec:** Optional lightweight planning that turns messy inputs into one executable Game Plan. Quick Create can bypass planning.
 
-  * **Route:** `frontend/app/pocs/idea-box`
+  * **Route:** `frontend/app/pocs/plan`. The separate `/pocs/idea-box` remains a legacy exploratory canvas, not the canonical shared inbox.
 
-  * **Key Elements:** Quick voice note input, categorized idea cards, drag-to-pipeline triggers.
+  * **Key Elements:** Shared IdeaCaptureWidget, raw text/link/file-metadata capture, active Ideas Inbox, select/archive actions, four guided decisions, saved-plan recovery, and Create routing. Voice is a non-recording preview.
 
 * \[ \] **Candidate 2 — Content Prep & Organizer**
 
@@ -168,42 +182,51 @@ Ensure full Light & Dark mode support and zero hardcoded hex colors.
 
   * **Key Elements:** Shoot date organizer, supplies checklist, reusable team/location picker.
 
-* \[ \] **Page 14 — Platform Selection & Publish Routing**
+* \[x\] **Page 14 — Impact & Learn**
 
-  * **Spec:** Multi-channel formatting and traffic-light post readiness status.
+  * **Spec:** Goal -> What Happened -> Was It Worth It? -> What We Learned -> Next Best Move. Distinguish Observed, Creator-Confirmed, and Inferred.
 
-  * **Route:** `frontend/app/pocs/publish-routing`
+  * **Route:** `frontend/app/pocs/impact`
 
-  * **Key Elements:** Traffic-light readiness badges (Green/Yellow/Red), per-platform format transformers (LinkedIn, Instagram, TikTok, YouTube).
+  * **Key Elements:** Labeled synthetic performance signals, goal progress, editable browser-saved feedback, and rule-based Plan/Create recommendations. No causal, automated attribution, revenue, or live-platform claim. Platform routing remains contextual to Ready/Schedule/Calendar.
 
-* \[ \] **Page 15 — Creator Dashboard**
+* \[x\] **Page 15 — Creator Home**
 
   * **Spec:** Central executive command dashboard for the creator.
 
-  * **Route:** `frontend/app/pocs/creator-dashboard`
+  * **Route:** `frontend/app/pocs/home`
 
-  * **Key Elements:** Next Best Action banner, Content Pipeline summary counters, Recent Wins feed, weekly momentum charts.
+  * **Key Elements:** Only four high-value bands: Next Best Action, Your Content, This Week, Your Momentum. Counters and next actions derive from saved POC state; sample planning entries remain labeled.
 
-### Stage 5: Final Promotion & Documentation Lock
+### Stage 5: Prototype Verification & Shared UI
 
-* \[ \] **Interactive Visual Verification**
+* \[x\] **Interactive Visual Verification**
 
-  * Test all routes live on `http://localhost:3000/pocs/[route]` using the top Playground nav switcher.
+  * Test all 15 logical pages using `frontend/e2e/poc-consolidation.spec.ts`, the canonical sidebar, and Screens switcher.
 
   * Verify every component toggles cleanly between Light mode (`☀️`) and Dark mode (`🌙`).
 
-* \[ \] **Production Route Promotion**
+* \[x\] **Shared UI and Layout Extraction**
 
-  * Move approved routes from `frontend/app/pocs/` to `frontend/app/(dashboard)/`.
+  * Shared UI: `IdeaCaptureWidget`, `StatCounterCard`, `StatusPillFilter`, `MediaPreviewCard`, `StepProgressHeader`.
 
-* \[ \] **Documentation Consolidation**
+  * Layouts: `WizardLayout`, `DashboardShellLayout`, `SplitPaneLayout`, `GalleryGridLayout`. Each has real consumers and typed props; existing theme tokens remain the source of colors.
 
-  * Run **Agent Prompt 4** to generate `docs/ux/DESIGN_SYSTEM.md` and clean up obsolete doc files.
+* **Production promotion and broad documentation cleanup are out of scope.** Do not move these routes into the authenticated app or alter production acceptance records.
 
 ### Summary of Next Steps
 
-1. The TODO list is now saved at `docs/ux/PHASE1_PAGES_TODO.md`.
+1. Run focused POC Vitest, Playwright, lint, `npm run typecheck`, and `npm run build` from `frontend/`.
 
-2. You can pick any unchecked page (e.g., **Page 9: Content Workspace** or **Page 10: Single-Post Loop**) and run the corresponding command template with your coding agent.
+2. Independent QA reviews the current Draft 1 prototype mapping and observed evidence; do not infer production or design acceptance from local checks.
 
-3. Mark off items as you complete each screen and verify it in your local playground!
+3. Remaining boundaries: synthetic metrics/import/consultation/voice, browser-only storage, source assets plus visual recipes rather than rendered exports, and optional candidate-page placement. Content Prep remains deferred, outside the 15-page consolidation.
+
+## Local Verification - 2026-11-06
+
+- `npm run test`: 51 files, 282 tests passed.
+- `npx playwright test e2e/poc-consolidation.spec.ts --workers=1 --reporter=line`: eight cases passed, covering 15 logical pages in four desktop/mobile light/dark combinations and four complete saved-state journeys. Image waits are bounded; Home keyboard focus remains above the sticky footer.
+- Scoped ESLint, `npm run typecheck`, and `npm run build` passed. The repository script is `typecheck`, not `type-check`.
+- Component/POC CSS and JSX use centralized theme tokens; scoped hex-color scanning passed. Existing central token definitions are not replaced or duplicated.
+- Independent QA: **Accepted with Notes** for the local prototype. Storage-read failures do not overwrite saved work; stale-tab saves are rejected with explicit reload/discard recovery. Browser-local read/compare/write is optimistic, not atomic simultaneous-tab serialization.
+- No production routes, backend, authentication, dependencies, deployment, or historical production acceptance records were changed. These checks do not establish production or PDF pixel-fidelity acceptance.

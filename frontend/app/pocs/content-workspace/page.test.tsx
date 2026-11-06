@@ -18,16 +18,18 @@ describe("Content Workspace prototype", () => {
     fireEvent.click(screen.getByRole("button", { name: "Show next saved items" }));
     expect(within(savedItems).getByRole("heading", { name: "Leadership is a daily practice" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "Explore quick draft" }));
-    expect(screen.getByText(/Quick Draft is a visual preview/)).toBeDefined();
+    expect(screen.getByText(/Quick Draft opens a browser-local prototype/)).toBeDefined();
+    expect(router.push).toHaveBeenCalledWith("/pocs/single-post");
     fireEvent.click(screen.getByRole("button", { name: /Open Single-Post Preview/ }));
     expect(router.push).toHaveBeenCalledWith("/pocs/single-post");
   });
 
-  it("keeps idea and voice previews local and supports both sandbox themes", () => {
+  it("shares browser-local idea capture and supports both sandbox themes", () => {
     const { container } = render(<SandboxLayout><ContentWorkspacePage /></SandboxLayout>);
     const idea = screen.getByRole("textbox", { name: "Idea note" });
     fireEvent.change(idea, { target: { value: "A note for next week's post" } });
-    expect(screen.getByText("Draft note held in this page only.")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "Capture idea" }));
+    expect(screen.getByText("Idea saved in this browser's Ideas Inbox.")).toBeDefined();
 
     fireEvent.click(screen.getByRole("button", { name: "Voice preview" }));
     expect(screen.getByText("Voice preview selected. Microphone and audio are not used.")).toBeDefined();

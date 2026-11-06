@@ -21,7 +21,7 @@ describe("StageFlowNavigation", () => {
       "/pocs/discover-me",
       "/pocs/creator-dna",
       "/pocs/brand-kit",
-      "/pocs/brand-assets",
+      "/pocs/brand-asset-kit",
     ]);
     expect(navigation.getByRole("link", { name: /Creator DNA/ }).getAttribute("aria-current")).toBe("step");
     expect(navigation.getByRole("link", { name: /Welcome/ }).getAttribute("data-complete")).toBe("true");

@@ -1,0 +1,30 @@
+.page { display: grid; gap: var(--space-4); color: var(--color-text-primary); min-width: 0; }
+.header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-4); }
+.header h1 { font-size: 2rem; margin: var(--space-2) 0; letter-spacing: 0; }
+.page h2 { font-size: var(--font-size-title); margin: 0 0 var(--space-4); }
+.page h3 { font-size: var(--font-size-body); margin: 0; }
+.page p { margin: 0; overflow-wrap: anywhere; }
+.columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-8); }
+.stack { display: grid; gap: var(--space-4); align-content: start; min-width: 0; }
+.section { border-top: 1px solid var(--color-border-subtle); padding: var(--space-6) 0; display: grid; gap: var(--space-4); min-width: 0; }
+.field { display: grid; gap: var(--space-2); font-size: var(--font-size-body); min-width: 0; }
+.field textarea { resize: vertical; min-height: 8rem; width: 100%; }
+.field input, .field select { width: 100%; min-width: 0; }
+.muted { color: var(--color-text-secondary); font-size: var(--font-size-body); }
+.error { color: var(--status-danger); border-left: 3px solid var(--status-danger); padding: var(--space-3); }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); padding: 0; margin: 0; list-style: none; }
+.steps li { display: grid; gap: var(--space-2); font-size: var(--font-size-eyebrow); padding-bottom: var(--space-3); border-bottom: 2px solid var(--color-border-subtle); }
+.steps li[aria-current="step"] { border-color: var(--color-accent-primary); font-weight: 700; }
+.steps span { font-family: var(--font-luxe-serif); font-size: var(--font-size-title); }
+.inbox { display: grid; gap: var(--space-4); list-style: none; margin: 0; padding: 0; }
+.idea { display: grid; gap: var(--space-3); border-bottom: 1px solid var(--color-border-subtle); padding-bottom: var(--space-4); }
+.ideaText { white-space: pre-wrap; overflow-wrap: anywhere; }
+.summary { margin: 0; display: grid; gap: var(--space-3); }
+.summary dt { color: var(--color-text-secondary); font-size: var(--font-size-eyebrow); }
+.summary dd { margin: var(--space-1) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.references { margin: 0; padding-left: var(--space-5); overflow-wrap: anywhere; }
+.learning { display: grid; gap: var(--space-3); justify-items: start; }
+.page summary { cursor: pointer; font-weight: 600; }
+.page :is(button, a, summary, input, textarea, select):focus-visible { outline: 2px solid var(--color-accent-primary); outline-offset: 3px; }
+@media (max-width: 760px) { .columns { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); } }

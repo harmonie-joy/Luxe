@@ -9,8 +9,18 @@
 .workspace p, .workspace small { color: var(--color-text-secondary); line-height: var(--line-height-body); }
 .eyebrow { font-size: var(--font-size-eyebrow); color: var(--color-primary) !important; font-weight: 700; }
 .actions, .versionBar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
-.tabs { overflow-x: auto; max-width: 100%; }
-.tabs button { flex-shrink: 0; }
+.dialog { width: min(1200px, calc(100% - var(--space-6))); max-height: calc(100dvh - var(--space-6)); margin: auto; padding: var(--space-5); border: 1px solid var(--color-outline-variant); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-primary); overflow: auto; overscroll-behavior: contain; }
+.dialog::backdrop { background: color-mix(in srgb, var(--color-inverse-surface) 65%, transparent); }
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.dialogHeader button { width: 44px; height: 44px; flex-shrink: 0; font-size: 1.5rem; }
+.dialog h2 { margin: var(--space-3) 0; font-size: 1.35rem; }
+.dialog h3 { margin: var(--space-3) 0; font-size: 1rem; }
+.hubComparison { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.hubComparison > :only-child { grid-column: 1 / -1; }
+.hubComparison .artworkText { padding: var(--space-3); }
+.hubComparison .artworkText strong { font-size: 1.6rem; }
+.hubComparison .artworkText em { font-size: 1rem; }
+.hubComparison .signature { font-size: 0.55rem; }
 .notice { padding: var(--space-3) var(--space-4); background: var(--color-surface-container-low); border-left: 3px solid var(--color-primary); font-size: var(--font-size-eyebrow); }
 .dashboard { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--space-8); padding-top: var(--space-3); }
 .side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
@@ -27,7 +37,8 @@
 .artwork > img { object-fit: cover; }
 .portrait { aspect-ratio: 9 / 16; max-width: 330px; }
 .artworkText { position: absolute; inset: 0; padding: var(--space-6); display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-inverse-surface) 80%, transparent)); color: var(--color-inverse-on-surface); }
-.artworkText strong { display: block; font-size: 2.65rem; line-height: 1.05; white-space: pre-wrap; overflow-wrap: anywhere; }
+.artworkText > div { min-height: 0; overflow: auto; }
+.artworkText strong { display: block; font-size: 2rem; line-height: 1.1; white-space: pre-wrap; overflow-wrap: anywhere; }
 .artworkText em { display: block; font-family: var(--font-luxe-serif); font-size: 1.9rem; margin-top: var(--space-2); }
 .signature { font-size: 0.65rem; font-weight: 700; }
 .minimal .artworkText { justify-content: flex-end; gap: var(--space-4); }
@@ -71,7 +82,7 @@
 .scheduleFields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
 .scheduled { margin-top: var(--space-5); padding: var(--space-4); background: var(--color-tertiary-container); border-radius: var(--radius-sm); color: var(--color-on-tertiary-container); }
 .scheduled p { color: inherit; }
-.workspace button:focus-visible, .workspace textarea:focus-visible, .workspace select:focus-visible, .workspace input:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.workspace button:focus-visible, .workspace textarea:focus-visible, .workspace select:focus-visible, .workspace input:focus-visible, .workspace a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 @media (max-width: 1000px) {
   .visualGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .inspector { grid-column: 1 / -1; border-left: 0; padding: 0; }
@@ -79,6 +90,10 @@
   .reviewGrid > :last-child { grid-column: 1 / -1; }
 }
 @media (max-width: 700px) {
+  .dialog { width: calc(100% - var(--space-3)); max-height: calc(100dvh - var(--space-3)); padding: var(--space-3); }
+  .dashboard > .side:last-child { order: -1; }
+  .hubComparison { grid-template-columns: minmax(0, 1fr); }
+  .summary dd { overflow-wrap: anywhere; }
   .header, .previewHeader, .footer { align-items: flex-start; flex-wrap: wrap; }
   .dashboard, .editorGrid, .reviewGrid, .visualGrid { grid-template-columns: minmax(0, 1fr); gap: var(--space-5); }
   .workspace h1 { font-size: 1.4rem; }

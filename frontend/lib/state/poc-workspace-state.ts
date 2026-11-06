@@ -52,28 +52,34 @@ function validState(value: unknown): value is PocWorkspaceState {
   if (!isRecord(value) || !Array.isArray(value.ideas) || !Array.isArray(value.feedback)) return false;
   if (!value.ideas.every((idea: unknown) => isRecord(idea)
     && hasStrings(idea, ["id", "text", "createdAt", "updatedAt"])
-    && ["inbox", "planned", "drafting", "archived"].includes(String(idea.status)))) return false;
+    && typeof idea.status === "string"
+    && ["inbox", "planned", "drafting", "archived"].includes(idea.status))) return false;
   if (!value.feedback.every((feedback: unknown) => isRecord(feedback)
     && hasStrings(feedback, ["postId", "outcome", "learning", "updatedAt"])
-    && ["yes", "partly", "no"].includes(String(feedback.worthIt)))) return false;
+    && typeof feedback.worthIt === "string"
+    && ["yes", "partly", "no"].includes(feedback.worthIt))) return false;
   return value.gamePlan === null || (isRecord(value.gamePlan)
     && hasStrings(value.gamePlan, ["objective", "audience", "angle", "format", "nextAction", "updatedAt"])
     && (value.gamePlan.ideaId === null || typeof value.gamePlan.ideaId === "string"));
 }
 
-function getSnapshot(): PocWorkspaceState {
-  if (typeof window === "undefined") return emptyState;
+function readState(): PocWorkspaceState | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(POC_WORKSPACE_STORAGE_KEY);
     if (raw === cachedRaw) return cachedState;
+    const parsed: unknown = raw === null ? emptyState : JSON.parse(raw);
+    if (!validState(parsed)) return null;
     cachedRaw = raw;
-    const parsed: unknown = raw ? JSON.parse(raw) : null;
-    cachedState = validState(parsed) ? parsed : emptyState;
+    cachedState = parsed;
+    return cachedState;
   } catch {
-    cachedState = emptyState;
-    cachedRaw = null;
+    return null;
   }
-  return cachedState;
+}
+
+function getSnapshot(): PocWorkspaceState {
+  return typeof window === "undefined" ? emptyState : readState() ?? cachedState;
 }
 
 function subscribe(listener: () => void) {
@@ -101,26 +107,29 @@ export function usePocWorkspaceState() {
 
 export function capturePocIdea(text: string): string | null {
   if (!text.trim()) return null;
+  const state = readState();
+  if (!state) return null;
   const now = new Date().toISOString();
   const idea: PocIdea = { id: crypto.randomUUID(), text: text.trim(), status: "inbox", createdAt: now, updatedAt: now };
-  const state = getSnapshot();
   return writeState({ ...state, ideas: [idea, ...state.ideas] }) ? idea.id : null;
 }
 
 export function updatePocIdea(id: string, status: PocIdea["status"]): boolean {
-  const state = getSnapshot();
-  if (!state.ideas.some((idea) => idea.id === id)) return false;
+  const state = readState();
+  if (!state || !state.ideas.some((idea) => idea.id === id)) return false;
   return writeState({ ...state, ideas: state.ideas.map((idea) => idea.id === id
     ? { ...idea, status, updatedAt: new Date().toISOString() } : idea) });
 }
 
 export function savePocGamePlan(plan: PocGamePlan): boolean {
-  const state = getSnapshot();
+  const state = readState();
+  if (!state) return false;
   return writeState({ ...state, gamePlan: plan, ideas: state.ideas.map((idea) => idea.id === plan.ideaId
     ? { ...idea, status: "planned", updatedAt: plan.updatedAt } : idea) });
 }
 
 export function savePocFeedback(feedback: PocFeedback): boolean {
-  const state = getSnapshot();
+  const state = readState();
+  if (!state) return false;
   return writeState({ ...state, feedback: [feedback, ...state.feedback.filter((item) => item.postId !== feedback.postId)] });
 }

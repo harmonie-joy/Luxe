@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { IdeaCaptureWidget } from "@/components/ui/idea-capture-widget";
 import { StageFlowFooter } from "@/components/pocs/stage-flow-footer";
 import type { mockContentWorkspace as ContentWorkspaceData } from "@/lib/mock-data/pocs-data";
 import { APP_ROUTES } from "@/lib/routes";
+import { usePocWorkspaceState } from "@/lib/state/poc-workspace-state";
 import styles from "../content-workspace/page.module.css";
 
 interface ContentWorkspaceProps {
@@ -16,10 +18,10 @@ interface ContentWorkspaceProps {
 }
 
 export function ContentWorkspace({ data }: ContentWorkspaceProps) {
+  const router = useRouter();
+  const { gamePlan } = usePocWorkspaceState();
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [firstItemIndex, setFirstItemIndex] = useState(0);
-  const [voiceText, setVoiceText] = useState("");
-  const [voicePreview, setVoicePreview] = useState(false);
 
   const visibleItems = [...data.items.slice(firstItemIndex), ...data.items.slice(0, firstItemIndex)];
   const selectedPathTitle = data.paths.find((path) => path.id === selectedPath)?.title;
@@ -59,7 +61,10 @@ export function ContentWorkspace({ data }: ContentWorkspaceProps) {
               </div>
               <Button
                 className={styles.pathAction}
-                onClick={() => setSelectedPath(path.id)}
+                onClick={() => {
+                  setSelectedPath(path.id);
+                  router.push(path.id === "bring-in" ? APP_ROUTES.pocsImportWorld : APP_ROUTES.pocsSinglePost);
+                }}
                 type="button"
                 variant={path.id === "guided" ? "primary" : "outline"}
               >
@@ -70,9 +75,10 @@ export function ContentWorkspace({ data }: ContentWorkspaceProps) {
         </div>
         <p aria-live="polite" className={styles.feedback}>
           {selectedPathTitle
-            ? `${selectedPathTitle} is a visual preview. This action does not create, import, or save content.`
-            : "Choose a path to preview it. No content is created or uploaded here."}
+            ? `${selectedPathTitle} opens a browser-local prototype. No production content is created or uploaded.`
+            : "Choose a path to open the prototype workspace."}
         </p>
+          {gamePlan && <div className="luxe-pocs-stack"><h3>{gamePlan.objective}</h3><p>{gamePlan.angle}</p><p className="luxe-pocs-muted">{gamePlan.nextAction}</p></div>}
       </section>
 
       <section aria-labelledby="continue-title" className={styles.section}>
@@ -113,7 +119,7 @@ export function ContentWorkspace({ data }: ContentWorkspaceProps) {
                 </div>
                 <h3>{item.title}</h3>
                 <p>{item.nextAction}</p>
-                <Button className={styles.resumeButton} onClick={() => setSelectedPath("guided")} type="button" variant="ghost">
+                <Button className={styles.resumeButton} onClick={() => router.push(APP_ROUTES.pocsSinglePost)} title="Open the single-post demo" type="button" variant="ghost">
                   Continue <span aria-hidden="true">→</span>
                 </Button>
               </div>
@@ -122,38 +128,12 @@ export function ContentWorkspace({ data }: ContentWorkspaceProps) {
         </div>
       </section>
 
-      <section aria-labelledby="voice-title" className={styles.voiceSection}>
-        <div className={styles.voiceMark} aria-hidden="true">✦</div>
-        <div className={styles.voicePrompt}>
-          <h2 id="voice-title">Capture an idea as it arrives.</h2>
-          <p>Type a thought or try the voice preview. Nothing is recorded or saved.</p>
-        </div>
-        <div className={styles.voiceControls}>
-          <Input
-            aria-label="Idea note"
-            onChange={(event) => setVoiceText(event.target.value)}
-            placeholder="Tell me about your idea..."
-            value={voiceText}
-          />
-          <Button
-            aria-pressed={voicePreview}
-            className={styles.voiceButton}
-            onClick={() => setVoicePreview((active) => !active)}
-            type="button"
-            variant="primary"
-          >
-            <span aria-hidden="true">◉</span>{voicePreview ? "Stop preview" : "Voice preview"}
-          </Button>
-        </div>
-        <p aria-live="polite" className={styles.voiceStatus}>
-          {voicePreview ? "Voice preview selected. Microphone and audio are not used." : voiceText ? "Draft note held in this page only." : "Preview only · no microphone access"}
-        </p>
-      </section>
+      <IdeaCaptureWidget title="Capture an idea as it arrives." />
       <StageFlowFooter
         currentStep={3}
         nextLabel="Open Single-Post Preview"
         nextRoute={APP_ROUTES.pocsSinglePost}
-        prevRoute={APP_ROUTES.pocsTornadoWorkspace}
+        prevRoute={APP_ROUTES.pocsPlan}
         totalSteps={5}
       />
     </div>

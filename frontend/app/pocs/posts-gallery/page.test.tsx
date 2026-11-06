@@ -1,9 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { router } from "@/test/setup";
 import PostsGalleryPage from "./page";
 
 describe("Posts Gallery preview", () => {
+  beforeEach(() => { localStorage.clear(); });
   it("shows the content library and returns to the single-post workspace", () => {
     render(<PostsGalleryPage />);
 
@@ -41,6 +42,6 @@ describe("Posts Gallery preview", () => {
     expect(screen.getByRole("region", { name: "Post gallery" }).children).toHaveLength(3);
     expect(screen.getByRole("heading", { name: "Weekend Reminder" })).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "New Post" }));
-    expect(router.push).toHaveBeenCalledWith("/pocs/single-post");
+    expect(router.push).toHaveBeenCalledWith("/pocs/content-workspace");
   });
 });
