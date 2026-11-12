@@ -15,7 +15,54 @@ export const APP_ROUTES = {
   compliance: "/compliance",
   calendar: "/calendar",
   account: "/account",
+  pocsWelcome: "/pocs/welcome",
+  pocsDiscoverMe: "/pocs/discover-me",
+  pocsCreatorDNA: "/pocs/creator-dna",
+  pocsBrandKit: "/pocs/brand-kit",
+  pocsBrandAssetKit: "/pocs/brand-asset-kit",
+  pocsStageOneBrandAssetKit: "/pocs/brand-asset-kit",
+  pocsImportWorld: "/pocs/import-world",
+  pocsTornadoWorkspace: "/pocs/tornado-workspace",
+  pocsContentWorkspace: "/pocs/content-workspace",
+  pocsSinglePost: "/pocs/single-post",
+  pocsPostsGallery: "/pocs/posts-gallery",
+  pocsCalendar: "/pocs/calendar",
+  pocsIdeaBox: "/pocs/idea-box",
+  pocsHome: "/pocs/home",
+  pocsPlan: "/pocs/plan",
+  pocsImpact: "/pocs/impact",
+  pocsTornado: "/pocs/tornado",
+  pocsComponents: "/pocs/components",
+  pocsBrandGuide: "/pocs/brand-guide",
+  pocsAestheticBoard: "/pocs/aesthetic-board",
+  pocsWebPortal: "/pocs/web-portal",
 } as const;
+
+export const POC_NAV_ITEMS = [
+  { href: APP_ROUTES.pocsHome, label: "Home" },
+  { href: APP_ROUTES.pocsPlan, label: "Plan" },
+  { href: APP_ROUTES.pocsContentWorkspace, label: "Create" },
+  { href: APP_ROUTES.pocsCalendar, label: "Calendar" },
+  { href: APP_ROUTES.pocsImpact, label: "Impact" },
+  { href: APP_ROUTES.pocsPostsGallery, label: "Library" },
+  { href: APP_ROUTES.pocsCreatorDNA, label: "Brand/DNA" },
+] as const;
+
+export const POC_STAGE_ROUTES = [
+  APP_ROUTES.pocsWelcome,
+  APP_ROUTES.pocsDiscoverMe,
+  APP_ROUTES.pocsCreatorDNA,
+  APP_ROUTES.pocsBrandKit,
+  APP_ROUTES.pocsStageOneBrandAssetKit,
+  APP_ROUTES.pocsImportWorld,
+  APP_ROUTES.pocsTornado,
+  APP_ROUTES.pocsHome,
+  APP_ROUTES.pocsPlan,
+  APP_ROUTES.pocsContentWorkspace,
+  APP_ROUTES.pocsSinglePost,
+  APP_ROUTES.pocsPostsGallery,
+  APP_ROUTES.pocsImpact,
+] as const;
 
 /** Dynamic route for a single brand asset sample detail page. */
 export function brandVoiceSampleRoute(id: string): string {

@@ -1,0 +1,314 @@
+.page {
+  color: var(--color-text-primary);
+  min-width: 0;
+}
+
+.pageHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.pageHeader h1 {
+  font-family: var(--font-luxe-serif);
+  font-size: 2rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+.eyebrow,
+.sidebarLabel {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-eyebrow);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0 0 var(--space-2);
+  text-transform: uppercase;
+}
+
+.workspace {
+  background:
+    radial-gradient(ellipse at 75% 0%, color-mix(in srgb, var(--color-secondary) 12%, transparent), transparent 40%),
+    linear-gradient(145deg, var(--color-bg-surface), var(--color-surface-container-low));
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--shadow-panel);
+  display: grid;
+  grid-template-columns: minmax(13rem, 0.27fr) minmax(0, 1fr);
+  min-height: min(49rem, calc(100dvh - 13rem));
+  overflow: hidden;
+}
+
+.sidebar {
+  background: color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+  border-right: 1px solid var(--color-border-subtle);
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-6) var(--space-4);
+}
+
+.sidebarLabel {
+  font-size: 0.6875rem;
+  margin-bottom: var(--space-3);
+}
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.stepButton {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control, var(--radius-sm));
+  color: var(--color-text-primary);
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-3);
+  min-height: 4.25rem;
+  padding: var(--space-3);
+  text-align: left;
+  width: 100%;
+}
+
+.stepButton[aria-current="step"] {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg-surface));
+  border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border-subtle));
+}
+
+.stepButton:focus-visible,
+.agendaItem:focus-visible,
+.tab:focus-visible,
+.waveButton:focus-visible {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+.stepNumber {
+  align-items: center;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  flex: 0 0 1.75rem;
+  font-size: 0.75rem;
+  height: 1.75rem;
+  justify-content: center;
+}
+
+.stepButton[aria-current="step"] .stepNumber {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.stepCopy {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.stepCopy strong { font-size: 0.8125rem; }
+.stepCopy small { color: var(--color-text-secondary); font-size: 0.6875rem; }
+.stepChevron { color: var(--color-text-secondary); font-size: 1.25rem; margin-left: auto; }
+
+.privacyCard {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-bg-surface));
+  display: flex;
+  gap: var(--space-3);
+  margin-top: auto;
+}
+
+.privacyIcon { color: var(--color-accent-primary); font-size: 1.125rem; }
+.privacyCard strong { font-size: 0.8125rem; }
+.privacyCard p { color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1.5; margin: var(--space-1) 0 0; }
+
+.stage { min-width: 0; padding: clamp(var(--space-4), 3vw, var(--space-8)); }
+.choiceScreen, .chatScreen, .consultScreen { animation: arrive var(--motion-duration-normal) var(--motion-ease-standard) both; min-width: 0; }
+
+.screenHeading { margin: 0 auto var(--space-8); max-width: 38rem; text-align: center; }
+.screenHeading h2, .screenTopline h2, .consultTopline h2 {
+  font-family: var(--font-luxe-serif);
+  font-size: clamp(1.7rem, 3vw, 2.45rem);
+  font-weight: 400;
+  line-height: 1.15;
+  margin: var(--space-3) 0 var(--space-2);
+}
+.screenHeading p, .screenTopline p { color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.55; margin: 0; }
+
+.pathGrid { display: grid; gap: var(--space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 auto; max-width: 48rem; }
+.pathCard {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg-surface));
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: center;
+}
+.pathCardAlt { background: color-mix(in srgb, var(--color-secondary) 8%, var(--color-bg-surface)); }
+.pathIcon {
+  align-items: center;
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-surface));
+  border-radius: var(--radius-full);
+  color: var(--color-accent-primary);
+  display: flex;
+  font-size: 1.5rem;
+  height: 3rem;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  width: 3rem;
+}
+.pathCardAlt .pathIcon { background: color-mix(in srgb, var(--color-secondary) 17%, var(--color-bg-surface)); color: var(--color-secondary); }
+.pathCard h3 { font-size: 1rem; margin: 0 0 var(--space-2); }
+.pathCard p { color: var(--color-text-secondary); font-size: 0.8125rem; line-height: 1.55; margin: 0; max-width: 21rem; }
+.duration { color: var(--color-text-secondary); font-size: 0.6875rem; margin: var(--space-3) 0 var(--space-4); }
+.pathAction { min-width: 10rem; }
+.pathCardAlt :global(.luxe-ui-button--primary) { background: var(--color-secondary); }
+.pathCardAlt :global(.luxe-ui-button--primary:hover:not(:disabled)) { background: color-mix(in srgb, var(--color-secondary) 86%, var(--color-on-surface)); }
+.choiceFooter { align-items: center; background: color-mix(in srgb, var(--color-primary) 7%, var(--color-bg-surface)); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); display: flex; gap: var(--space-3); margin: var(--space-5) auto 0; max-width: 48rem; padding: var(--space-3) var(--space-4); }
+.shield { color: var(--color-accent-primary); font-size: 1.125rem; }
+.choiceFooter p { color: var(--color-text-primary); font-size: 0.75rem; line-height: 1.5; margin: 0; }
+.choiceFooter span:last-child { color: var(--color-text-secondary); }
+
+.screenTopline, .consultTopline { align-items: center; display: flex; gap: var(--space-4); justify-content: space-between; margin-bottom: var(--space-5); }
+.screenTopline h2, .consultTopline h2 { font-size: clamp(1.5rem, 2.5vw, 2rem); margin: var(--space-2) 0; }
+.progressRing { align-items: center; aspect-ratio: 1; background: radial-gradient(closest-side, var(--color-bg-surface) 83%, transparent 85% 99%), conic-gradient(var(--color-accent-primary) 0 28%, var(--color-surface-container-high) 28%); border-radius: var(--radius-full); display: flex; flex: 0 0 4.5rem; flex-direction: column; justify-content: center; }
+.progressRing strong { font-size: 0.875rem; }
+.progressRing span { color: var(--color-text-secondary); font-size: 0.5625rem; }
+.chatLayout { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr) minmax(12rem, 0.34fr); }
+.conversation { background: color-mix(in srgb, var(--color-bg-surface) 92%, transparent); display: flex; flex-direction: column; min-height: 30rem; min-width: 0; }
+.messageList { display: grid; gap: var(--space-3); margin-bottom: auto; }
+.messageRow { align-items: flex-end; display: flex; gap: var(--space-2); min-width: 0; }
+.messageRowCreator { justify-content: flex-end; }
+.avatarGuide, .avatarCreator { align-items: center; border-radius: var(--radius-full); display: inline-flex; flex: 0 0 2rem; font-size: 0.75rem; height: 2rem; justify-content: center; }
+.avatarGuide { background: color-mix(in srgb, var(--color-primary) 15%, var(--color-bg-surface)); color: var(--color-accent-primary); }
+.avatarCreator { background: color-mix(in srgb, var(--color-tertiary) 18%, var(--color-bg-surface)); color: var(--color-tertiary); }
+.guideBubble, .creatorBubble { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); font-size: 0.8125rem; line-height: 1.5; margin: 0; max-width: 85%; padding: var(--space-3) var(--space-4); }
+.guideBubble { background: var(--color-surface-container-low); border-bottom-left-radius: var(--radius-sm); }
+.creatorBubble { background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg-surface)); border-bottom-right-radius: var(--radius-sm); }
+.answerChoices { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-5) 0 var(--space-4) 2.5rem; }
+.chatForm { align-items: center; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-full); display: flex; gap: var(--space-2); padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4); }
+.chatForm input { background: transparent; border: 0; color: var(--color-text-primary); flex: 1; font: inherit; font-size: 0.8125rem; min-width: 0; outline: 0; }
+.chatForm input::placeholder { color: var(--color-text-secondary); }
+.chatAside { display: grid; gap: var(--space-4); grid-template-rows: 1fr auto; min-width: 0; }
+.promptCard { background: color-mix(in srgb, var(--color-secondary) 8%, var(--color-bg-surface)); display: flex; flex-direction: column; justify-content: center; min-height: 10rem; }
+.asideSpark { color: var(--color-secondary); font-size: 1.25rem; }
+.promptCard h3 { font-size: 0.875rem; margin: var(--space-2) 0; }
+.promptCard p, .voiceCard p { color: var(--color-text-secondary); font-size: 0.75rem; line-height: 1.55; margin: 0; }
+.sparkleLine { color: var(--color-secondary); display: flex; font-size: 1.125rem; gap: var(--space-3); margin-top: var(--space-4); }
+.voiceCard { background: color-mix(in srgb, var(--color-primary) 7%, var(--color-bg-surface)); }
+.voiceHeading { align-items: center; display: flex; justify-content: space-between; }
+.voiceHeading .sidebarLabel { margin-bottom: var(--space-1); }
+.voiceHeading h3 { font-size: 0.75rem; margin: 0; }
+.voiceMark { color: var(--color-accent-primary); font-size: 1.5rem; }
+.waveButton { align-items: center; background: transparent; border: 0; cursor: pointer; display: flex; gap: 2px; height: 3rem; justify-content: center; margin: var(--space-2) 0; padding: 0; width: 100%; }
+.waveButton span { background: var(--color-accent-primary); border-radius: var(--radius-full); height: calc(var(--bar) * 0.22rem); min-height: 0.25rem; opacity: 0.8; width: 3px; }
+.wavePlaying span { animation: pulse var(--motion-duration-slow) var(--motion-ease-standard) infinite alternate; animation-delay: calc(var(--bar) * -45ms); }
+.voiceCard p { font-size: 0.6875rem; text-align: center; }
+
+.consultTopline { align-items: flex-start; }
+.consultTopline h2 { margin-bottom: 0; }
+.callStatus { align-items: center; color: var(--color-text-secondary); display: flex; flex-wrap: wrap; font-size: 0.6875rem; gap: var(--space-2); justify-content: flex-end; }
+.liveDot, .pausedDot { background: var(--status-success); border-radius: var(--radius-full); height: 0.5rem; width: 0.5rem; }
+.pausedDot { background: var(--status-warning); }
+.consultLayout { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.38fr); }
+.consultMain { display: grid; gap: var(--space-4); min-width: 0; }
+.videoRoom { aspect-ratio: 16 / 8.5; background: linear-gradient(125deg, color-mix(in srgb, var(--color-primary) 30%, var(--color-surface-container-high)), color-mix(in srgb, var(--color-secondary) 24%, var(--color-surface-container-high))); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); display: grid; gap: var(--space-3); grid-template-columns: 1fr 1fr; min-height: 17rem; overflow: hidden; padding: var(--space-3); position: relative; }
+.videoTile { align-items: center; background: color-mix(in srgb, var(--color-bg-surface) 32%, transparent); border: 1px solid color-mix(in srgb, var(--color-bg-surface) 50%, transparent); border-radius: var(--radius-card); display: flex; justify-content: center; min-width: 0; overflow: hidden; position: relative; }
+.videoTileMuted { background: color-mix(in srgb, var(--color-surface-container-high) 76%, transparent); }
+.videoTileMuted .portraitYou { opacity: 0.55; }
+.portraitMaya, .portraitYou { align-items: center; border: 1px solid color-mix(in srgb, var(--color-bg-surface) 55%, transparent); border-radius: var(--radius-full); box-shadow: var(--shadow-card); display: flex; height: clamp(5rem, 12vw, 9rem); justify-content: center; width: clamp(5rem, 12vw, 9rem); }
+.portraitMaya { background: radial-gradient(circle at 50% 35%, var(--color-surface-bright), color-mix(in srgb, var(--color-secondary) 38%, var(--color-surface-container-high))); }
+.portraitYou { background: radial-gradient(circle at 50% 35%, var(--color-surface-bright), color-mix(in srgb, var(--color-tertiary) 35%, var(--color-surface-container-high))); }
+.portraitMaya span, .portraitYou span { color: var(--color-text-primary); font-family: var(--font-luxe-serif); font-size: 1.25rem; }
+.portraitYou span { font-family: var(--font-luxe-sans); font-size: 0.75rem; font-weight: 700; }
+.videoName { background: color-mix(in srgb, var(--color-bg-surface) 83%, transparent); border: 1px solid color-mix(in srgb, var(--color-border-subtle) 80%, transparent); border-radius: var(--radius-sm); bottom: var(--space-2); display: grid; font-size: 0.6875rem; left: var(--space-2); padding: var(--space-1) var(--space-2); position: absolute; }
+.videoName small { color: var(--color-text-secondary); font-size: 0.5625rem; }
+.videoTileYou .videoName { left: auto; right: var(--space-2); }
+.videoControls { align-items: center; background: color-mix(in srgb, var(--color-bg-surface) 85%, transparent); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-full); bottom: var(--space-3); display: flex; gap: var(--space-2); left: 50%; padding: var(--space-1); position: absolute; transform: translateX(-50%); }
+.videoControls button { min-width: 2.25rem; }
+.roomBadge { left: var(--space-3); position: absolute; top: var(--space-3); }
+.shareIndicator { background: color-mix(in srgb, var(--color-bg-surface) 88%, transparent); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-sm); font-size: 0.625rem; padding: var(--space-1) var(--space-2); position: absolute; right: var(--space-3); top: var(--space-3); }
+.notesPanel { background: color-mix(in srgb, var(--color-bg-surface) 94%, transparent); }
+.tabs { border-bottom: 1px solid var(--color-border-subtle); display: flex; gap: var(--space-2); padding: 0 var(--space-4); }
+.tab { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--color-text-secondary); cursor: pointer; font: inherit; font-size: 0.75rem; min-height: 2.75rem; padding: 0 var(--space-2); }
+.tab[aria-selected="true"] { border-bottom-color: var(--color-accent-primary); color: var(--color-text-primary); }
+.tabContent { font-size: 0.75rem; line-height: 1.5; min-height: 6rem; padding: var(--space-4); }
+.tabContent p { margin: 0; }
+.noteList { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
+.noteList li { align-items: flex-start; display: flex; gap: var(--space-2); }
+.noteList li::before { color: var(--color-accent-primary); content: "✦"; }
+.noteList label { align-items: flex-start; display: flex; gap: var(--space-2); font-size: inherit; font-weight: 400; }
+.agendaPanel { display: grid; gap: var(--space-3); grid-template-rows: 1fr auto; min-width: 0; }
+.agendaCard { background: color-mix(in srgb, var(--color-primary) 6%, var(--color-bg-surface)); }
+.agendaHeading { align-items: flex-start; display: flex; gap: var(--space-2); justify-content: space-between; }
+.agendaHeading h3 { font-size: 0.875rem; margin: 0; }
+.agendaHeading .sidebarLabel { font-size: 0.625rem; }
+.agendaList { list-style: none; margin: var(--space-4) 0; padding: 0; }
+.agendaList li { align-items: flex-start; border-bottom: 1px solid var(--color-border-subtle); display: flex; gap: var(--space-2); padding: var(--space-2) 0; }
+.agendaTime { color: var(--color-text-secondary); flex: 0 0 2.5rem; font-size: 0.625rem; padding-top: 0.2rem; }
+.agendaItem { align-items: flex-start; background: transparent; border: 0; color: var(--color-text-primary); cursor: pointer; display: flex; font: inherit; font-size: 0.6875rem; gap: var(--space-2); line-height: 1.4; min-width: 0; padding: 0; text-align: left; }
+.agendaCheck, .agendaCheckComplete { color: var(--color-text-secondary); flex: 0 0 0.875rem; }
+.agendaCheckComplete { color: var(--status-success); }
+.consultProgress > div { display: flex; font-size: 0.6875rem; justify-content: space-between; margin-bottom: var(--space-2); }
+.consultProgress strong { color: var(--color-accent-primary); }
+.progressTrack { background: var(--color-surface-container-high); border-radius: var(--radius-full); display: block; height: 0.375rem; overflow: hidden; }
+.progressTrack > span { background: var(--color-accent-primary); border-radius: inherit; display: block; height: 100%; }
+.roomNote { align-items: flex-start; background: color-mix(in srgb, var(--color-secondary) 8%, var(--color-bg-surface)); display: flex; gap: var(--space-3); }
+.roomNote > span { color: var(--color-secondary); }
+.roomNote p { color: var(--color-text-secondary); font-size: 0.6875rem; line-height: 1.5; margin: 0; }
+.srOnly { clip: rect(0, 0, 0, 0); clip-path: inset(50%); height: 1px; overflow: hidden; position: absolute; white-space: nowrap; width: 1px; }
+
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(var(--space-2)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  from { transform: scaleY(0.55); }
+  to { transform: scaleY(1.15); }
+}
+
+@media (max-width: 62rem) {
+  .workspace { grid-template-columns: minmax(11rem, 0.3fr) minmax(0, 1fr); }
+  .chatLayout, .consultLayout { grid-template-columns: minmax(0, 1fr); }
+  .chatAside { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .agendaPanel { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: auto; }
+  .agendaList { margin-bottom: var(--space-3); }
+}
+
+@media (max-width: 44rem) {
+  .pageHeader { align-items: flex-start; }
+  .pageHeader h1 { font-size: 1.75rem; }
+  .workspace { display: flex; flex-direction: column; min-height: calc(100dvh - 13rem); }
+  .sidebar { border-bottom: 1px solid var(--color-border-subtle); border-right: 0; padding: var(--space-3); }
+  .sidebar > .sidebarLabel { display: none; }
+  .steps { display: grid; gap: var(--space-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .stepButton { align-items: flex-start; flex-direction: column; gap: var(--space-1); min-height: 5rem; padding: var(--space-2); }
+  .stepCopy strong { font-size: 0.6875rem; line-height: 1.3; }
+  .stepCopy small, .stepChevron { display: none; }
+  .privacyCard { display: none; }
+  .stage { padding: var(--space-4); }
+  .screenHeading { margin-bottom: var(--space-5); }
+  .pathGrid { grid-template-columns: minmax(0, 1fr); }
+  .pathCard { padding: var(--space-4); }
+  .screenTopline, .consultTopline { align-items: flex-start; }
+  .progressRing { flex-basis: 3.75rem; }
+  .conversation { min-height: 27rem; }
+  .chatAside, .agendaPanel { grid-template-columns: minmax(0, 1fr); }
+  .promptCard { min-height: auto; }
+  .consultTopline { flex-direction: column; }
+  .callStatus { justify-content: flex-start; }
+  .videoRoom { aspect-ratio: auto; grid-template-columns: minmax(0, 1fr); min-height: 33rem; }
+  .videoTile { min-height: 12rem; }
+  .videoControls { bottom: var(--space-2); }
+  .agendaPanel { display: flex; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choiceScreen, .chatScreen, .consultScreen { animation: none; }
+  .wavePlaying span { animation: none; }
+}
